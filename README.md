@@ -1,12 +1,36 @@
-# React + Vite
+# IELTS Mock Exam Platform 🎓📝
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-featured IELTS Mock Exam platform that simulates the real IELTS test experience for students. The platform offers **Listening**, **Reading**, and **Writing** tests — all administered in the same structure and format as the official IELTS exam.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🎧 **Listening Test**: Timed sections with audio playback and answer inputs.
+- 📖 **Reading Test**: Interactive reading passages with various question types (e.g., multiple choice, matching headings, table completion).
+- ✍️ **Writing Test**: Task 1 and Task 2 writing prompts with text editor and word count.
+- ⏱️ **Real Exam Timings**: Mirrors official IELTS timing for each section.
+- 📊 **Score Simulation**: Automatic scoring system for Listening and Reading; manual review for Writing.
+- 📈 **Result Dashboard**: Users can view their scores, writing feedback, and test history.
+- 👤 **User Authentication**: Register and log in to save test progress and view results.
 
-## Expanding the ESLint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend**: React.js + TypeScript + Redux Toolkit
+- **Backend**: Spring Boot + PostgreSQL
+- **Authentication**: JWT-based Auth
+- **Deployment**: Vercel (Frontend) + Railway or Render (Backend)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- Yarn or npm
+- Java 17+
+- PostgreSQL database
+
+### Frontend Setup
+
+```bash
+cd client
+yarn install
+yarn dev
