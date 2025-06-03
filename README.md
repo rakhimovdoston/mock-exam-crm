@@ -12,25 +12,12 @@ A full-featured IELTS Mock Exam platform that simulates the real IELTS test expe
 - 📈 **Result Dashboard**: Users can view their scores, writing feedback, and test history.
 - 👤 **User Authentication**: Register and log in to save test progress and view results.
 
-## 🛠 Tech Stack
+## 🌟 Project Capabilities
 
-- **Frontend**: React.js + TypeScript + Redux Toolkit
-- **Backend**: Spring Boot + PostgreSQL
-- **Authentication**: JWT-based Auth
-- **Deployment**: Vercel (Frontend) + Railway or Render (Backend)
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js (v18+)
-- Yarn or npm
-- Java 17+
-- PostgreSQL database
-
-### Frontend Setup
-
-```bash
-cd client
-yarn install
-yarn dev
+- **Customizable Question Types**: Add new question types for Listening, Reading, and Writing sections.
+- **Dynamic Content Management**: Easily update or modify test content via the admin panel.
+- **Real-Time Feedback**: Provide instant feedback for Listening and Reading answers.
+- **Scalable Architecture**: Designed to handle large numbers of concurrent users.
+- **Secure Data Handling**: Implements JWT-based authentication and encrypted data storage.
+- **Multi-Language Support**: Extendable to support multiple languages for global users.
+- **Analytics Dashboard**: Track user performance and test statistics for improvement insights.
