@@ -25,11 +25,14 @@ const NewListening = React.lazy(() => import("./pages/create/NewListening"));
 const ReadingAnswers = React.lazy(() =>
   import("./pages/create/ReadingAnswers")
 );
+const ListeningExam = React.lazy(() => import("./pages/exam/ListeningExam"));
+const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
+const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
 
 const { Content: AntContent } = Layout;
 
 function App() {
-  const { accessToken, isLoggedIn } = useSelector((state) => state.auth);
+  const { accessToken, isLoggedIn, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -67,14 +70,26 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <UserPage />
+                  {["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_ADMIN"].some(
+                    (role) => user?.roles.includes(role)
+                  ) ? (
+                    <Navigate to="/dashboard" />
+                  ) : (
+                    <UserPage />
+                  )}
                 </ProtectedRoute>
               }
             />
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ROLE_ADMIN",
+                    "ROLE_TEACHER",
+                    "ROLE_SUPER_ADMIN",
+                  ]}
+                >
                   <Dashboard />
                 </ProtectedRoute>
               }
@@ -93,6 +108,30 @@ function App() {
               <Route path="ielts/writing" element={<Writing />} />
               <Route path="ielts/writing/create" element={<NewWriting />} />
             </Route>
+            <Route
+              path="/listening/:id"
+              element={
+                <ProtectedRoute>
+                  <ListeningExam />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reading/:id"
+              element={
+                <ProtectedRoute>
+                  <ReadingExam />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/writing/:id"
+              element={
+                <ProtectedRoute>
+                  <WritingExam />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Suspense>
       </AntContent>

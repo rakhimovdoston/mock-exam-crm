@@ -5,9 +5,10 @@ import { Input } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { updateAnswer } from "../../../store/answerReducer";
 import { getValueFromAnswer } from "../../../utils";
+import { updateForUserAnswers } from "../../../store/examReducer";
 
 const InputElement = ({ attributes, element, children }) => {
-  const editor = useSlateStatic(); // avoids triggering rerenders
+  const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
   const {answers} = useSelector((state) => state.answer);
   const inpValue = getValueFromAnswer(element.placeholder, answers);
@@ -22,7 +23,11 @@ const InputElement = ({ attributes, element, children }) => {
   const handleChange = (e) => {
     setInputValue(e.target.value);
     const idNumber = parseInt(e.target.id.replace("ques-", ""), 10);
-    dispatch(updateAnswer({key: idNumber, value: e.target.value}));
+    if (answers.length > 0) {
+      dispatch(updateAnswer({key: idNumber, value: e.target.value}));
+    } else {
+      dispatch(updateForUserAnswers({key: idNumber, value: e.target.value}));
+    }
   };
 
   const handleBlur = () => {

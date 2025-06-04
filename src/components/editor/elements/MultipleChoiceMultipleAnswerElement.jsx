@@ -2,6 +2,7 @@ import React from "react";
 import { Card, Checkbox } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { updateMultipleAnswer } from "../../../store/answerReducer";
+import { updateForUserMultipleAnswers } from "../../../store/examReducer";
 
 const MultipleChoiceMultipleAnswerElement = ({
   attributes,
@@ -10,6 +11,7 @@ const MultipleChoiceMultipleAnswerElement = ({
 }) => {
   const dispatch = useDispatch();
   const { answers } = useSelector((state) => state.answer);
+  const userAnswer = useSelector((state) => state.exam);
 
   const getValue = (questionNumber) => {
     switch (questionNumber) {
@@ -35,13 +37,25 @@ const MultipleChoiceMultipleAnswerElement = ({
   };
 
   const checkIsAnswer = (option, answers) => {
-    const keys = getKeys();
-    const answer = answers.find((a) => a.keys === keys);
-    if (answer && answer.values && answer.values.includes(option)) {
-      return true;
+    if (answers.length > 0) {
+      const keys = getKeys();
+      const answer = answers.find((a) => a.keys === keys);
+      if (answer && answer.values && answer.values.includes(option)) {
+        return true;
+      }
+      return false;
+    } else {
+      const keys = getKeys();
+      for (const ans of userAnswer.answers) {
+        for (const a of ans.questionAnswers) {
+            if (a.keys === keys && a.values && a.values.includes(option)) {
+              return true;
+            }
+          }
+      }
+      return false;
     }
-    return false;
-  }
+  };
 
   const getKeys = () => {
     const numbers = element.questionNumber;
@@ -75,9 +89,18 @@ const MultipleChoiceMultipleAnswerElement = ({
             <Checkbox
               checked={checkIsAnswer(opt, answers)}
               onChange={(e) => {
-                dispatch(
-                  updateMultipleAnswer({ keys: getKeys(), values: opt })
-                );
+                if (answers.length > 0) {
+                  dispatch(
+                    updateMultipleAnswer({ keys: getKeys(), values: opt })
+                  );
+                } else {
+                  dispatch(
+                    updateForUserMultipleAnswers({
+                      keys: getKeys(),
+                      values: opt,
+                    })
+                  );
+                }
               }}
               style={{ display: "flex", alignItems: "center" }}
             >

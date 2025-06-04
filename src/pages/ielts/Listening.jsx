@@ -10,11 +10,11 @@ const { Option } = Select;
 const Listening = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [type, setType] = useState("all");
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // Number of items per page
 
   const { data, loading } = useApiRequest(
-    `/api/v1/listening/all?type=${type}&page=${currentPage}&size=${pageSize}`,
+    `/api/v1/listening/all?type=${type}&page=${currentPage-1}&size=${pageSize}`,
     [type, currentPage]
   );
 

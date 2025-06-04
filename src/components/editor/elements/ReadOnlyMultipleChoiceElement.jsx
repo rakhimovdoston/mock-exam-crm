@@ -3,11 +3,12 @@ import { Radio, Card } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { updateAnswer } from "../../../store/answerReducer";
 import { getValueFromAnswer } from "../../../utils";
+import { updateForUserAnswers } from "../../../store/examReducer";
 
 const ReadOnlyMultipleChoiceElement = ({ element }) => {
   const [selected, setSelected] = useState(null);
   const dispatch = useDispatch();
-  const {answers} = useSelector((state) => state.answer);
+  const { answers } = useSelector((state) => state.answer);
 
   const value = getValueFromAnswer(element.id, answers);
 
@@ -21,14 +22,29 @@ const ReadOnlyMultipleChoiceElement = ({ element }) => {
         backgroundColor: "#fffefc",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-        <span style={{fontWeight: 500, fontSize: "16px"}}>{element.id}.</span>
-        <span style={{ fontWeight: "bold", fontSize: "18px" }}>{element.question}</span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "10px",
+        }}
+      >
+        <span style={{ fontWeight: 500, fontSize: "16px" }}>{element.id}.</span>
+        <span style={{ fontWeight: "bold", fontSize: "18px" }}>
+          {element.question}
+        </span>
       </div>
       <Radio.Group
         onChange={(e) => {
           setSelected(e.target.value);
-          dispatch(updateAnswer({ key: element.id, value: e.target.value }));
+          if (answers.length > 0) {
+            dispatch(updateAnswer({ key: element.id, value: e.target.value }));
+          } else {
+            dispatch(
+              updateForUserAnswers({ key: element.id, value: e.target.value })
+            );
+          }
         }}
         value={value || selected}
         style={{ display: "flex", flexDirection: "column", gap: "6px" }}

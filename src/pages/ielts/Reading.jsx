@@ -8,12 +8,12 @@ const { Option } = Select;
 
 const Reading = () => {
   const [type, setType] = useState("all");
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // Number of items per page
   const navigate = useNavigate();
 
   const { data, loading, error } = useApiRequest(
-    `/api/v1/reading/all?type=${type}&page=${currentPage}&size=${pageSize}`,
+    `/api/v1/reading/all?type=${type}&page=${currentPage-1}&size=${pageSize}`,
     [type, currentPage]
   );
 

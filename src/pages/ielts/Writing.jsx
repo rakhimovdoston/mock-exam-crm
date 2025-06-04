@@ -7,12 +7,12 @@ import useApiRequest from "../../hooks/useApiRequest"; // Adjust the import path
 const Writing = () => {
   const navigate = useNavigate();
   const [type, setType] = useState("all");
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // Number of items per page
 
   // Update the API request URL dynamically based on type and currentPage
   const { loading, data } = useApiRequest(
-    `/api/v1/writing/all?type=${type}&page=${currentPage}&size=${pageSize}`,
+    `/api/v1/writing/all?type=${type}&page=${currentPage-1}&size=${pageSize}`,
     [type, currentPage]
   );
 

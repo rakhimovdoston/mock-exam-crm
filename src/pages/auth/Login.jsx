@@ -28,7 +28,7 @@ const Login = () => {
       const { access_token, refresh_token } = response.data;
       
       dispatch(login({ accessToken: access_token, refreshToken: refresh_token }));
-      navigate("/dashboard");
+      navigate("/");
       toast.success("Login successful!");
     } catch (error) {
       console.error("Login error:", error);
