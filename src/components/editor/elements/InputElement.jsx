@@ -11,6 +11,7 @@ const InputElement = ({ attributes, element, children }) => {
   const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
   const {answers} = useSelector((state) => state.answer);
+  const userAnswers = useSelector((state) => state.exam);
   const inpValue = getValueFromAnswer(element.placeholder, answers);
 
   const [inputValue, setInputValue] = useState(element.value || "");
@@ -38,6 +39,16 @@ const InputElement = ({ attributes, element, children }) => {
     );
   };
 
+  const getValue = () => {
+    for (const anss of userAnswers.answers) {
+      for (const ans of anss.answers) {
+        if (ans.key === element.placeholder)
+          return ans.value
+      }
+    }
+    return "";
+  }
+
   return (
     <span
       {...attributes}
@@ -48,7 +59,7 @@ const InputElement = ({ attributes, element, children }) => {
         type={element.inputType || "text"}
         id={"ques-" + (element.placeholder || "input")}
         placeholder={element.placeholder}
-        value={inpValue || inputValue}
+        value={inpValue || inputValue || getValue()}
         onChange={handleChange}
         onBlur={handleBlur}
         style={{

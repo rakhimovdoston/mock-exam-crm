@@ -34,7 +34,8 @@ const examReducer = createSlice({
 
         return {
           type: element.type,
-          questionAnswers: flatAnswers,
+          passageId: element.id,
+          answers: flatAnswers,
         };
       });
 
@@ -43,7 +44,7 @@ const examReducer = createSlice({
     updateForUserAnswers: (state, action) => {
       const { key, value } = action.payload;
       state.answers.forEach((answer) => {
-        answer.questionAnswers.forEach((group) => {
+        answer.answers.forEach((group) => {
           if (group.key === key) {
             group.value = value;
           }
@@ -53,7 +54,7 @@ const examReducer = createSlice({
     updateForUserMultipleAnswers: (state, action) => {
       const { keys, values } = action.payload;
       state.answers.forEach((answer) => {
-        answer.questionAnswers.forEach((group) => {
+        answer.answers.forEach((group) => {
           if (group.keys === keys) {
             if (group.values && group.values.includes(values)) {
               group.values = group.values.filter((v) => v !== values);

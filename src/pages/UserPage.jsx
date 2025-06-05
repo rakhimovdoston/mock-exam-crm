@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
 import useApiRequest from "../hooks/useApiRequest";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const UserPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
@@ -14,11 +15,16 @@ const UserPage = () => {
   const { data, loading, error } = useApiRequest("api/v1/exam/get", []);
 
   useEffect(() => {
-    if (data?.data && data?.data.leftDuration) {      
+    if (data?.data && data?.data.leftDuration) {
       setTimeLeft(Math.floor(Number(data.data.leftDuration) / 1000)); // Set timeLeft from API response
     }
   }, [data]);
 
+  useEffect(() => {
+    if (data?.data && timeLeft === 0) {
+      dispatch(logout());
+    }
+  }, [timeLeft, dispatch]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -108,20 +114,38 @@ const UserPage = () => {
             }}
           >
             {/* Listening Card */}
-            { <Card title="Listening" style={{ width: 600 }}>
-              <p>Practice your listening skills.</p>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <Button type="primary" disabled={data.data.listening} onClick={() => navigate(`/listening/${data.data.id}`)}>
-                  Start
-                </Button>
-              </div>
-            </Card>}
+            {
+              <Card title="Listening" style={{ width: 600 }}>
+                <p>Practice your listening skills.</p>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <Button
+                    type="primary"
+                    disabled={data.data.listening}
+                    onClick={async () => {
+                      try {
+                        await navigator.mediaDevices.getUserMedia({audio: true});
+                        navigate(`/listening/${data.data.id}`)
+                      } catch(error) {
+                        console.log("Audio permission error: ", error)
+                        toast.error("Please allow me to listen to the audio.");
+                      }
+                    }}
+                  >
+                    Start
+                  </Button>
+                </div>
+              </Card>
+            }
 
             {/* Reading Card */}
             <Card title="Reading" style={{ width: 600 }}>
               <p>Practice your reading skills.</p>
               <div style={{ display: "flex", justifyContent: "center" }}>
-                <Button type="primary" disabled={data.data.reading} onClick={() => navigate(`/reading/${data.data.id}`)}>
+                <Button
+                  type="primary"
+                  disabled={data.data.reading}
+                  onClick={() => navigate(`/reading/${data.data.id}`)}
+                >
                   Start
                 </Button>
               </div>
@@ -131,7 +155,11 @@ const UserPage = () => {
             <Card title="Writing" style={{ width: 600 }}>
               <p>Practice your writing skills.</p>
               <div style={{ display: "flex", justifyContent: "center" }}>
-                <Button type="primary" disabled={data.data.writing} onClick={() => navigate(`/writing/${data.data.id}`)}>
+                <Button
+                  type="primary"
+                  disabled={data.data.writing}
+                  onClick={() => navigate(`/writing/${data.data.id}`)}
+                >
                   Start
                 </Button>
               </div>

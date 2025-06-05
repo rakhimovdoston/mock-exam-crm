@@ -119,6 +119,7 @@ function injectHeadingOptions(content, headings, type) {
 }
 
 const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
+  
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline; // Save the original method
@@ -181,7 +182,7 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
         boxSizing: "border-box",
       }}
     >
-      <Slate editor={editor} initialValue={preparedContent}>
+      <Slate key={JSON.stringify(content)} editor={editor} initialValue={preparedContent}>
         <Editable
           style={{
             padding: "0 10px",

@@ -31,6 +31,7 @@ const authSlice = createSlice({
     isLoggedIn: !!localStorage.getItem("accessToken"), // Check if token exists in localStorage
     accessToken: localStorage.getItem("accessToken") || null,
     user: null,
+    loading: false,
     error: null,
   },
   reducers: {
@@ -44,16 +45,23 @@ const authSlice = createSlice({
       state.isLoggedIn = false;
       state.accessToken = null;
       state.user = null;
-      localStorage.removeItem("accessToken"); // Remove token from localStorage
-      localStorage.removeItem("refreshToken"); // Remove token from localStorage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("roles");
     },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchProfile.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        localStorage.setItem("roles", action.payload.roles)
         state.user = action.payload; // Set user profile data
       })
       .addCase(fetchProfile.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload;
       });
   },

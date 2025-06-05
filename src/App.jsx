@@ -11,7 +11,6 @@ const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const LoginPage = React.lazy(() => import("./pages/auth/Login"));
 const UserPage = React.lazy(() => import("./pages/UserPage"));
 const User = React.lazy(() => import("./pages/dashboard/User"));
-const Manager = React.lazy(() => import("./pages/dashboard/Manager"));
 const DashboardPage = React.lazy(() =>
   import("./pages/dashboard/DashboardPage")
 );
@@ -28,6 +27,7 @@ const ReadingAnswers = React.lazy(() =>
 const ListeningExam = React.lazy(() => import("./pages/exam/ListeningExam"));
 const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
 const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
+const UserDetails = React.lazy(() => import('./pages/dashboard/UserDetailts'))
 
 const { Content: AntContent } = Layout;
 
@@ -42,7 +42,7 @@ function App() {
     } else {
       navigate("/login");
     }
-  }, [isLoggedIn, accessToken, dispatch, navigate]);
+  }, [isLoggedIn, accessToken]);
 
   return (
     <Layout style={{ width: "100%", height: "100vh" }}>
@@ -96,7 +96,8 @@ function App() {
             >
               <Route path="" element={<DashboardPage />} />
               <Route path="users" element={<User />} />
-              <Route path="teachers" element={<Manager />} />
+              {/* <Route path="exams" element={<Manager />} /> */}
+              <Route path="user/:id" element={<UserDetails />} />
               <Route path="ielts/listening" element={<Listening />} />
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />

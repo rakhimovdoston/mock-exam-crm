@@ -14,6 +14,7 @@ const ListItemElement = ({ attributes, children, element }) => {
   const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
   const { answers } = useSelector((state) => state.answer);
+  const userAnswers = useSelector((state) => state.exam);
   const dispatch = useDispatch();
 
   // Get the parent path (should be ordered-list or unordered-list)
@@ -33,6 +34,17 @@ const ListItemElement = ({ attributes, children, element }) => {
   const itemNumber = startNumber + listItemIndex;
   const selectValue = getValueFromAnswer(itemNumber, answers);
 
+  const getValue = () => {
+    for (const anss of userAnswers.answers) {
+      for (const ans of anss.answers) {
+        if (ans.key === itemNumber) {
+          return ans.value;
+        }
+      }
+    }
+    return "";
+  };
+
   return (
     <li {...attributes}>
       <div
@@ -50,16 +62,10 @@ const ListItemElement = ({ attributes, children, element }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <strong>{element.label}</strong>
               <Select
-                // style={{
-                //   padding: "4px",
-                //   border: "1px solid #ccc",
-                //   borderRadius: "10px",
-                //   textAlign: "center",
-                // }}
                 style={{ width: "130px" }}
                 defaultValue={""}
                 id={"ques-" + itemNumber}
-                value={selectValue || element.headingMatch}
+                value={selectValue || element.headingMatch || getValue()}
                 onChange={(e) => {
                   const path = ReactEditor.findPath(editor, element);
                   Transforms.setNodes(
@@ -76,11 +82,13 @@ const ListItemElement = ({ attributes, children, element }) => {
                   }
                 }}
               >
-                <Option value="">Select value:</Option>
+                <Option value="" disabled>
+                  Select value:
+                </Option>
                 {headingOptions.map((opt) => (
-                  <option key={opt.key} value={opt.key}>
+                  <Option key={opt.key} value={opt.key}>
                     {opt.value}
-                  </option>
+                  </Option>
                 ))}
               </Select>
             </div>

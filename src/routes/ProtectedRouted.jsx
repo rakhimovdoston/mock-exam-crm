@@ -3,16 +3,19 @@ import { useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
 
 const ProtectedRoute = ({ children, requiredRoles }) => {
-  const { accessToken, user } = useSelector((state) => state.auth);
-  const location = useLocation();  
+  const { accessToken, user } = useSelector((state) => state.auth); // Add loading state
+  const location = useLocation();
+
 
   if (!accessToken) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
-    const userRoles = user?.roles || [];
-    const hasRequiredRole = requiredRoles.some(role => user?.roles.includes(role));
+    const userRoles = user?.roles || localStorage.getItem("roles") || [];
+    const hasRequiredRole = requiredRoles.some((role) =>
+      userRoles.includes(role)
+    );
 
     if (!hasRequiredRole) {
       return <Navigate to="/not-found" state={{ from: location }} replace />;

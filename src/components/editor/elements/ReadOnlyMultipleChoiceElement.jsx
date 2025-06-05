@@ -9,8 +9,20 @@ const ReadOnlyMultipleChoiceElement = ({ element }) => {
   const [selected, setSelected] = useState(null);
   const dispatch = useDispatch();
   const { answers } = useSelector((state) => state.answer);
+  const userAnswer = useSelector((state) => state.exam);
 
   const value = getValueFromAnswer(element.id, answers);
+
+  const checkedValue = () => {
+    for (const ans of userAnswer.answers) {
+      for (const a of ans.answers) {
+          if (a.key === element.id) {
+            return a.value;
+          }
+        }
+    }
+    return ""
+  }
 
   return (
     <Card
@@ -46,7 +58,7 @@ const ReadOnlyMultipleChoiceElement = ({ element }) => {
             );
           }
         }}
-        value={value || selected}
+        value={value || selected || checkedValue()}
         style={{ display: "flex", flexDirection: "column", gap: "6px" }}
       >
         {element.options.map((opt, idx) => (

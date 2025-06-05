@@ -47,7 +47,7 @@ const MultipleChoiceMultipleAnswerElement = ({
     } else {
       const keys = getKeys();
       for (const ans of userAnswer.answers) {
-        for (const a of ans.questionAnswers) {
+        for (const a of ans.answers) {
             if (a.keys === keys && a.values && a.values.includes(option)) {
               return true;
             }

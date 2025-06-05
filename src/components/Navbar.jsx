@@ -52,11 +52,11 @@ const Navbar = () => {
             icon: <UserOutlined />,
             label: <Link to="/dashboard/users">Users</Link>,
           },
-          {
-            key: "/dashboard/managers",
-            icon: <TeamOutlined />,
-            label: <Link to="/dashboard/teachers">Teachers</Link>,
-          },
+          // {
+          //   key: "/dashboard/exams",
+          //   icon: <TeamOutlined />,
+          //   label: <Link to="/dashboard/exams">Exams</Link>,
+          // },
           {
             key: "/dashboard/ielts",
             icon: <ExclamationCircleOutlined />,

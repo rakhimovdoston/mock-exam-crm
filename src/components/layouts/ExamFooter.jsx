@@ -4,10 +4,19 @@ import { useSelector } from "react-redux";
 
 const { Footer } = Layout;
 
-const ExamFooter = ({ types, selectPart, setSelectPart }) => {
+const ExamFooter = ({ selectPart, setSelectPart }) => {
+  const { answers } = useSelector((state) => state.exam);
 
-  const { answers } = useSelector((state) => state.answer);
-
+  const getKeysNumbers = (keys) => {
+    const [start, end] = keys.split("-");
+    const startNum = parseInt(start, 10);
+    const endNum = parseInt(end, 10);
+    const numbers = [];
+    for (let i = startNum; i <= endNum; i++) {
+      numbers.push(i);
+    }
+    return numbers;
+  };
   return (
     <Footer
       style={{
@@ -20,17 +29,17 @@ const ExamFooter = ({ types, selectPart, setSelectPart }) => {
         background: "white",
       }}
     >
-      {types.map((type, index) => (
+      {answers.map((answer, index) => (
         <Card
           key={index}
-          onClick={() => setSelectPart(type)}
+          onClick={() => setSelectPart(answer.type)}
           style={{
             height: "50px",
             flex: 1,
             border: `1px solid ${
-              selectPart === type ? "#1890ff" : "#d9d9d9"
+              selectPart === answer.type ? "#1890ff" : "#d9d9d9"
             }`,
-            backgroundColor: selectPart === type ? "#e6f7ff" : "white",
+            backgroundColor: "white",
             borderRadius: "10px",
             cursor: "pointer",
             padding: "10px",
@@ -39,7 +48,33 @@ const ExamFooter = ({ types, selectPart, setSelectPart }) => {
             justifyContent: "center",
           }}
         >
-          {index + 1}
+          <div style={{ display: "flex", gap: "15px" }}>
+            {answer.answers.map((ans, index) => {
+              return ans.key ? (
+                <span
+                  key={index}
+                  style={{
+                    textAlign: "center",
+                    color: `${ans.value ? "blue" : "gray"}`,
+                  }}
+                >
+                  {ans.key}
+                </span>
+              ) : (
+                getKeysNumbers(ans.keys).map((key, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      textAlign: "center",
+                      color: `${ans.values.length > 0 ? "blue" : "gray"}`,
+                    }}
+                  >
+                    {key}
+                  </span>
+                ))
+              );
+            })}
+          </div>
         </Card>
       ))}
     </Footer>

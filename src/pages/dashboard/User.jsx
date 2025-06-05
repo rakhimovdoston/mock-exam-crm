@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Input, DatePicker, Modal, Form, message, Tag } from "antd";
-import { useSearchParams } from "react-router-dom";
+import { Table, Button, Input, Modal, Form, message, Tag } from "antd";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
-import dayjs from "dayjs";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
 
@@ -12,23 +11,16 @@ const User = () => {
     current: parseInt(searchParams.get("page")) || 1,
     pageSize: parseInt(searchParams.get("size")) || 10,
   });
-  const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("search") || ""
-  );
-  const [fromDate, setFromDate] = useState(
-    searchParams.get("from") ||
-      dayjs().subtract(1, "month").format("YYYY-MM-DD")
-  );
-  const [toDate, setToDate] = useState(
-    searchParams.get("to") || dayjs().format("YYYY-MM-DD")
-  );
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [refreshKey, setRefreshKey] = useState(0);
   const { data, loading } = useApiRequest(
-    `api/v1/admin/user/all?page=${pagination.current-1}&size=${pagination.pageSize}&search=${searchTerm}&fromDate=${fromDate}&toDate=${toDate}`,
-    [pagination.current, pagination.pageSize, searchTerm, fromDate, toDate, refreshKey]
+    `api/v1/admin/user/all?page=${pagination.current - 1}&size=${pagination.pageSize}&search=${searchTerm}`,
+    [pagination.current, pagination.pageSize, searchTerm, refreshKey]
   );
+
+  const navigate = useNavigate();
 
   const handleTableChange = (page, pageSize) => {
     setPagination({ current: page, pageSize });
@@ -36,8 +28,6 @@ const User = () => {
       page,
       size: pageSize,
       search: searchTerm,
-      from: fromDate,
-      to: toDate,
     });
   };
 
@@ -48,32 +38,6 @@ const User = () => {
       page: pagination.current,
       size: pagination.pageSize,
       search: value,
-      from: fromDate,
-      to: toDate,
-    });
-  };
-
-  const handleFromDateChange = (date) => {
-    const formattedDate = date ? date.format("YYYY-MM-DD") : null;
-    setFromDate(formattedDate);
-    setSearchParams({
-      page: pagination.current,
-      size: pagination.pageSize,
-      search: searchTerm,
-      from: formattedDate,
-      to: toDate,
-    });
-  };
-
-  const handleToDateChange = (date) => {
-    const formattedDate = date ? date.format("YYYY-MM-DD") : null;
-    setToDate(formattedDate);
-    setSearchParams({
-      page: pagination.current,
-      size: pagination.pageSize,
-      search: searchTerm,
-      from: fromDate,
-      to: formattedDate,
     });
   };
 
@@ -165,10 +129,17 @@ const User = () => {
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
-      title: "Role",
-      dataIndex: "roles",
-      key: "roles",
-      render: (roles) => roles.map((role) => <Tag color="blue" key={role}>{role}</Tag>),
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) =><Tag color="blue" key={status}>{status}</Tag>,
+    },
+    {
+      title: "",
+      key: "actions",
+      render: (_, record) => (
+        <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>View</Button>
+      )
     }
   ];
 
@@ -176,15 +147,9 @@ const User = () => {
     const page = parseInt(searchParams.get("page")) || 1;
     const size = parseInt(searchParams.get("size")) || 10;
     const search = searchParams.get("search") || "";
-    const from =
-      searchParams.get("from") ||
-      dayjs().subtract(1, "month").format("YYYY-MM-DD");
-    const to = searchParams.get("to") || dayjs().format("YYYY-MM-DD");
 
     setPagination({ current: page, pageSize: size });
     setSearchTerm(search);
-    setFromDate(from);
-    setToDate(to);
   }, [searchParams]);
 
   return (
@@ -195,37 +160,18 @@ const User = () => {
           marginBottom: 16,
           display: "flex",
           gap: 8,
+          justifyContent: "space-between",
           alignItems: "center",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Search:</label>
+          {/* <label style={{ display: "block", marginBottom: 4 }}>Search:</label>
           <Input
             placeholder="Search by name or username"
             value={searchTerm}
             onChange={handleSearch}
             style={{ width: 200, marginRight: 8 }}
-          />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>
-            From Date:
-          </label>
-          <DatePicker
-            onChange={handleFromDateChange}
-            defaultValue={dayjs(fromDate)}
-            style={{ marginRight: 8 }}
-            placeholder="Select From Date"
-          />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>To Date:</label>
-          <DatePicker
-            onChange={handleToDateChange}
-            defaultValue={dayjs(toDate)}
-            style={{ marginRight: 8 }}
-            placeholder="Select To Date"
-          />
+          /> */}
         </div>
         <Button type="primary" onClick={handleModalOpen}>
           Create New User
