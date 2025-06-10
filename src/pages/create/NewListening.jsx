@@ -41,6 +41,7 @@ const NewListening = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [initKeys, setInitKeys] = useState([]);
+  const [isRefresh, setRefresh] = useState(false);
 
   const { answers } = useSelector((state) => state.answer);
 
@@ -48,7 +49,7 @@ const NewListening = () => {
   const questionTypes = useApiRequest(
     `/api/v1/question-type/all?type=LISTENING`
   );
-  const questions = useApiRequest(`/api/v1/listening/${id}/get`, [id]);
+  const questions = useApiRequest(`/api/v1/listening/${id}/get`, [id, isRefresh]);
 
   useEffect(() => {
     if (questions.data && questions.data.data?.questions) {
@@ -291,6 +292,8 @@ const NewListening = () => {
           initialValue={getInitValue(listening_inits, selectQuestionType)}
           startQuestionId={getStart()}
           reading={false}
+          setRefresh={setRefresh}
+          isRefresh={isRefresh}
         />
       </div>
       <div style={{ textAlign: "right", padding: "20px 0" }}>

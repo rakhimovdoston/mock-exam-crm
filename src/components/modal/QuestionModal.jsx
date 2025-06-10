@@ -12,7 +12,9 @@ const QuestionModal = ({
   setOpen,
   initialValue,
   startQuestionId,
-  reading = true
+  reading = true,
+  setRefresh,
+  isRefresh
 }) => {
   const [value, setValue] = useState();
   const [loading, setLoading] = useState(false);
@@ -46,7 +48,7 @@ const QuestionModal = ({
         return;
       }
       toast.success("Question submitted successfully!");
-
+      setRefresh(!isRefresh)
       setOpen(false);
     } catch (error) {
       console.error("Error submitting question:", error);

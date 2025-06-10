@@ -138,6 +138,13 @@ const User = () => {
       title: "",
       key: "actions",
       render: (_, record) => (
+        <Button type="primary">Open this user</Button>
+      )
+    },
+    {
+      title: "",
+      key: "actions",
+      render: (_, record) => (
         <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>View</Button>
       )
     }

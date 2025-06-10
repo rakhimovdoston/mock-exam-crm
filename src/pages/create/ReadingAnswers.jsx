@@ -35,6 +35,7 @@ const ReadingAnswers = () => {
   const [selectQuestionType, setSelectQuestionType] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [isRefresh, setRefresh] = useState(false);
 
   const navigate = useNavigate();
   const { answers } = useSelector((state) => state.answer);
@@ -46,6 +47,7 @@ const ReadingAnswers = () => {
   const questionTypes = useApiRequest(`/api/v1/question-type/all?type=READING`);
   const questions = useApiRequest(`/api/v1/reading/passage/${id}/questions`, [
     id,
+    isRefresh,
   ]);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const ReadingAnswers = () => {
           initializeAnswers({
             numberOfAnswers: lastQuestionId,
             startNumber: getStartByQuestionType(data.data.type) + 1,
-            initKeys: []
+            initKeys: [],
           })
         );
       }
@@ -111,9 +113,9 @@ const ReadingAnswers = () => {
         (node) => node.type === "multiple-choice" && typeof node.id === "number"
       )
       .map((node) => node.id);
-    
-      const min = ids[0];
-      const max = ids[ids.length - 1];
+
+    const min = ids[0];
+    const max = ids[ids.length - 1];
     return min == max ? `${min}` : `${min}-${max}`;
   };
 
@@ -186,21 +188,21 @@ const ReadingAnswers = () => {
   }
 
   const getStart = () => {
-      const lastQuestionNumber = getLastQuestionId(
-        questions.data?.data?.questions
-      );
-      const startByQuestionType = getStartByQuestionType(
-        data?.data?.type,
-        "READING"
-      );
-      let start = 0;
-      if (lastQuestionNumber > 0) {
-        start = lastQuestionNumber;
-      } else {
-        start = startByQuestionType + lastQuestionNumber;
-      }
-      return start;
-    };
+    const lastQuestionNumber = getLastQuestionId(
+      questions.data?.data?.questions
+    );
+    const startByQuestionType = getStartByQuestionType(
+      data?.data?.type,
+      "READING"
+    );
+    let start = 0;
+    if (lastQuestionNumber > 0) {
+      start = lastQuestionNumber;
+    } else {
+      start = startByQuestionType + lastQuestionNumber;
+    }
+    return start;
+  };
 
   const getQuestionNumbers = (question) => {
     if (question.type === "Multiple Choice")
@@ -225,10 +227,12 @@ const ReadingAnswers = () => {
     if (placeholders.length === 0) {
       const result = getListMinMax(question.content);
       if (result) {
-        return result.min == result.max ? result.min : `${result.min}-${result.max}`;
+        return result.min == result.max
+          ? result.min
+          : `${result.min}-${result.max}`;
       }
     }
-    const min  = placeholders[0];
+    const min = placeholders[0];
     const max = placeholders[placeholders.length - 1];
     return min === max ? `${min}` : `${min}-${max}`;
   };
@@ -373,6 +377,8 @@ const ReadingAnswers = () => {
         type={selectQuestionType}
         initialValue={getInitValue(readings_inits, selectQuestionType)}
         startQuestionId={getStart()}
+        isRefresh={isRefresh}
+        setRefresh={setRefresh}
       />
       <Divider />
       <div style={{ textAlign: "right" }}>

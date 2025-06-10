@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   Spin,
@@ -10,6 +10,9 @@ import {
   Divider,
   Avatar,
   Space,
+  Input,
+  Button,
+  Form,
 } from "antd";
 import {
   UserOutlined,
@@ -82,10 +85,30 @@ const UserDetails = () => {
     `api/v1/history/all/${id}`
   );
 
+  const [form] = Form.useForm();
+  const [isEditing, setIsEditing] = useState(false);
+
   if (loading) return <LoadingSpinner />;
 
   const user = data?.data;
   const history = historyData?.data || [];
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    form.setFieldsValue({
+      firstname: user?.firstname,
+      lastname: user?.lastname,
+      email: user?.email,
+      username: user?.username,
+      password: '',
+    });
+  };
+
+  const handleSave = async (values) => {
+    // Replace with actual API call to update user details
+    console.log("Updated values:", values);
+    setIsEditing(false);
+  };
 
   return (
     <div style={{ padding: "40px" }}>
@@ -97,12 +120,77 @@ const UserDetails = () => {
         }}
       >
         <Space direction="vertical" style={{ width: "100%" }} align="start">
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Typography>Full name:</Typography>
-            <Title level={3} style={{ margin: 0 }}>
-              {user?.firstname} {user?.lastname}
-            </Title>
-          </div>
+          {isEditing ? (
+            <Form form={form} onFinish={handleSave} layout="vertical">
+              <h2>Update User details:</h2>
+              <div style={{ display: "flex", width: "100%", gap: "10px" }}>
+                <Form.Item
+                  label="First Name"
+                  style={{ flex: 1 }}
+                  name="firstname"
+                  rules={[
+                    { required: true, message: "First name is required" },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  style={{ flex: 1 }}
+                  label="Last Name"
+                  name="lastname"
+                  rules={[{ required: true, message: "Last name is required" }]}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
+              <div style={{ display: "flex", width: "100%", gap: "10px" }}>
+                <Form.Item
+                  label="Email"
+                  style={{ flex: 1 }}
+                  name="email"
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="Username"
+                  style={{ flex: 1 }}
+                  name="username"
+                  rules={[{ required: true, message: "Login is required" }]}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
+              <Form.Item
+                label="Password"
+                name="password"
+                rules={[{ required: true, message: "Password is required" }]}
+              >
+                <Input.Password />
+              </Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit">
+                  Save
+                </Button>
+                <Button onClick={() => setIsEditing(false)}>Cancel</Button>
+              </Space>
+            </Form>
+          ) : (
+            <>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <Typography>Full name:</Typography>
+                <Title level={3} style={{ margin: 0 }}>
+                  {user?.firstname} {user?.lastname}
+                </Title>
+              </div>
+              <Text>Email: <b>{user?.email}</b></Text>
+              <Text>Login: <b>{user?.username}</b></Text>
+              <Button type="primary" onClick={handleEdit}>
+                Edit Details
+              </Button>
+            </>
+          )}
         </Space>
       </Card>
 
