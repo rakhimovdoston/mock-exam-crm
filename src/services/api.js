@@ -51,14 +51,10 @@ apiClient.interceptors.response.use(
                     console.error('Unexpected Error:', data?.message || 'An error occurred.');
             }
         } else if (error.request) {
-            // Request was made but no response was received
             console.error('No response received from the server:', error.request);
         } else {
-            // Something happened while setting up the request
             console.error('Request setup error:', error.message);
         }
-
-        // Optionally, you can return a custom error object or message
         return Promise.reject(error);
     }
 );

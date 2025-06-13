@@ -185,7 +185,7 @@ const Toolbar = ({ is_passage, startInputId = 0 }) => {
     const element = {
       type: "multiple-choice-multiple-answer",
       questionNumber: questionNumber,
-      startInputId: startInputId,
+      startInputId: Number(startInputId) + 1,
       question: question,
       options: options,
       children: [{ text: "" }],
@@ -210,12 +210,11 @@ const Toolbar = ({ is_passage, startInputId = 0 }) => {
 
   const insertInput = (type = "text") => {
     const inputCount = countInputElements();
-
     const input = {
       type: "input",
       inputType: type,
       value: "", // Initialize the value property
-      placeholder: startInputId + inputCount + 1, // Use the count to create a unique placeholder
+      placeholder: startInputId + inputCount + 1,
       children: [{ text: "" }], // Ensure the input has a valid text child
     };
 
@@ -242,7 +241,6 @@ const Toolbar = ({ is_passage, startInputId = 0 }) => {
 
       Transforms.insertNodes(editor, span, { at: nextPath });
 
-      // Move the cursor to the span element
       Transforms.select(editor, nextPath);
     }
   };

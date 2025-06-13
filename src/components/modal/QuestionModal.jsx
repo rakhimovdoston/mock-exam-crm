@@ -18,7 +18,7 @@ const QuestionModal = ({
 }) => {
   const [value, setValue] = useState();
   const [loading, setLoading] = useState(false);
-  const { id } = useParams();  
+  const { id } = useParams();
 
   const formattedInitialValue = Array.isArray(initialValue)
     ? initialValue
@@ -48,8 +48,10 @@ const QuestionModal = ({
         return;
       }
       toast.success("Question submitted successfully!");
-      setRefresh(!isRefresh)
+      setRefresh(!isRefresh);
       setOpen(false);
+      setValue(null);
+      initialValue = null;
     } catch (error) {
       console.error("Error submitting question:", error);
       toast.error("Failed to submit question. Please try again.");

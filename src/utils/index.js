@@ -91,7 +91,11 @@ export const getMinMaxFromMultipleAnswer = (content) => {
     )
     .map((node) => node.questionNumber);
 
-  return (Number(startInputIn) + 1) + "-" + (Number(startInputIn) + Number(questionCount));
+  return (
+    Number(startInputIn) +
+    "-" +
+    (Number(startInputIn) + Number(questionCount) - 1)
+  );
 };
 
 export const getMinMaxQuestionIds = (content) => {
@@ -138,10 +142,26 @@ export const getLastQuestionId = (questions) => {
   if (!questions || questions.length === 0) return 0;
   const lastQuestion = questions[questions.length - 1];
 
+  if (!lastQuestion.content) return 0;
+
   if (lastQuestion.type === "Multiple Choice (Multiple answers)") {
-    return Number(getMinMaxFromMultipleAnswer(lastQuestion.content).split("-")[1]);
+    return Number(
+      getMinMaxFromMultipleAnswer(lastQuestion.content).split("-")[1]
+    );
   }
+
   let max = 0;
+
+  if (lastQuestion.type === "Multiple choice") {
+    const questionIds = getMinMaxQuestionIds(lastQuestion.content);
+    if (questionIds !== "") {
+      const parts = questionIds.split("-");
+      if (parts.length === 2) {
+        max = parseInt(parts[1], 10);
+        return max;
+      }
+    }
+  }
 
   function traverse(node) {
     if (Array.isArray(node)) {
@@ -174,3 +194,43 @@ export const getLastQuestionId = (questions) => {
   }
   return max;
 };
+
+export function renumberSlateQuestionsSmart(json, defaultStart = 1) {
+  let counter = defaultStart;
+
+  function walk(node) {
+    if (Array.isArray(node)) {
+      node.forEach((child) => walk(child));
+    } else if (typeof node === "object" && node !== null) {
+      if (node.type === "ordered-list" && Array.isArray(node.children)) {
+        if (node.listStyleType === "decimal") node.start = counter;
+
+        node.children.forEach((child) => walk(child));
+        return;
+      }
+
+      if (node.type === "input") {
+        node.placeholder = counter++;
+        return;
+      }
+
+      if (node.type === "multiple-choice") {
+        node.id = counter++;
+        return;
+      }
+
+      if (node.type === "multiple-choice-multiple-answer") {
+        node.startInputId = counter;
+        counter = counter + 1;
+      }
+
+      for (const key in node) {
+        walk(node[key]);
+      }
+    }
+  }
+
+  const cloned = JSON.parse(JSON.stringify(json));
+  walk(cloned);
+  return cloned;
+}

@@ -27,7 +27,8 @@ const ReadingAnswers = React.lazy(() =>
 const ListeningExam = React.lazy(() => import("./pages/exam/ListeningExam"));
 const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
 const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
-const UserDetails = React.lazy(() => import('./pages/dashboard/UserDetailts'))
+const UserDetails = React.lazy(() => import("./pages/dashboard/UserDetailts"));
+const HomePage = React.lazy(() => import("./pages/HomePage"))
 
 const { Content: AntContent } = Layout;
 
@@ -75,7 +76,7 @@ function App() {
                   ) ? (
                     <Navigate to="/dashboard" />
                   ) : (
-                    <UserPage />
+                    <HomePage />
                   )}
                 </ProtectedRoute>
               }
@@ -109,6 +110,14 @@ function App() {
               <Route path="ielts/writing" element={<Writing />} />
               <Route path="ielts/writing/create" element={<NewWriting />} />
             </Route>
+            <Route
+              path="exam"
+              element={
+                <ProtectedRoute>
+                  <UserPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/listening/:id"
               element={

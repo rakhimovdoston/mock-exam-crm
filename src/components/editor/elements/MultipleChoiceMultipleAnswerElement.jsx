@@ -48,10 +48,10 @@ const MultipleChoiceMultipleAnswerElement = ({
       const keys = getKeys();
       for (const ans of userAnswer.answers) {
         for (const a of ans.answers) {
-            if (a.keys === keys && a.values && a.values.includes(option)) {
-              return true;
-            }
+          if (a.keys === keys && a.values && a.values.includes(option)) {
+            return true;
           }
+        }
       }
       return false;
     }
@@ -60,7 +60,7 @@ const MultipleChoiceMultipleAnswerElement = ({
   const getKeys = () => {
     const numbers = element.questionNumber;
     const start = element.startInputId || 1;
-    return start + 1 + "-" + (start + numbers);
+    return start + "-" + (start + numbers - 1);
   };
 
   return (

@@ -120,7 +120,7 @@ const User = () => {
       title: "Email",
       dataIndex: "email",
       key: "email",
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      render: (email) => email ? email: "-"
     },
     {
       title: "Username",
@@ -133,13 +133,6 @@ const User = () => {
       dataIndex: "status",
       key: "status",
       render: (status) =><Tag color="blue" key={status}>{status}</Tag>,
-    },
-    {
-      title: "",
-      key: "actions",
-      render: (_, record) => (
-        <Button type="primary">Open this user</Button>
-      )
     },
     {
       title: "",
@@ -249,7 +242,7 @@ const User = () => {
                 onBlur={(e) => checkUsernameAvailability(e.target.value)}
               />
             </Form.Item>
-            <Form.Item
+            {/* <Form.Item
               name="phone"
               style={{ flex: 1 }}
               label="Phone Number"
@@ -261,7 +254,7 @@ const User = () => {
               ]}
             >
               <Input placeholder="Enter phone number" />
-            </Form.Item>
+            </Form.Item> */}
           </div>
           <Form.Item
             name="password"

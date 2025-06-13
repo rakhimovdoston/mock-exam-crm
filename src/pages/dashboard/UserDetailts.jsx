@@ -24,6 +24,9 @@ import {
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
+import { toast } from "react-toastify";
+import apiClient from "../../services/api";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -87,6 +90,7 @@ const UserDetails = () => {
 
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   if (loading) return <LoadingSpinner />;
 
@@ -107,7 +111,19 @@ const UserDetails = () => {
   const handleSave = async (values) => {
     // Replace with actual API call to update user details
     console.log("Updated values:", values);
-    setIsEditing(false);
+    try {
+      const response = await apiClient.put(`api/v1/admin/user/update/${id}`, values);
+      if (response.code != 200) {
+        toast.error(response.message || "Failed to update to user details")
+        return;
+      }
+      toast.success("Successfull update user details!")
+      setIsEditing(false);
+    } catch (error) {
+      toast.error(error.message || "Failed to update user details:")
+    } finally {
+      setUpdateLoading(false);
+    }
   };
 
   return (

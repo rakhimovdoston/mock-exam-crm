@@ -10,6 +10,7 @@ import {
   Spin,
   Typography,
 } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 import RichTextViewer from "../../components/editor/RichTextViewer";
 import QuestionModal from "../../components/modal/QuestionModal";
 import {
@@ -29,6 +30,8 @@ import {
 } from "../../store/answerReducer";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
+import DeleteModal from "../../components/modal/DeleteModal";
+import QuestionComponent from "../../components/questions/QuestionComponent";
 
 const { Option } = Select;
 
@@ -42,14 +45,16 @@ const NewListening = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [initKeys, setInitKeys] = useState([]);
   const [isRefresh, setRefresh] = useState(false);
+  const [isDelete, setDelete] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
 
   const { answers } = useSelector((state) => state.answer);
 
   const { data, loading, error } = useApiRequest(`api/v1/listening/get/${id}`);
-  const questionTypes = useApiRequest(
-    `/api/v1/question-type/all?type=LISTENING`
-  );
-  const questions = useApiRequest(`/api/v1/listening/${id}/get`, [id, isRefresh]);
+  const questions = useApiRequest(`/api/v1/listening/${id}/get`, [
+    id,
+    isRefresh,
+  ]);
 
   useEffect(() => {
     if (questions.data && questions.data.data?.questions) {
@@ -120,7 +125,11 @@ const NewListening = () => {
   const saveListening = async () => {
     for (const answer of answers) {
       if (answer?.value === "" || answer?.options?.length === 0) {
-        toast.error(`Please fill in all answers for question ${answer?.value === "" ? answer.key : answer.keys}`);
+        toast.error(
+          `Please fill in all answers for question ${
+            answer?.value === "" ? answer.key : answer.keys
+          }`
+        );
         return;
       }
     }
@@ -151,8 +160,7 @@ const NewListening = () => {
   };
 
   const questioNumber = (question) => {
-    const number = getQuestionNumbers(question);
-    return number;
+    return getQuestionNumbers(question);
   };
 
   return (
@@ -206,95 +214,7 @@ const NewListening = () => {
           paddingLeft: "20px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-          }}
-        >
-          <div>
-            <div>
-              {questionTypes.loading ? (
-                <Spin tip="Loading question types..." />
-              ) : questionTypes.error || !questionTypes.data ? (
-                <Typography.Text type="danger">
-                  Failed to load question types.
-                </Typography.Text>
-              ) : (
-                <Select
-                  style={{ width: "250px" }}
-                  value={selectQuestionType}
-                  onChange={(value) => {
-                    dispatch(setQuestionType(value));
-                    setSelectQuestionType(value);
-                  }}
-                  placeholder="Select question type"
-                >
-                  <Option value="all" disabled>
-                    Select questions types:
-                  </Option>
-                  {questionTypes.data.data.map((type) => (
-                    <Option key={type.id} value={type.type}>
-                      {type.name}
-                    </Option>
-                  ))}
-                </Select>
-              )}
-            </div>
-          </div>
-          <Button
-            type="primary"
-            onClick={() => {
-              if (selectQuestionType === "all") {
-                toast.error("Please select a question type first.");
-                return;
-              }
-              setIsModalOpen(true);
-            }}
-          >
-            Add question
-          </Button>
-        </div>
-        {questions.loading ? (
-          <Skeleton active />
-        ) : questions.data?.code !== 200 || questions.error ? (
-          <Layout
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "420px", // Full height of the viewport
-            }}
-          >
-            <Typography.Text
-              style={{ fontSize: "18px", fontWeight: 800, color: "#888" }}
-            >
-              You have not added any questions yet.
-            </Typography.Text>
-          </Layout>
-        ) : (
-          questions.data?.data?.questions.map((question) => (
-            <div key={question.id}>
-              <p style={{ fontSize: "20px", fontWeight: "bold" }}>
-                Questions {questioNumber(question)}
-              </p>
-              <RichTextViewer content={question.content} type={question.type} />
-            </div>
-          ))
-        )}
-        <QuestionModal
-          isOpen={isModalOpen}
-          setOpen={setIsModalOpen}
-          title={getTitle(selectQuestionType, questionTypes.data?.data)}
-          type={selectQuestionType}
-          initialValue={getInitValue(listening_inits, selectQuestionType)}
-          startQuestionId={getStart()}
-          reading={false}
-          setRefresh={setRefresh}
-          isRefresh={isRefresh}
-        />
+        <QuestionComponent difficultType={data?.data?.type} type={'listening'} />
       </div>
       <div style={{ textAlign: "right", padding: "20px 0" }}>
         <Button

@@ -36,7 +36,7 @@ const RichTextEditor = ({
 }) => {
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
-    const originalIsInline = baseEditor.isInline; // Save the original method
+    const originalIsInline = baseEditor.isInline;
 
     baseEditor.isInline = (element) => {
       return (
@@ -127,6 +127,7 @@ const RichTextEditor = ({
     <div>
       <Slate
         editor={editor}
+        key={JSON.stringify(readonly ? value : initValue || initialValue)}
         initialValue={readonly ? value : initValue || initialValue}
         value={value}
         onChange={(newValue) => {

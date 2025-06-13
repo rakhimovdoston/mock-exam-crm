@@ -80,7 +80,7 @@ const UserPage = () => {
           right: "20px",
         }}
         onClick={() => {
-          dispatch(logout());
+          navigate("/");
         }}
       >
         Exit
@@ -123,10 +123,12 @@ const UserPage = () => {
                     disabled={data.data.listening}
                     onClick={async () => {
                       try {
-                        await navigator.mediaDevices.getUserMedia({audio: true});
-                        navigate(`/listening/${data.data.id}`)
-                      } catch(error) {
-                        console.log("Audio permission error: ", error)
+                        await navigator.mediaDevices.getUserMedia({
+                          audio: true,
+                        });
+                        navigate(`/listening/${data.data.id}`);
+                      } catch (error) {
+                        console.log("Audio permission error: ", error);
                         toast.error("Please allow me to listen to the audio.");
                       }
                     }}
