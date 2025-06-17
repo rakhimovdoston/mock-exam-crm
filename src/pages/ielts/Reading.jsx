@@ -81,11 +81,11 @@ const Reading = () => {
       title: "Status",
       dataIndex: "active",
       key: "active",
-      render: (active) =>
-        active ? (
+      render: (_, record) =>
+        record.active ? (
           <Tag color="green">Active</Tag>
         ) : (
-          <Tag color="red">Inactive</Tag>
+          <Tag color="red">{record.error}</Tag>
         ),
     },
     {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   Spin,
   Typography,
@@ -8,15 +8,14 @@ import {
   Row,
   Col,
   Divider,
-  Avatar,
   Space,
   Input,
   Button,
   Form,
 } from "antd";
 import {
-  UserOutlined,
   ReadOutlined,
+  EyeOutlined,
   SoundOutlined,
   EditOutlined,
   CalendarOutlined,
@@ -26,7 +25,6 @@ import {
 import useApiRequest from "../../hooks/useApiRequest";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
-import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -43,24 +41,29 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const ScoreBox = ({ icon, label, score }) => (
-  <Card
-    size="small"
-    style={{
-      minWidth: 120,
-      textAlign: "center",
-      backgroundColor: "#f0f5ff",
-      border: "1px solid #1890ff",
-      borderRadius: "8px",
-    }}
-  >
-    <Space direction="vertical">
-      {icon}
-      <Text strong>{label}</Text>
-      <Text>{score ?? "N/A"}</Text>
-    </Space>
-  </Card>
-);
+const ScoreBox = ({ id, icon, label, score }) => {
+  return (
+    <Card
+      size="small"
+      style={{
+        minWidth: 120,
+        textAlign: "center",
+        backgroundColor: "#f0f5ff",
+        border: "1px solid #1890ff",
+        borderRadius: "8px",
+      }}
+    >
+      <Space direction="vertical">
+        {icon}
+        <Text strong>{label}</Text>
+        <Text>{score ?? "N/A"}</Text>
+        <Link to={`/dashboard/history/${id}/${label.toLowerCase()}`}>
+          <Button type="dashed" icon={<EyeOutlined />} />
+        </Link>
+      </Space>
+    </Card>
+  );
+};
 
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -104,7 +107,7 @@ const UserDetails = () => {
       lastname: user?.lastname,
       email: user?.email,
       username: user?.username,
-      password: '',
+      password: "",
     });
   };
 
@@ -112,15 +115,18 @@ const UserDetails = () => {
     // Replace with actual API call to update user details
     console.log("Updated values:", values);
     try {
-      const response = await apiClient.put(`api/v1/admin/user/update/${id}`, values);
+      const response = await apiClient.put(
+        `api/v1/admin/user/update/${id}`,
+        values
+      );
       if (response.code != 200) {
-        toast.error(response.message || "Failed to update to user details")
+        toast.error(response.message || "Failed to update to user details");
         return;
       }
-      toast.success("Successfull update user details!")
+      toast.success("Successfull update user details!");
       setIsEditing(false);
     } catch (error) {
-      toast.error(error.message || "Failed to update user details:")
+      toast.error(error.message || "Failed to update user details:");
     } finally {
       setUpdateLoading(false);
     }
@@ -160,11 +166,7 @@ const UserDetails = () => {
                 </Form.Item>
               </div>
               <div style={{ display: "flex", width: "100%", gap: "10px" }}>
-                <Form.Item
-                  label="Email"
-                  style={{ flex: 1 }}
-                  name="email"
-                >
+                <Form.Item label="Email" style={{ flex: 1 }} name="email">
                   <Input />
                 </Form.Item>
                 <Form.Item
@@ -200,8 +202,12 @@ const UserDetails = () => {
                   {user?.firstname} {user?.lastname}
                 </Title>
               </div>
-              <Text>Email: <b>{user?.email}</b></Text>
-              <Text>Login: <b>{user?.username}</b></Text>
+              <Text>
+                Email: <b>{user?.email}</b>
+              </Text>
+              <Text>
+                Login: <b>{user?.username}</b>
+              </Text>
               <Button type="primary" onClick={handleEdit}>
                 Edit Details
               </Button>
@@ -222,9 +228,18 @@ const UserDetails = () => {
             <List.Item>
               <Card
                 title={
-                  <Text>
-                    <CalendarOutlined /> Test Date: {formatDate(item.startDate)}
-                  </Text>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text>
+                      <CalendarOutlined /> Test Date:{" "}
+                      {formatDate(item.startDate)}
+                    </Text>
+                  </div>
                 }
                 variant={"borderless"}
                 style={{
@@ -244,16 +259,19 @@ const UserDetails = () => {
                   <Col>
                     <Space>
                       <ScoreBox
+                        id={item.id}
                         icon={<ReadOutlined />}
                         label="Reading"
                         score={item.reading}
                       />
                       <ScoreBox
+                        id={item.id}
                         icon={<SoundOutlined />}
                         label="Listening"
                         score={item.listening}
                       />
                       <ScoreBox
+                        id={item.id}
                         icon={<EditOutlined />}
                         label="Writing"
                         score={item.writing}

@@ -39,7 +39,7 @@ import { isFormatActive, toggleFormat } from "./editorUtils";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 
-const Toolbar = ({ is_passage, startInputId = 0 }) => {
+const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
   const editor = useSlate();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -103,41 +103,6 @@ const Toolbar = ({ is_passage, startInputId = 0 }) => {
     });
   };
   // Insert an image into the editor
-  const insertImage = async (file) => {
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("type", "PHOTOS");
-    try {
-      const response = await apiClient.post("api/v1/file/photo", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          const { loaded, total } = progressEvent;
-          const percentCompleted = Math.round((loaded / total) * 100);
-          setUploadProgress(percentCompleted);
-        },
-      });
-
-      const image = {
-        type: "image",
-        url: response.data.url,
-        children: [{ text: "" }],
-      };
-      Transforms.insertNodes(editor, image);
-      Transforms.insertNodes(editor, {
-        type: "paragraph",
-        children: [{ text: "" }],
-      });
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast.error("Failed to upload image. Please try again.");
-    } finally {
-      setUploading(false); // Hide the progress bar modal
-      setUploadProgress(0); // Reset progress
-    }
-  };
 
   const setAlignment = (alignment) => {
     Transforms.setNodes(
@@ -468,20 +433,6 @@ const Toolbar = ({ is_passage, startInputId = 0 }) => {
             Add Option
           </Button>
         </Space>
-      </Modal>
-      <Modal
-        open={uploading}
-        footer={null}
-        closable={false}
-        centered
-        title="Uploading Image..."
-        style={{ textAlign: "center" }}
-      >
-        <Progress
-          type="circle"
-          percent={uploadProgress}
-          status={uploadProgress == 100 ? "success" : "active"}
-        />
       </Modal>
 
       <Space style={{ marginBottom: "10px" }} wrap>

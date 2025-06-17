@@ -28,7 +28,11 @@ const ListeningExam = React.lazy(() => import("./pages/exam/ListeningExam"));
 const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
 const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
 const UserDetails = React.lazy(() => import("./pages/dashboard/UserDetailts"));
-const HomePage = React.lazy(() => import("./pages/HomePage"))
+const HomePage = React.lazy(() => import("./pages/HomePage"));
+const WritingDetails = React.lazy(() => import("./pages/create/WritingDetails"));
+const WritingHistory = React.lazy(() => import('./pages/details/WritingHistory'));
+const ReadingHistory = React.lazy(() => import('./pages/details/ReadingHistory'));
+const ListeningHistory = React.lazy(() => import('./pages/details/Listeninghistory'));
 
 const { Content: AntContent } = Layout;
 
@@ -97,7 +101,6 @@ function App() {
             >
               <Route path="" element={<DashboardPage />} />
               <Route path="users" element={<User />} />
-              {/* <Route path="exams" element={<Manager />} /> */}
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="ielts/listening" element={<Listening />} />
               <Route path="ielts/listening/:id" element={<NewListening />} />
@@ -108,7 +111,11 @@ function App() {
                 element={<ReadingAnswers />}
               />
               <Route path="ielts/writing" element={<Writing />} />
+              <Route path="ielts/writing/:id" element={<WritingDetails />} />
               <Route path="ielts/writing/create" element={<NewWriting />} />
+              <Route path="history/:id/writing" element={<WritingHistory />} />
+              <Route path="history/:id/reading" element={<ReadingHistory />} />
+              <Route path="history/:id/listening" element={<ListeningHistory />} />
             </Route>
             <Route
               path="exam"

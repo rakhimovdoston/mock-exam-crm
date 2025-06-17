@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export const getValueFromAnswer = (key, answers) => {
   const answer = answers.find((a) => a.key === key);
   return answer ? answer.value : "";
@@ -233,4 +235,33 @@ export function renumberSlateQuestionsSmart(json, defaultStart = 1) {
   const cloned = JSON.parse(JSON.stringify(json));
   walk(cloned);
   return cloned;
+}
+
+export const dateFormat = (date) => {
+  return dayjs(date).format("YYYY-MM-DD HH:mm");
+};
+
+export const isWithinOneHour = (date) => {
+  const target = new Date(date);
+  const now = new Date();
+
+  const oneHourLater = new Date(target.getTime() + 60 * 60 * 1000);
+
+  return (now >= target && now <= oneHourLater) || target > now;
+};
+
+
+export const getColor = (date) => {
+  const target = new Date(date);
+  const now = new Date();
+
+  const oneHourLater = new Date(target.getTime() + 60 * 60 * 1000);
+
+  if (target > now) 
+    return "green";
+
+  if (now > target && now <= oneHourLater)
+    return 'blue';
+
+  return 'red';
 }

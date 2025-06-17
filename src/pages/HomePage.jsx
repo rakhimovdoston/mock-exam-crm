@@ -17,20 +17,23 @@ const HomePage = () => {
   const [loading, setLoading] = useState();
 
   const handleStartExam = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-        const response = await apiClient.get("api/v1/exam/start");
-        if (response.code != 200) {
-            toast.error("No new questions have been added yet, please wait for questions to be added.")
-            return;
-        }
+      const response = await apiClient.get("api/v1/exam/start");
+      if (response.code != 200) {
+        toast.error(
+          "No new questions have been added yet, please wait for questions to be added."
+        );
+        return;
+      }
 
-        navigate("")
-
-    } catch(error) {
-        toast.error("No new questions have been added yet, please wait for questions to be added.")
+      navigate("/exam");
+    } catch (error) {
+      toast.error(
+        "No new questions have been added yet, please wait for questions to be added."
+      );
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 

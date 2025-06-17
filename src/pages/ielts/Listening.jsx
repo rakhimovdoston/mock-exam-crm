@@ -84,11 +84,11 @@ const Listening = () => {
       title: "Status",
       dataIndex: "active",
       key: "active",
-      render: (active) =>
-        active ? (
-          <Tag color="green">Active</Tag>
+      render: (_, record) =>
+        record.active ? (
+          <Tag color="green">Active </Tag>
         ) : (
-          <Tag color="red">Inactive</Tag>
+          <Tag color="red">{record.error}</Tag>
         ),
     },
     {

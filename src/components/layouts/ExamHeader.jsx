@@ -21,7 +21,7 @@ const ExamHeader = ({ type }) => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          setIsModalVisible(true); // Show modal when timeLeft reaches 0
+          setIsModalVisible(true);
           return 0;
         }
         return prevTime - 1;

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { createEditor, Element as SlateElement } from "slate";
+import { createEditor, Element as SlateElement, Transforms } from "slate";
 import { Slate, Editable, withReact } from "slate-react";
 import { withHistory } from "slate-history";
 import Toolbar from "./Toolbar";
@@ -18,6 +18,8 @@ import { handleKeyDown } from "./editorUtils";
 import ParagraphElement from "./elements/ParagraprhElement";
 import MultipleChoiceElement from "./elements/MultipleChoiceElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
+import { Modal, Progress } from "antd";
+import apiClient from "../../services/api";
 
 const initialValue = [
   {
@@ -34,6 +36,9 @@ const RichTextEditor = ({
   initValue,
   startQuestionId = 0,
 }) => {
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline;
@@ -83,48 +88,75 @@ const RichTextEditor = ({
     return <Leaf {...props} />;
   }, []);
 
-  // const isFormatActive = (format) => {
-  //   const marks = Editor.marks(editor);
-  //   return marks ? marks[format] === true : false;
-  // };
+  const handlePaste = (editor, event) => {
+    const clipboardData = event.clipboardData;
+    const items = clipboardData.items;
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      console.log("Working: ", item);
+      
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          insertImage(file)
+        }
+      }
+    }
+  };
 
-  // const toggleFormat = (format) => {
-  //   const isActive = isFormatActive(format);
-  //   if (isActive) {
-  //     Editor.removeMark(editor, format);
-  //   } else {
-  //     Editor.addMark(editor, format, true);
-  //   }
-  // };
+  const insertImage = async (file) => {
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", "PHOTOS");
+    try {
+      const response = await apiClient.post("api/v1/file/photo", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          const { loaded, total } = progressEvent;
+          const percentCompleted = Math.round((loaded / total) * 100);
+          setUploadProgress(percentCompleted);
+        },
+      });
 
-  // const handleKeyDown = (event) => {
-  //   if (event.ctrlKey || event.metaKey) {
-  //     switch (event.key.toLowerCase()) {
-  //       case "b":
-  //         event.preventDefault();
-  //         toggleFormat("bold");
-  //         break;
-  //       case "i":
-  //         event.preventDefault();
-  //         toggleFormat("italic");
-  //         break;
-  //       case "u":
-  //         event.preventDefault();
-  //         toggleFormat("underline");
-  //         break;
-  //       default:
-  //         break;
-  //     }
-  //   }
-
-  //   if (event.key === "Tab") {
-  //     event.preventDefault();
-  //     Transforms.insertText(editor, "\t");
-  //   }
-  // };
+      const image = {
+        type: "image",
+        url: response.data.url,
+        children: [{ text: "" }],
+      };
+      Transforms.insertNodes(editor, image);
+      Transforms.insertNodes(editor, {
+        type: "paragraph",
+        children: [{ text: "" }],
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
 
   return (
     <div>
+      <Modal
+        open={uploading}
+        footer={null}
+        closable={false}
+        centered
+        title="Uploading Image..."
+        style={{ textAlign: "center" }}
+      >
+        <Progress
+          type="circle"
+          percent={uploadProgress}
+          status={uploadProgress == 100 ? "success" : "active"}
+        />
+      </Modal>
       <Slate
         editor={editor}
         key={JSON.stringify(readonly ? value : initValue || initialValue)}
@@ -135,7 +167,7 @@ const RichTextEditor = ({
         }}
       >
         {!readonly && (
-          <Toolbar is_passage={is_passage} startInputId={startQuestionId} />
+          <Toolbar is_passage={is_passage} startInputId={startQuestionId} insertImage={insertImage} />
         )}
         <Editable
           style={{
@@ -153,6 +185,7 @@ const RichTextEditor = ({
           renderElement={renderElement}
           renderLeaf={renderLeaf}
           onKeyDown={(event) => handleKeyDown(editor, event)}
+          onPaste={(event) => handlePaste(editor, event)}
         />
       </Slate>
     </div>

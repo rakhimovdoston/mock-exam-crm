@@ -134,7 +134,11 @@ const ReadingAnswers = () => {
             paddingLeft: "20px",
           }}
         >
-          <QuestionComponent type={"reading"} difficultType={data?.data?.type} countList={countLists()} />
+          <QuestionComponent
+            type={"reading"}
+            difficultType={data?.data?.type}
+            countLists={countLists()}
+          />
         </div>
       </div>
       <Divider />

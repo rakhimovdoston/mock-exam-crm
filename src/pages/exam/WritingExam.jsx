@@ -39,8 +39,8 @@ const WritingExam = () => {
           task: item.task,
           answer: "",
         };
-      })
-      
+      });
+
       setAnswers(initAnswers);
     }
   }, [data]);
@@ -73,9 +73,9 @@ const WritingExam = () => {
       event.preventDefault();
       event.returnValue = "";
     };
-  
+
     window.addEventListener("beforeunload", handleBeforeUnload);
-  
+
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
@@ -113,13 +113,15 @@ const WritingExam = () => {
 
   const getWordCount = () => {
     if (answers.length === 0) return 0;
-    const text = answers.find((ans) => ans.task === task); 
-    return text && text.answer.trim() ? text.answer.trim().split(/\s+/).length : 0;
-  }
+    const text = answers.find((ans) => ans.task === task);
+    return text && text.answer.trim()
+      ? text.answer.trim().split(/\s+/).length
+      : 0;
+  };
 
   const getValue = () => {
     return answers.find((ans) => ans.task === task)?.answer || "";
-  }
+  };
 
   if (loading) {
     return (
@@ -222,14 +224,28 @@ const WritingExam = () => {
       </>
       <Content style={{ padding: "40px", overflowY: "auto" }}>
         <div style={{ display: "flex", gap: "20px" }}>
-          {content && <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
-              {content.task ? "Writing Task 1" : "Writing Task 2"}
-            </h2>
-            <p style={{fontSize: "18px", fontWeight: 600}}>{content.title}</p>
-            {content.image && <img src={content.image} alt="Task" style={{ maxWidth: "100%" }} />}
-            </div>}
+          {content && (
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
+                {content.task ? "Writing Task 1" : "Writing Task 2"}
+              </h2>
+              <Input.TextArea
+                value={content.title}
+                readOnly
+                style={{ fontSize: "18px", fontWeight: 600, height: "180px" }}
+              />
+              <p></p>
+              {content.image && (
+                <img
+                  src={content.image}
+                  alt="Task"
+                  style={{ maxWidth: "100%" }}
+                />
+              )}
+            </div>
+          )}
           <div style={{ flex: 1 }}>
+            <h2 style={{fontSize: "16px", fontWeight: "bold"}}>Enter here your answers:</h2>
             <Input.TextArea
               value={getValue()}
               onChange={(e) => {
@@ -239,8 +255,9 @@ const WritingExam = () => {
                 setAnswers(updatedAnswers);
               }}
               style={{ width: "100%", minHeight: "400px", fontSize: "16px" }}
-             placeholder="Enter here writing task your opition" />
-             <p>Word Count: {getWordCount()}</p>
+              placeholder="Enter here writing task your opition"
+            />
+            <p>Word Count: {getWordCount()}</p>
           </div>
         </div>
       </Content>

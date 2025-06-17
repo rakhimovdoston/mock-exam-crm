@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Input, Modal, Form, message, Tag } from "antd";
+import {
+  Table,
+  Button,
+  Input,
+  Modal,
+  Form,
+  message,
+  Tag,
+  DatePicker,
+} from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
+import { dateFormat, getColor } from "../../utils";
+import moment from "moment";
+import dayjs from "dayjs";
 
 const User = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,13 +23,29 @@ const User = () => {
     current: parseInt(searchParams.get("page")) || 1,
     pageSize: parseInt(searchParams.get("size")) || 10,
   });
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTestDateModalOpen, setIsTestDateModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [testDate, setTestDate] = useState(null);
   const [form] = Form.useForm();
   const [refreshKey, setRefreshKey] = useState(0);
   const { data, loading } = useApiRequest(
-    `api/v1/admin/user/all?page=${pagination.current - 1}&size=${pagination.pageSize}&search=${searchTerm}`,
-    [pagination.current, pagination.pageSize, searchTerm, refreshKey]
+    `api/v1/admin/user/all?page=${pagination.current - 1}&size=${
+      pagination.pageSize
+    }&search=${searchTerm}&fromDate=${fromDate}&toDate=${toDate}`,
+    [
+      pagination.current,
+      pagination.pageSize,
+      searchTerm,
+      refreshKey,
+      fromDate,
+      toDate,
+    ]
   );
 
   const navigate = useNavigate();
@@ -50,6 +78,43 @@ const User = () => {
     form.resetFields();
   };
 
+  const handleTestDateModalOpen = (record) => {
+    setSelectedRecord(record);
+    if (record.testStartDate) setTestDate(moment(record.testStartDate));
+    setIsTestDateModalOpen(true);
+  };
+
+  const handleTestDateModalClose = () => {
+    setIsTestDateModalOpen(false);
+    setSelectedRecord(null);
+    setTestDate(null);
+  };
+
+  const handleTestDateSave = () => {
+    if (!testDate) {
+      toast.error("Please select a test start date and time.");
+      return;
+    }
+
+    apiClient
+      .put(`/api/v1/admin/user/test-date/${selectedRecord.id}`, {
+        date: testDate.toISOString(),
+      })
+      .then((response) => {
+        if (response.code === 200) {
+          toast.success("Test start date saved successfully");
+          setRefreshKey((prevKey) => prevKey + 1);
+          handleTestDateModalClose();
+        } else {
+          toast.error("Failed to save test start date");
+        }
+      })
+      .catch((error) => {
+        console.error("Error saving test start date:", error);
+        toast.error("An error occurred while saving the test start date");
+      });
+  };
+
   const handleCreateUser = (values) => {
     apiClient
       .post("/api/v1/admin/user/save", values)
@@ -58,7 +123,7 @@ const User = () => {
           toast.success("User created successfully");
           form.resetFields();
           setIsModalOpen(false);
-          setRefreshKey((prevKey) => prevKey + 1); // Trigger a refresh of the data
+          setRefreshKey((prevKey) => prevKey + 1);
         } else {
           toast.error("Failed to create user");
         }
@@ -120,7 +185,7 @@ const User = () => {
       title: "Email",
       dataIndex: "email",
       key: "email",
-      render: (email) => email ? email: "-"
+      render: (email) => (email ? email : "-"),
     },
     {
       title: "Username",
@@ -128,19 +193,53 @@ const User = () => {
       key: "username",
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
+    // {
+    //   title: "Status",
+    //   dataIndex: "status",
+    //   key: "status",
+    //   render: (status) => (
+    //     <Tag color="blue" key={status}>
+    //       {status}
+    //     </Tag>
+    //   ),
+    // },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) =><Tag color="blue" key={status}>{status}</Tag>,
+      title: "Test Time",
+      dataIndex: "testStartDate",
+      key: "testStartDate",
+      render: (testStartDate) =>
+        testStartDate ? (
+          <Tag color={getColor(testStartDate)}>{dateFormat(testStartDate)}</Tag>
+        ) : (
+          <Tag color="blue"></Tag>
+        ),
     },
     {
       title: "",
       key: "actions",
       render: (_, record) => (
-        <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>View</Button>
-      )
-    }
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <Button
+              type={record.testStartDate ? "dashed" : "primary"}
+              onClick={() => handleTestDateModalOpen(record)}
+            >
+              {record.testStartDate ? "Change time" : "Test time"}
+            </Button>
+          </div>
+          <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>
+            View
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   useEffect(() => {
@@ -164,14 +263,31 @@ const User = () => {
           alignItems: "center",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* <label style={{ display: "block", marginBottom: 4 }}>Search:</label>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
+        >
           <Input
-            placeholder="Search by name or username"
             value={searchTerm}
-            onChange={handleSearch}
-            style={{ width: 200, marginRight: 8 }}
-          /> */}
+            placeholder="Search"
+            style={{ width: "200px" }}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <DatePicker
+            placeholder="Select Date"
+            style={{ width: "200px" }}
+            value={fromDate ? dayjs(fromDate) : null}
+            onChange={(date) =>
+              setFromDate(date ? date.format("YYYY-MM-DD") : "")
+            }
+          />
+          <DatePicker
+            placeholder="End Date"
+            style={{ width: "200px" }}
+            value={toDate ? dayjs(toDate) : null}
+            onChange={(date) =>
+              setToDate(date ? date.format("YYYY-MM-DD") : "")
+            }
+          />
         </div>
         <Button type="primary" onClick={handleModalOpen}>
           Create New User
@@ -242,19 +358,6 @@ const User = () => {
                 onBlur={(e) => checkUsernameAvailability(e.target.value)}
               />
             </Form.Item>
-            {/* <Form.Item
-              name="phone"
-              style={{ flex: 1 }}
-              label="Phone Number"
-              rules={[
-                {
-                  pattern: /^[0-9]{10,15}$/,
-                  message: "Phone number must be between 10 and 15 digits",
-                },
-              ]}
-            >
-              <Input placeholder="Enter phone number" />
-            </Form.Item> */}
           </div>
           <Form.Item
             name="password"
@@ -275,6 +378,20 @@ const User = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+      <Modal
+        title="Test Start Date"
+        open={isTestDateModalOpen}
+        onCancel={handleTestDateModalClose}
+        onOk={handleTestDateSave}
+      >
+        <DatePicker
+          showTime={{ format: "HH:mm" }}
+          format="YYYY-MM-DD HH:mm"
+          value={testDate}
+          onChange={(value) => setTestDate(value)}
+          style={{ width: "100%" }}
+        />
       </Modal>
     </div>
   );

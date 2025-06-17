@@ -28,7 +28,9 @@ import apiClient from "../../services/api";
 
 const { Option } = Select;
 
-const QuestionComponent = ({ type, countLists, difficultType }) => {  
+const QuestionComponent = ({ type, difficultType, countLists }) => {  
+  console.log("CountLists: ", countLists, "Type: ", type, "Difficulty: ", difficultType);
+  
   const { id } = useParams();
   const [isDelete, setDelete] = useState(false);
   const [selectQuestionType, setSelectQuestionType] = useState("all");
@@ -58,7 +60,6 @@ const QuestionComponent = ({ type, countLists, difficultType }) => {
       const multiAnswerKeys = data.data.questions
         .filter((q) => q.type === "Multiple Choice (Multiple answers)")
         .map(q => getQuestionNumbers(q));
-        console.log("Multiple answers: ", multiAnswerKeys);
         
       setInitKeys([...new Set(multiAnswerKeys)]);
     }
@@ -263,6 +264,7 @@ const QuestionComponent = ({ type, countLists, difficultType }) => {
           type === "reading" ? readings_inits : listening_inits,
           selectQuestionType
         )}
+        reading={type === 'reading'}
         startQuestionId={getStart(data?.data?.questions)}
         isRefresh={refresh}
         setRefresh={setRefresh}
