@@ -60,7 +60,7 @@ export const getQuestionNumbers = (question) => {
 
 export function getListMinMax(nodes) {
   for (const node of nodes) {
-    if (node.type === "ordered-list" && Array.isArray(node.children)) {
+    if (node.type === "ordered-list" && node.listStyleType === 'decimal' && Array.isArray(node.children)) {
       const start = typeof node.start === "number" ? node.start : 1;
       const itemCount = node.children.filter(
         (child) => child.type === "list-item"

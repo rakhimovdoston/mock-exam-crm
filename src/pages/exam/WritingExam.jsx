@@ -98,7 +98,7 @@ const WritingExam = () => {
         return;
       }
       toast.success("Answers submitted successfully!");
-      navigate("/");
+      navigate("/exam");
     } catch (error) {
       console.error("Error submitting answers:", error);
       toast.error("Failed to submit answers. Please try again.");

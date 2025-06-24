@@ -15,8 +15,9 @@ import {
   Tooltip,
   Dropdown,
   Modal,
-  Progress,
   Input,
+  Popover,
+  InputNumber,
 } from "antd";
 import {
   BoldOutlined,
@@ -35,82 +36,22 @@ import {
   PlusCircleOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { isFormatActive, toggleFormat } from "./editorUtils";
+import { insertTable, isFormatActive, toggleFormat } from "./editorUtils";
 import { toast } from "react-toastify";
-import apiClient from "../../services/api";
 
 const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
   const editor = useSlate();
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [row, setRow] = useState(1);
+  const [columns, setColumns] = useState(1);
 
-  const insertTable = () => {
-    const table = {
-      type: "table",
-      children: [
-        {
-          type: "table-row",
-          children: [
-            { type: "table-cell", children: [{ text: "" }] },
-            { type: "table-cell", children: [{ text: "" }] },
-          ],
-        },
-        {
-          type: "table-row",
-          children: [
-            { type: "table-cell", children: [{ text: "" }] },
-            { type: "table-cell", children: [{ text: "" }] },
-          ],
-        },
-      ],
-    };
-
-    // Insert the table at the current selection
-    Transforms.insertNodes(editor, table);
-
-    // Get the path of the inserted table
-    const [tableNodeEntry] = Editor.nodes(editor, {
-      match: (node) => node.type === "table",
-      mode: "lowest",
-    });
-
-    if (tableNodeEntry) {
-      const [, tablePath] = tableNodeEntry;
-
-      // Calculate the path after the table
-      const nextPath = Path.next(tablePath);
-
-      // Insert a new paragraph after the table
-      const paragraph = {
-        type: "paragraph",
-        children: [{ text: "" }],
-      };
-      Transforms.insertNodes(editor, paragraph, { at: nextPath });
-
-      // Move the cursor to the new paragraph
-      Transforms.select(editor, nextPath);
-    }
-  };
-
-  // Remove the table from the editor
-  const removeTable = () => {
-    Transforms.removeNodes(editor, {
-      match: (node) => node.type === "table",
-    });
-  };
-  // Insert an image into the editor
-
-  const setAlignment = (alignment) => {
-    Transforms.setNodes(
-      editor,
-      { align: alignment },
-      { match: (node) => Editor.isBlock(editor, node) }
-    );
-  };
+  const [popoverVisible, setPopoverVisible] = useState(false);
+  const [tableModalVisible, setTableModalVisible] = useState(false);
+  const [customRows, setCustomRows] = useState(3);
+  const [customCols, setCustomCols] = useState(3);
 
   const getLastQuestionNumber = () => {
     let count = 0;
@@ -225,109 +166,11 @@ const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
     Transforms.insertNodes(editor, list);
   };
 
-  const insertTableRow = () => {
-    const [tableNodeEntry] = Editor.nodes(editor, {
-      match: (node) => node.type === "table",
-      mode: "lowest",
-    });
-
-    if (tableNodeEntry) {
-      const [tableNode, tablePath] = tableNodeEntry;
-
-      const lastRowIndex = tableNode.children.length - 1;
-
-      const lastRowPath = [...tablePath, lastRowIndex];
-
-      const cellCount = tableNode.children[lastRowIndex].children.length;
-
-      // Create a new row with the same number of cells
-      const newRow = {
-        type: "table-row",
-        children: Array.from({ length: cellCount }, () => ({
-          type: "table-cell",
-          children: [{ text: "" }],
-        })),
-      };
-
-      // Insert the new row after the last row
-      Transforms.insertNodes(editor, newRow, { at: Path.next(lastRowPath) });
-    }
-  };
-
-  const insertTableCell = () => {
-    const [tableRowEntry] = Editor.nodes(editor, {
-      match: (node) => node.type === "table-row",
-      mode: "lowest",
-    });
-
-    if (tableRowEntry) {
-      const [rowNode, rowPath] = tableRowEntry;
-
-      const newCell = {
-        type: "table-cell",
-        children: [{ text: "" }],
-      };
-
-      // Add new cell at the end of the row
-      Transforms.insertNodes(editor, newCell, {
-        at: [...rowPath, rowNode.children.length],
-      });
-    }
-  };
-
-  const removeTableRow = () => {
-    Transforms.removeNodes(editor, {
-      match: (node) => node.type === "table-row",
-      mode: "lowest",
-    });
-  };
-
-  // Remove a cell from the table
-  const removeTableCell = () => {
-    Transforms.removeNodes(editor, {
-      match: (node) => node.type === "table-cell",
-      mode: "lowest",
-    });
-  };
-
   const handleOptionChange = (index, value) => {
     const updatedOptions = [...options];
     updatedOptions[index] = value;
     setOptions(updatedOptions);
   };
-
-  const tableMenuItems = [
-    {
-      key: "insert-table",
-      label: "Insert Table",
-      onClick: () => insertTable(),
-    },
-    {
-      key: "remove-table",
-      label: "Delete Table",
-      onClick: () => removeTable(),
-    },
-    {
-      key: "insert-row",
-      label: "Insert Table Row",
-      onClick: () => insertTableRow(),
-    },
-    {
-      key: "insert-cell",
-      label: "Insert Table Cell",
-      onClick: () => insertTableCell(),
-    },
-    {
-      key: "remove-row",
-      label: "Remove Table Row",
-      onClick: () => removeTableRow(),
-    },
-    {
-      key: "remove-cell",
-      label: "Remove Table Cell",
-      onClick: () => removeTableCell(),
-    },
-  ];
 
   const orderedListMenuItems = [
     {
@@ -359,6 +202,67 @@ const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
       onClick: () => setModalVisible(true),
     },
   ];
+
+  const handleCustomInsert = () => {
+    insertTable(editor, customRows, customCols);
+    setTableModalVisible(false);
+  };
+
+  const handleGridInsert = () => {
+    insertTable(editor, row + 1, columns + 1);
+    setPopoverVisible(false);
+  };
+
+  const content = (
+    <div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${10}, 20px)`,
+          gridTemplateRows: `repeat(${10}, 20px)`,
+          gap: 5,
+          padding: 5,
+        }}
+      >
+        {[...Array(10)].map((_, r) =>
+          [...Array(10)].map((_, c) => {
+            const isHighlighted = r <= row && c <= columns;
+            return (
+              <div
+                key={`${r}-${c}`}
+                onMouseEnter={() => {
+                  setRow(r);
+                  setColumns(c);
+                }}
+                onClick={handleGridInsert}
+                style={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: isHighlighted ? "#1677ff" : "#f0f0f0",
+                  border: "1px solid #ccc",
+                  cursor: "pointer",
+                }}
+              />
+            );
+          })
+        )}
+      </div>
+      <div style={{ textAlign: "center", paddingTop: 4, fontSize: 12 }}>
+        {row + 1} × {columns + 1}
+      </div>
+      <div style={{ textAlign: "center", marginTop: 10 }}>
+        <Button
+          type="link"
+          onClick={() => {
+            setPopoverVisible(false);
+            setTableModalVisible(true);
+          }}
+        >
+          Custom Table...
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -435,6 +339,35 @@ const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
         </Space>
       </Modal>
 
+      <Modal
+        open={tableModalVisible}
+        title="Insert Custom Table"
+        onOk={handleCustomInsert}
+        onCancel={() => setTableModalVisible(false)}
+        okText="Insert"
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <div>
+            Rows:{" "}
+            <InputNumber
+              min={1}
+              max={100}
+              value={customRows}
+              onChange={setCustomRows}
+            />
+          </div>
+          <div>
+            Columns:{" "}
+            <InputNumber
+              min={1}
+              max={100}
+              value={customCols}
+              onChange={setCustomCols}
+            />
+          </div>
+        </Space>
+      </Modal>
+
       <Space style={{ marginBottom: "10px" }} wrap>
         <Tooltip title="Bold (Ctrl+B)">
           <Button
@@ -466,37 +399,15 @@ const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
             }}
           />
         </Tooltip>
-        <Tooltip title="Align Left">
-          <Button
-            icon={<AlignLeftOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setAlignment("left");
-            }}
-          />
-        </Tooltip>
-        <Tooltip title="Align Center">
-          <Button
-            icon={<AlignCenterOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setAlignment("center");
-            }}
-          />
-        </Tooltip>
-        <Tooltip title="Align Right">
-          <Button
-            icon={<AlignRightOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setAlignment("right");
-            }}
-          />
-        </Tooltip>
-        {/* Dropdown for table-related actions */}
-        <Dropdown menu={{ items: tableMenuItems }} trigger={["hover"]}>
-          <Button icon={<TableOutlined />}></Button>
-        </Dropdown>
+        <Popover
+          content={content}
+          open={popoverVisible}
+          onOpenChange={setPopoverVisible}
+          title="Insert Table"
+          trigger="click"
+        >
+          <Button icon={<TableOutlined />} />
+        </Popover>
         <Tooltip title="Upload Image">
           <Upload
             showUploadList={false}
@@ -537,6 +448,27 @@ const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
             }}
           />
         </Tooltip>
+        {/* <Tooltip title="Clear Area">
+          <Button
+            icon={<DeleteOutlined />}
+            danger
+            onClick={() => {
+              Transforms.delete(editor, {
+                at: [],
+                match: () => true,
+              });
+
+              Transforms.insertNodes(editor, {
+                type: "paragraph",
+                children: [{ text: "" }],
+              });
+              const firstNodePath = Editor.start(editor, [0]);
+              Transforms.select(editor, firstNodePath);
+          
+              editor.history = { undos: [], redos: [] };
+            }}
+          />
+        </Tooltip> */}
       </Space>
     </>
   );

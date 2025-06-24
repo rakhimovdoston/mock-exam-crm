@@ -20,6 +20,7 @@ import MultipleChoiceElement from "./elements/MultipleChoiceElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
 import { Modal, Progress } from "antd";
 import apiClient from "../../services/api";
+import { ResizableTableCell } from "./elements/ResizableTableCell";
 
 const initialValue = [
   {
@@ -60,17 +61,17 @@ const RichTextEditor = ({
       case "table-row":
         return <TableRowElement {...props} />;
       case "table-cell":
-        return <TableCellElement {...props} />;
+        return <ResizableTableCell {...props} />;
       case "image":
         return <ImageElement {...props} />;
       case "input":
-        return <InputElement {...props} />;
+        return <InputElement {...props} view={false} />;
       case "ordered-list":
         return <OrderedListElement {...props} />;
       case "unordered-list":
         return <UnorderedListElement {...props} />;
       case "list-item":
-        return <ListItemElement {...props} />;
+        return <ListItemElement {...props} view={false} />;
       case "span":
         return <SpanElement {...props} />;
       case "paragraph":

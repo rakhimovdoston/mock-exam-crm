@@ -4,6 +4,7 @@ import RichTextEditor from "../editor/RichTextEditor";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { useParams } from "react-router-dom";
+import { Transforms } from "slate";
 
 const QuestionModal = ({
   isOpen,
@@ -14,7 +15,7 @@ const QuestionModal = ({
   startQuestionId,
   reading = true,
   setRefresh,
-  isRefresh
+  isRefresh,
 }) => {
   const [value, setValue] = useState();
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,9 @@ const QuestionModal = ({
 
     try {
       const response = await apiClient.post(
-        reading ? `api/v1/reading/passage/${id}/save/question` : `api/v1/listening/${id}/save/question`,
+        reading
+          ? `api/v1/reading/passage/${id}/save/question`
+          : `api/v1/listening/${id}/save/question`,
         requestBody
       );
       if (response.code !== 200) {
@@ -50,8 +53,7 @@ const QuestionModal = ({
       toast.success("Question submitted successfully!");
       setRefresh(!isRefresh);
       setOpen(false);
-      setValue(null);
-      initialValue = null;
+      setValue([]);
     } catch (error) {
       console.error("Error submitting question:", error);
       toast.error("Failed to submit question. Please try again.");
@@ -67,7 +69,14 @@ const QuestionModal = ({
       width={800}
       closable={false}
       footer={[
-        <Button key="cancel" danger onClick={() => setOpen(false)}>
+        <Button
+          key="cancel"
+          danger
+          onClick={() => {
+            setValue([]);
+            setOpen(false);
+          }}
+        >
           Cancel
         </Button>,
         <Button

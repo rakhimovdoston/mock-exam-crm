@@ -16,6 +16,7 @@ import ReadOnlyMultipleChoiceElement from "./elements/ReadOnlyMultipleChoiceElem
 import Leaf from "./elements/Leaf";
 import DefaultElement from "./elements/DefaultElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
+import TableElementViewer from "./elements/TableElementViewer";
 
 const initialValue = [
   {
@@ -101,6 +102,7 @@ function injectHeadingOptions(content, headings, type) {
         return {
           ...node,
           headingOptions: headingOptions,
+          questionsType: type,
         };
       }
 
@@ -137,7 +139,7 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
   const renderElement = useCallback((props) => {
     switch (props.element.type) {
       case "table":
-        return <TableElement {...props} />;
+        return <TableElementViewer {...props} />;
       case "table-row":
         return <TableRowElement {...props} />;
       case "table-cell":

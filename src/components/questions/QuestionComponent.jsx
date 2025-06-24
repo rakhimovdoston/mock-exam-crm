@@ -29,7 +29,6 @@ import apiClient from "../../services/api";
 const { Option } = Select;
 
 const QuestionComponent = ({ type, difficultType, countLists }) => {  
-  console.log("CountLists: ", countLists, "Type: ", type, "Difficulty: ", difficultType);
   
   const { id } = useParams();
   const [isDelete, setDelete] = useState(false);
