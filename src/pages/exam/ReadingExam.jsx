@@ -64,6 +64,18 @@ const ReadingExam = () => {
     );
   }
 
+  const countListHeader = (content) => {
+    let count = 0;
+    for (const node of content) {
+      if (node.type === "ordered-list") {
+        count +=
+          node.children?.filter((child) => child.type === "list-item").length ||
+          0;
+      }
+    }
+    return count;
+  };
+
   return (
     <Layout style={{ position: "relative", height: "100vh" }}>
       <ExamHeader type="reading" />
@@ -80,6 +92,7 @@ const ReadingExam = () => {
                     Questions {getQuestionNumbers(question)}
                   </p>
                   <RichTextViewer
+                    headings={countListHeader(currentPart.content)}
                     content={question.content}
                     type={question.type}
                   />

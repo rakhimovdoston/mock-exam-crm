@@ -113,7 +113,7 @@ function App() {
               <Route path="ielts/writing" element={<Writing />} />
               <Route path="ielts/writing/:id" element={<WritingDetails />} />
               <Route path="ielts/writing/create" element={<NewWriting />} />
-              <Route path="history/:id/writing" element={<WritingHistory />} />
+              <Route path="history/:userId/writing/:id" element={<WritingHistory />} />
               <Route path="history/:id/reading" element={<ReadingHistory />} />
               <Route path="history/:id/listening" element={<ListeningHistory />} />
             </Route>

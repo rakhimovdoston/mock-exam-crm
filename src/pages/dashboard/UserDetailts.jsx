@@ -92,6 +92,7 @@ const ScoreBox = ({ id, icon, label, score, setRefresh, userId }) => {
       setErrorMessage("");
     }
   };
+
   return (
     <>
       <Card
@@ -118,7 +119,13 @@ const ScoreBox = ({ id, icon, label, score, setRefresh, userId }) => {
               Set score
             </Button>
           ) : (
-            <Link to={`/dashboard/history/${id}/${label.toLowerCase()}`}>
+            <Link
+              to={
+                label === "Writing"
+                  ? `/dashboard/history/${userId}/${label.toLowerCase()}/${id}`
+                  : `/dashboard/history/${id}/${label.toLowerCase()}`
+              }
+            >
               <Button type="dashed" icon={<EyeOutlined />} />
             </Link>
           )}
@@ -419,18 +426,24 @@ const UserDetails = () => {
                         icon={<ReadOutlined />}
                         label="Reading"
                         score={item.reading}
+                        userId={id}
+                        setRefresh={setQuestionRefresh}
                       />
                       <ScoreBox
                         id={item.id}
                         icon={<SoundOutlined />}
                         label="Listening"
                         score={item.listening}
+                        userId={id}
+                        setRefresh={setQuestionRefresh}
                       />
                       <ScoreBox
                         id={item.id}
                         icon={<EditOutlined />}
                         label="Writing"
                         score={item.writing}
+                        userId={id}
+                        setRefresh={setQuestionRefresh}
                       />
                       <ScoreBox
                         id={item.id}

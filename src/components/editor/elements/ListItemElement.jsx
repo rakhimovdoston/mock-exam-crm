@@ -135,7 +135,7 @@ const ListItemElement = ({ attributes, children, element, view = true }) => {
                 alignItems: "center",
               }}
             >
-              <strong>{element.label}</strong>
+              {/* <strong>{element.label}</strong> */}
               {parentNode.listStyleType === "decimal" && checkQuestionTypes ? (
                 <Radio.Group
                   style={{ display: "flex", flexDirection: "column", gap: 10 }}

@@ -11,17 +11,19 @@ const UserPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const id = localStorage.getItem("exam_start");
 
-  const { data, loading, error } = useApiRequest("api/v1/exam/get", []);
+  const { data, loading, error } = useApiRequest(`api/v1/exam/get/${id}`, [id]);
 
   useEffect(() => {
     if (data?.data && data?.data.leftDuration) {
-      setTimeLeft(Math.floor(Number(data.data.leftDuration) / 1000)); // Set timeLeft from API response
+      setTimeLeft(Math.floor(Number(data.data.leftDuration) / 1000));
     }
   }, [data]);
 
   useEffect(() => {
     if (data?.data && timeLeft === 0) {
+      localStorage.removeItem("exam_start");
       dispatch(logout());
     }
   }, [timeLeft, dispatch]);
@@ -31,7 +33,7 @@ const UserPage = () => {
       setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
     }, 1000);
 
-    return () => clearInterval(timer); // Cleanup timer on component unmount
+    return () => clearInterval(timer);
   }, []);
 
   // Format time in HH:MM:SS
@@ -58,6 +60,10 @@ const UserPage = () => {
       </div>
     );
   }
+  if (error) {
+    localStorage.removeItem("exam_start");
+    dispatch(logout());
+  }
 
   return (
     <div
@@ -80,6 +86,7 @@ const UserPage = () => {
           right: "20px",
         }}
         onClick={() => {
+          localStorage.removeItem("exam_start");
           navigate("/");
         }}
       >
@@ -123,13 +130,26 @@ const UserPage = () => {
                     disabled={data.data.listening}
                     onClick={async () => {
                       try {
-                        await navigator.mediaDevices.getUserMedia({
-                          audio: true,
-                        });
-                        navigate(`/listening/${data.data.id}`);
+
+                        const stream =
+                          await navigator.mediaDevices.getUserMedia({
+                            audio: true,
+                          });
+                        if (stream) {
+                          navigate(`/listening/${data.data.id}`);
+                        }
                       } catch (error) {
-                        console.log("Audio permission error: ", error);
-                        toast.error("Please allow me to listen to the audio.");
+                        console.error("Audio permission error: ", error);
+
+                        if (error.name === "NotAllowedError") {
+                          toast.info(
+                            "Please enable microphone access in your browser settings and try again."
+                          );
+                        } else {
+                          toast.error(
+                            "An unexpected error occurred. Please try again."
+                          );
+                        }
                       }
                     }}
                   >
@@ -138,7 +158,6 @@ const UserPage = () => {
                 </div>
               </Card>
             }
-
             {/* Reading Card */}
             <Card title="Reading" style={{ width: 600 }}>
               <p>Practice your reading skills.</p>
@@ -152,7 +171,6 @@ const UserPage = () => {
                 </Button>
               </div>
             </Card>
-
             {/* Writing Card */}
             <Card title="Writing" style={{ width: 600 }}>
               <p>Practice your writing skills.</p>
@@ -166,6 +184,17 @@ const UserPage = () => {
                 </Button>
               </div>
             </Card>
+            <Button
+              disabled={
+                !data.data.writing && !data.data.listening && !data.data.reading
+              }
+              onClick={() => {
+                localStorage.removeItem("exam_start");
+                dispatch(logout());
+              }}
+            >
+              End Test
+            </Button>
           </div>
         </div>
       )}

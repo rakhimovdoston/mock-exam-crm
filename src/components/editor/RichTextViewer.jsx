@@ -69,7 +69,7 @@ function injectSelectoptions(nodes) {
 
 function injectHeadingOptions(content, headings, type) {
   const headOptions = [];
-  if (headings && type === "Matching Headings") {
+  if (headings && type === "Matching Headings" || type === 'Matching Information') {
     for (let i = 0; i < headings; i++) {
       headOptions.push({
         key: String.fromCharCode(65 + i),

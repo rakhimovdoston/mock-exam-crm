@@ -60,7 +60,11 @@ export const getQuestionNumbers = (question) => {
 
 export function getListMinMax(nodes) {
   for (const node of nodes) {
-    if (node.type === "ordered-list" && node.listStyleType === 'decimal' && Array.isArray(node.children)) {
+    if (
+      node.type === "ordered-list" &&
+      node.listStyleType === "decimal" &&
+      Array.isArray(node.children)
+    ) {
       const start = typeof node.start === "number" ? node.start : 1;
       const itemCount = node.children.filter(
         (child) => child.type === "list-item"
@@ -250,18 +254,72 @@ export const isWithinOneHour = (date) => {
   return (now >= target && now <= oneHourLater) || target > now;
 };
 
-
 export const getColor = (date) => {
   const target = new Date(date);
   const now = new Date();
 
   const oneHourLater = new Date(target.getTime() + 60 * 60 * 1000);
 
-  if (target > now) 
-    return "green";
+  if (target > now) return "green";
 
-  if (now > target && now <= oneHourLater)
-    return 'blue';
+  if (now > target && now <= oneHourLater) return "blue";
 
-  return 'red';
+  return "red";
+};
+
+export function countCorrectAnswers(answers, userAnswers) {
+  let count = 0;
+
+  for (const answer of answers) {
+    if (answer.key && checkKey(answer, userAnswers)) {
+      count++;
+    } else if (answer.keys) {
+      count += checkKeys(answer, userAnswers);
+    }
+  }
+
+  return count;
+}
+
+export function checkKey(answer, userAnswers) {
+  for (const userAnswer of userAnswers) {
+    if (answer.value.includes("; ")) {
+      const parts = answer.value.split("; ");
+      if (answer.key === userAnswer.key) {
+        for (const part of parts) {
+          if (
+            part.trim().toLowerCase() === userAnswer.value.trim().toLowerCase()
+          ) {
+            return true;
+          }
+        }
+      }
+    } else {
+      if (userAnswer.key && answer.key === userAnswer.key) {
+        return (
+          answer.value.trim().toLowerCase() ===
+          userAnswer.value.trim().toLowerCase()
+        );
+      }
+    }
+  }
+  return false;
+}
+
+export function checkKeys(answer, userAnswers) {
+  let count = 0;
+
+  const filteredUserAnswers = userAnswers.filter(userAnswer => userAnswer.keys != null);
+
+  for (const userAnswer of filteredUserAnswers) {
+    if (answer.keys === userAnswer.keys) {
+      for (const value of userAnswer.values || []) {
+        if (answer.values.map(v => v.trim().toLowerCase()).includes(value.trim().toLowerCase())) {
+          count++;
+        }
+      }
+    }
+  }
+
+  return count;
 }

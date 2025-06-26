@@ -17,17 +17,21 @@ const HomePage = () => {
   const [loading, setLoading] = useState();
 
   const handleStartExam = async () => {
+    if (localStorage.getItem("exam_start")) {
+      navigate("exam");
+      return;
+    }
     setLoading(true);
     try {
       const response = await apiClient.get("api/v1/exam/start");
-      if (response.code != 200) {
+      if (response.code !== 200) {
         toast.error(
           "No new questions have been added yet, please wait for questions to be added."
         );
         return;
       }
-
-      navigate("/exam");
+      localStorage.setItem("exam_start", response.data.id);
+      navigate(`/exam`);
     } catch (error) {
       toast.error(
         "No new questions have been added yet, please wait for questions to be added."
