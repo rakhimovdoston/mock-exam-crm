@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import { useNavigate, useParams } from "react-router-dom";
-import { Layout, Button, Modal, Spin, Card, Input } from "antd";
-import { ClockCircleOutlined } from "@ant-design/icons";
+import {
+  Layout,
+  Button,
+  Modal,
+  Spin,
+  Card,
+  Input,
+  Splitter,
+  Result,
+} from "antd";
+import {
+  ClockCircleOutlined,
+  FullscreenExitOutlined,
+  FullscreenOutlined,
+} from "@ant-design/icons";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
+import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
 
 const { Header, Footer, Content } = Layout;
 
@@ -63,21 +77,68 @@ const WritingExam = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return (
+      <span>
+        <span style={{ fontWeight: "bold" }}>
+          {minutes > 0
+            ? minutes.toString().padStart(2, "0")
+            : seconds.toString().padStart(2, "0")}
+        </span>{" "}
+        {minutes > 0 ? "minutes" : "seconds"} remaining
+      </span>
+    );
   };
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ["c", "v", "x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
+      ) {
+        e.preventDefault();
+        toast.info(`This keyboard blocked:`);
+      }
+
+      // F12 (developer tools), PrintScreen, va boshqalarni ham bloklash mumkin
+      if (e.key === "F12" || e.key === "PrintScreen") {
+        e.preventDefault();
+        toast.info(`This keyboard blocked:`);
+      }
+    };
+
+    const handlePaste = (e) => {
+      e.preventDefault();
+      toast.info(`Paste is blocked:`);
+    };
+
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      toast.info("Context Menu bloklangan:");
+    };
+
+    const handleCopy = (e) => {
+      e.preventDefault();
+      toast.info(`Copy is Blocked:`);
+    };
+
     const handleBeforeUnload = (event) => {
       event.preventDefault();
       event.returnValue = "";
     };
 
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("copy", handleCopy);
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, []);
 
@@ -178,7 +239,6 @@ const WritingExam = () => {
             <span
               style={{
                 fontSize: "16px",
-                fontWeight: "bold",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
@@ -187,17 +247,28 @@ const WritingExam = () => {
               <ClockCircleOutlined style={{ fontSize: "16px" }} />
               {formatTime(timeLeft)}
             </span>
-            <Button
-              type="primary"
-              style={{ fontWeight: "bold" }}
-              onClick={() => setIsModalVisible(true)}
-            >
-              Submit
-            </Button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Button
+                onClick={enterFullScreen}
+                icon={
+                  isFullScreen() ? (
+                    <FullscreenExitOutlined />
+                  ) : (
+                    <FullscreenOutlined />
+                  )
+                }
+              />
+              <Button
+                type="primary"
+                style={{ fontWeight: "bold" }}
+                onClick={() => setIsModalVisible(true)}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </Header>
         <Modal
-          title="Time's Up!"
           open={isModalVisible}
           closable={timeLeft > 0}
           footer={[
@@ -219,21 +290,28 @@ const WritingExam = () => {
           ]}
           centered
         >
-          <p>Your time for this test has ended. Please submit your answers.</p>
+          <Result title="Are you sure you want to submit?" />
         </Modal>
       </>
       <Content style={{ padding: "40px", overflowY: "auto" }}>
-        <div style={{ display: "flex", gap: "20px" }}>
+        <Splitter style={{ display: "flex", gap: "20px" }}>
           {content && (
-            <div style={{ flex: 1 }}>
+            <Splitter.Panel defaultSize={"50%"} min={"30%"} max={"70%"}>
               <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
                 {content.task ? "Writing Task 1" : "Writing Task 2"}
               </h2>
-              <Input.TextArea
-                value={content.title}
-                readOnly
-                style={{ fontSize: "18px", fontWeight: 600, height: "180px" }}
-              />
+              <p
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 600,
+                  height: "180px",
+                  overflowY: "auto",
+                  whiteSpace: "pre-wrap",
+                  borderRadius: "4px",
+                }}
+              >
+                {content.title}
+              </p>
               <p></p>
               {content.image && (
                 <img
@@ -242,11 +320,16 @@ const WritingExam = () => {
                   style={{ maxWidth: "100%" }}
                 />
               )}
-            </div>
+            </Splitter.Panel>
           )}
-          <div style={{ flex: 1 }}>
-            <h2 style={{fontSize: "16px", fontWeight: "bold"}}>Enter here your answers:</h2>
+          <Splitter.Panel style={{ flex: 1 }}>
+            <h2 style={{ fontSize: "16px", fontWeight: "bold" }}>
+              Enter here your answers:
+            </h2>
             <Input.TextArea
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
               value={getValue()}
               onChange={(e) => {
                 const updatedAnswers = answers.map((ans) =>
@@ -255,11 +338,13 @@ const WritingExam = () => {
                 setAnswers(updatedAnswers);
               }}
               style={{ width: "100%", minHeight: "400px", fontSize: "16px" }}
-              placeholder="Enter here writing task your opition"
+              placeholder={`Enter here writing task ${
+                content && content.task ? "one" : "two"
+              } your opition`}
             />
             <p>Word Count: {getWordCount()}</p>
-          </div>
-        </div>
+          </Splitter.Panel>
+        </Splitter>
       </Content>
 
       <Footer

@@ -323,3 +323,25 @@ export function checkKeys(answer, userAnswers) {
 
   return count;
 }
+
+export const getNumberByPassageType = (type) => {
+  switch (type) {
+    case "easy": return "1-13"
+    case "medium": return "14-26"
+    case "hard": return "27-40"
+    case "part_1": return "1-10"
+    case "part_2": return "10-20"
+    case "part_1": return "20-30"
+    case "part_1": return "30-40"
+    default: "";
+  }
+}
+
+export const getPassageNumberByPassageType = (type) => {
+  switch (type) {
+    case "easy": return "1"
+    case "medium": return "2"
+    case "hard": return "3"
+    default: return "";
+  }
+}

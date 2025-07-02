@@ -105,7 +105,7 @@ const ListItemElement = ({ attributes, children, element, view = true }) => {
             }
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
           >
-            <Radio checked={(selectValue || selected || checkedValue()) === opt.key} />
+            <Radio checked={(selectValue || selected || checkedValue() || getValue()) === opt.key} />
           </td>
         ))}
       </tr>
@@ -205,7 +205,7 @@ const ListItemElement = ({ attributes, children, element, view = true }) => {
                     gap: "10px",
                     width: "100%",
                   }}
-                  value={selectValue || selected || checkedValue()}
+                  value={selectValue || selected || checkedValue() || getValue()}
                   onChange={(e) => {
                     setSelected(e.target.value);
                     if (answers.length > 0) {

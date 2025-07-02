@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import {
@@ -59,9 +59,14 @@ const WritingWriting = () => {
     }
   };
 
+  useEffect(() => {
+    if (data) {
+      setSelectedScore(data.data.score);
+    }
+  }, [data]);
+
   const handleModalCancel = () => {
     setIsModalVisible(false);
-    setSelectedScore(null);
     setErrorMessage("");
   };
 
@@ -133,9 +138,14 @@ const WritingWriting = () => {
       {/* Header */}
       <Flex justify="space-between" align="center" style={{ marginBottom: 24 }}>
         <Typography.Title level={3}>🖊️ Writing History</Typography.Title>
-        <Button type="primary" onClick={() => setIsModalVisible(true)}>
-          Set Score
-        </Button>
+        <Flex align="center" gap="large">
+          <Typography.Text strong style={{ fontSize: "16px" }}>
+            💯 Current Score: {selectedScore ?? "Not set"}
+          </Typography.Text>
+          <Button type="primary" onClick={() => setIsModalVisible(true)}>
+            Set Score
+          </Button>
+        </Flex>
       </Flex>
 
       {/* Questions Rendering */}

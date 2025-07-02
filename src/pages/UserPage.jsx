@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Card, Button, Spin } from "antd";
-import { LogoutOutlined } from "@ant-design/icons";
+import {
+  FullscreenExitOutlined,
+  FullscreenOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
 import useApiRequest from "../hooks/useApiRequest";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { enterFullScreen, isFullScreen } from "../utils/documentUtils";
 
 const UserPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
@@ -36,7 +41,6 @@ const UserPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Format time in HH:MM:SS
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -77,21 +81,32 @@ const UserPage = () => {
         position: "relative",
       }}
     >
-      <Button
-        danger
-        icon={<LogoutOutlined />}
+      <div
         style={{
           position: "absolute",
           top: "20px",
           right: "20px",
-        }}
-        onClick={() => {
-          localStorage.removeItem("exam_start");
-          navigate("/");
+          display: "flex",
+          gap: "10px",
         }}
       >
-        Exit
-      </Button>
+        <Button
+          onClick={enterFullScreen}
+          icon={
+            isFullScreen() ? <FullscreenExitOutlined /> : <FullscreenOutlined />
+          }
+        ></Button>
+        <Button
+          danger
+          icon={<LogoutOutlined />}
+          onClick={() => {
+            localStorage.removeItem("exam_start");
+            navigate("/");
+          }}
+        >
+          Exit
+        </Button>
+      </div>
       {error || !data || !data.data ? (
         <div
           style={{
@@ -130,7 +145,6 @@ const UserPage = () => {
                     disabled={data.data.listening}
                     onClick={async () => {
                       try {
-
                         const stream =
                           await navigator.mediaDevices.getUserMedia({
                             audio: true,
