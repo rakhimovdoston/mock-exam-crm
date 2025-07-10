@@ -140,7 +140,7 @@ const Reading = () => {
             type="primary"
             onClick={() => navigate("/dashboard/ielts/reading/create")}
           >
-            Add New Reading
+            New
           </Button>
         </div>
       </div>

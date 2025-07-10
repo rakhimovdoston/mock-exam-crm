@@ -121,7 +121,7 @@ const Writing = () => {
             <Option value="false">Part 2</Option>
           </Select>
           <Button type="primary" onClick={() => navigate("create")}>
-            Add New Writing
+            New
           </Button>
         </div>
       </div>

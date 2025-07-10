@@ -138,7 +138,7 @@ const Listening = () => {
             <Option value="part_4">Listening Part 4</Option>
           </Select>
           <Button type="primary" onClick={() => setModalVisible(true)}>
-            Add New Listening
+            New
           </Button>
         </div>
       </div>

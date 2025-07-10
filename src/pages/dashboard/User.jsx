@@ -253,7 +253,6 @@ const User = () => {
 
   return (
     <div>
-      <h1>Users</h1>
       <div
         style={{
           marginBottom: 16,
@@ -266,7 +265,8 @@ const User = () => {
         <div
           style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
         >
-          <Input
+          <h1>Users</h1>
+          {/* <Input
             value={searchTerm}
             placeholder="Search"
             style={{ width: "200px" }}
@@ -287,10 +287,10 @@ const User = () => {
             onChange={(date) =>
               setToDate(date ? date.format("YYYY-MM-DD") : "")
             }
-          />
+          /> */}
         </div>
         <Button type="primary" onClick={handleModalOpen}>
-          Create New User
+          New Student
         </Button>
       </div>
       <Table
