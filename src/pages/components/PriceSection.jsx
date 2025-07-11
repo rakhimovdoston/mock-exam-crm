@@ -1,5 +1,5 @@
-import React from "react";
-import { Row, Col, Card, Typography, Button, Tag } from "antd";
+import React, { useState } from "react";
+import { Row, Col, Card, Typography, Button, Tag, Modal } from "antd";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 
@@ -8,47 +8,64 @@ const { Title, Paragraph } = Typography;
 const plans = [
   {
     name: "Free Plan",
-    price: "$0",
+    price: "0",
     description: [
       "✔ 1 Full Mock Test",
       "✖️ No Progress Reports",
       "✖️ No feedback explanations",
-      "✖️ Transcripts + AI Evaluation",
     ],
     tag: "Free trial",
     tagColor: "processing",
-    buttonText: "Get Started",
+    buttonText: "Demo Test",
   },
+  // {
+  //   name: "Premium Plan",
+  //   price: "$19.99 / month",
+  //   description: [
+  //     "✔ Unlimited Mock Tests",
+  //     "✔ Band Score Reports",
+  //     "✔ Answer Explanations",
+  //     "✔ Transcripts + AI Evaluation",
+  //   ],
+  //   tag: "Most Popular",
+  //   tagColor: "processing",
+  //   buttonText: "Upgrade Now",
+  //   highlighted: true,
+  // },
+  // {
+  //   name: "Single Test",
+  //   price: "$4.99",
+  //   description: [
+  //     "✔ 1 Full Mock Test",
+  //     "✔ Band Score & Feedback",
+  //     "✖️ No History Tracking",
+  //     "✖️ Transcripts + AI Evaluation",
+  //   ],
+  //   tag: "Pay Once",
+  //   tagColor: "processing",
+  //   buttonText: "Buy Now",
+  // },
   {
-    name: "Premium Plan",
-    price: "$19.99 / month",
-    description: [
-      "✔ Unlimited Mock Tests",
-      "✔ Band Score Reports",
-      "✔ Answer Explanations",
-      "✔ Transcripts + AI Evaluation",
-    ],
-    tag: "Most Popular",
-    tagColor: "processing",
-    buttonText: "Upgrade Now",
-    highlighted: true,
-  },
-  {
-    name: "Single Test",
-    price: "$4.99",
+    name: "IELTS Mock Test",
+    price: "100,000 sum",
     description: [
       "✔ 1 Full Mock Test",
       "✔ Band Score & Feedback",
-      "✖️ No History Tracking",
-      "✖️ Transcripts + AI Evaluation",
+      "✔ Feedback explanations",
     ],
-    tag: "Pay Once",
-    tagColor: "processing",
-    buttonText: "Buy Now",
+    tag: "Recommended",
+    tagColor: "success",
+    buttonText: "Payment",
+    paymentDetails: {
+      cardNumber: "8600 XXXX XXXX XXXX",
+      telegramBot: "https://t.me/d0st0nj0n",
+    },
   },
 ];
 
 const PricingSection = () => {
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   return (
     <section
       id="pricing-section"
@@ -57,8 +74,35 @@ const PricingSection = () => {
         background: "#fff",
       }}
     >
+      <Modal
+        title="Payment Details"
+        open={openModal}
+        onCancel={() => setOpenModal(false)}
+        footer={null}
+      >
+        {selectedPlan && (
+          <div style={{ lineHeight: 2 }}>
+            <p>
+              💳 <strong>Card number:</strong>{" "}
+              {selectedPlan.paymentDetails.cardNumber}
+            </p>
+            <p>
+              📩 <strong>Send a payment screenshot:</strong>{" "}
+              <a
+                href={selectedPlan.paymentDetails.telegramBot}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Telegram
+              </a>
+            </p>
+            <p>✅ After payment, you will be able to access the test...</p>
+          </div>
+        )}
+      </Modal>
+
       <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>
-        Pricing Plans
+        Pricing
       </Title>
 
       <Row gutter={[32, 32]} justify="center">
@@ -139,6 +183,10 @@ const PricingSection = () => {
                 <Button
                   type="primary"
                   size="large"
+                  onClick={() => {
+                    setSelectedPlan(plan);
+                    setOpenModal(true);
+                  }}
                   shape="round"
                   style={{
                     backgroundColor: "#e31837",

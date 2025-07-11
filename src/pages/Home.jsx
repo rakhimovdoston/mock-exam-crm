@@ -14,7 +14,6 @@ import {
 import { motion } from "framer-motion";
 import { CaretRightOutlined } from "@ant-design/icons";
 import logo from "../assets/logo.jpeg";
-import hero from "../assets/hero.png";
 import { FEATURES } from "../data/home"; // Har bir feature icon bilan bo‘lsin: { title, description, icon }
 import Navbar from "./components/Navbar";
 import PricingSection from "./components/PriceSection";
@@ -22,6 +21,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import LoginModal from "../components/modal/login/LoginModal";
 import TestimonialSlider from "./components/TestimonialSlider";
+import HeroSection from "./components/HeroSection";
+import ScrollFadeIn from "../components/ScrollFadeIn";
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph } = Typography;
@@ -95,17 +96,6 @@ const Home = () => {
   const { user, accessToken, isLoggedIn } = useSelector((state) => state.auth);
   const [refresh, setRefresh] = useState(1);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
-  };
-
-  const slideIn = {
-    hidden: { opacity: 0, x: -50 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.8 } },
-  };
 
   const cardAnimation = {
     hidden: { opacity: 0, scale: 0.9 },
@@ -163,91 +153,58 @@ const Home = () => {
         </div>
       </Header>
       <LoginModal open={open} setOpen={setOpen} setRefresh={setRefresh} />
-
-      <Content style={{ padding: "80px 40px 40px" }}>
-        <div id="home-section" style={{ scrollMarginTop: 100 }}>
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
+      <Content>
+        <div
+          style={{
+            position: "relative",
+            scrollMarginTop: 100,
+            overflow: "hidden",
+          }}
+        >
+          <svg
+            viewBox="0 0 1440 320"
             style={{
-              padding: "80px 40px",
-              borderRadius: 24,
-              boxShadow: "0 10px 40px rgba(0,0,0,0.05)",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 1,
+              pointerEvents: "none",
             }}
+            preserveAspectRatio="none"
           >
-            <Row
-              gutter={[32, 32]}
-              align="middle"
-              justify="center"
-              style={{ flexDirection: "row", flexWrap: "wrap" }}
-            >
-              <Col xs={24} md={24} lg={12}>
-                <motion.div variants={slideIn}>
-                  <Title>
-                    <span
-                      style={{
-                        background:
-                          "linear-gradient(to right, #e31837, #ff4081)",
-                        WebkitBackgroundClip: "text",
-                        color: "transparent",
-                      }}
-                    >
-                      Mock IELTS. AI-Powered.
-                    </span>
-                    <br />
-                    Experience the Real Test Format. <br />
-                    Get Instant Scoring & Feedback.
-                  </Title>
-                  <Paragraph>
-                    Train like it’s test day. Our platform mirrors the official
-                    IELTS exam structure — with AI-evaluated results to boost
-                    your performance faster.
-                  </Paragraph>
+            {[...Array(5)].map((_, i) => (
+              <path
+                key={i}
+                d={`
+        M0,${60 + i * 40}
+        C240,${200 + i * 60},
+        1200,${-40 + i * 60},
+        1440,${60 + i * 40}
+      `}
+                fill="none"
+                stroke="url(#lineGradient)"
+                strokeWidth="2.5"
+                opacity="0.35"
+              />
+            ))}
 
-                  <Button
-                    type="default"
-                    size="large"
-                    shape="round"
-                    style={{
-                      borderColor: "#e31837",
-                      color: "#e31837",
-                      fontWeight: "bold",
-                      padding: "6px 24px",
-                      outline: "none",
-                    }}
-                    onClick={() => {
-                      if (user) {
-                        navigate("/start");
-                      } else {
-                        setOpen(true);
-                      }
-                    }}
-                  >
-                    🚀 Start Mock Exam
-                  </Button>
-                </motion.div>
-              </Col>
+            <defs>
+              <linearGradient
+                id="lineGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
+                <stop offset="0%" stopColor="#e31837" />
+                <stop offset="100%" stopColor="#ff4081" />
+              </linearGradient>
+            </defs>
+          </svg>
 
-              {/* Image Section */}
-              <Col xs={24} md={24} lg={12} style={{ textAlign: "center" }}>
-                <motion.img
-                  src={hero}
-                  alt="Hero"
-                  style={{
-                    width: "100%",
-                    maxWidth: 450,
-                    height: "auto",
-                    objectFit: "contain",
-                    borderRadius: 24,
-                  }}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8 }}
-                />
-              </Col>
-            </Row>
-          </motion.div>
+          <HeroSection setOpen={setOpen} />
         </div>
 
         {/* Features Section */}
@@ -262,103 +219,111 @@ const Home = () => {
               xl={8}
               style={{ display: "flex", justifyContent: "center" }}
             >
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={cardAnimation}
-                whileHover={{ scale: 1.05 }}
-                style={{ width: "100%", maxWidth: 400 }}
-              >
-                <Card
-                  hoverable
-                  style={{
-                    textAlign: "center",
-                    borderRadius: 16,
-                    padding: 24,
-                    backdropFilter: "blur(8px)",
-                    background: "rgba(255, 255, 255, 0.75)",
-                    boxShadow: "0 4px 30px rgba(0, 0, 0, 0.05)",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
+              <ScrollFadeIn delay={index * 0.2}>
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={cardAnimation}
+                  whileHover={{ scale: 1.05 }}
+                  style={{ width: "100%", maxWidth: 400 }}
                 >
-                  <img
-                    src={feature.icon}
-                    alt={feature.title}
-                    width={280}
-                    style={{ marginBottom: 20, objectFit: "contain" }}
-                  />
-                  <Title level={4} style={{ color: "#e31837" }}>
-                    {feature.title}
-                  </Title>
-                  <Paragraph style={{ color: "#666" }}>
-                    {feature.description}
-                  </Paragraph>
-                </Card>
-              </motion.div>
+                  <Card
+                    hoverable
+                    style={{
+                      textAlign: "center",
+                      borderRadius: 16,
+                      padding: 24,
+                      backdropFilter: "blur(8px)",
+                      background: "rgba(255, 255, 255, 0.75)",
+                      boxShadow: "0 4px 30px rgba(0, 0, 0, 0.05)",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <img
+                      src={feature.icon}
+                      alt={feature.title}
+                      width={280}
+                      style={{ marginBottom: 20, objectFit: "contain" }}
+                    />
+                    <Title level={4} style={{ color: "#e31837" }}>
+                      {feature.title}
+                    </Title>
+                    <Paragraph style={{ color: "#666" }}>
+                      {feature.description}
+                    </Paragraph>
+                  </Card>
+                </motion.div>
+              </ScrollFadeIn>
             </Col>
           ))}
         </Row>
 
         {/* Testimonial */}
-        <div style={{ textAlign: "center", marginTop: 120 }}>
-          <Title level={3} italic style={{ maxWidth: 700, margin: "0 auto" }}>
-            “This platform made preparing for IELTS less stressful and I loved
-            the instant feedback on my mock exams.”
-          </Title>
-        </div>
+        <ScrollFadeIn>
+          <div style={{ textAlign: "center", marginTop: 120 }}>
+            <Title level={3} italic style={{ maxWidth: 700, margin: "0 auto" }}>
+              “This platform made preparing for IELTS less stressful and I loved
+              the instant feedback on my mock exams.”
+            </Title>
+          </div>
+        </ScrollFadeIn>
 
         <Divider style={{ margin: "" }} />
 
         {/* Call to Action */}
         <TestimonialSlider />
+        <Divider style={{ marginTop: "40px" }} />
 
-        <div id="faq-section" style={{ marginBottom: 100 }}>
-          <Title level={3} style={{ textAlign: "center", marginBottom: 40 }}>
-            Frequently Asked Questions
-          </Title>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={24} lg={12}>
-              <Collapse
-                accordion
-                expandIcon={({ isActive }) => (
-                  <CaretRightOutlined rotate={isActive ? 90 : 0} />
-                )}
-                size="large"
-                style={{
-                  background: token.colorBgContainer,
-                  borderRadius: 12,
-                }}
-                items={faqs.slice(0, 3).map((faq) => ({
-                  ...faq,
-                  label: `❓ ${faq.label}`,
-                }))}
-              />
-            </Col>
-            <Col xs={24} md={24} lg={12}>
-              <Collapse
-                accordion
-                expandIcon={({ isActive }) => (
-                  <CaretRightOutlined rotate={isActive ? 90 : 0} />
-                )}
-                size="large"
-                style={{
-                  background: token.colorBgContainer,
-                  borderRadius: 12,
-                }}
-                items={faqs.slice(3, 6).map((faq) => ({
-                  ...faq,
-                  label: `❓ ${faq.label}`,
-                }))}
-              />
-            </Col>
-          </Row>
-        </div>
-        <Divider style={{ margin: "" }} />
+        <ScrollFadeIn>
+          <PricingSection />
+        </ScrollFadeIn>
 
-        <PricingSection />
+        <ScrollFadeIn>
+          <div id="faq-section" style={{ marginBottom: 100 }}>
+            <Title level={3} style={{ textAlign: "center", marginBottom: 40 }}>
+              Frequently Asked Questions
+            </Title>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={24} lg={12}>
+                <Collapse
+                  accordion
+                  expandIcon={({ isActive }) => (
+                    <CaretRightOutlined rotate={isActive ? 90 : 0} />
+                  )}
+                  size="large"
+                  style={{
+                    background: token.colorBgContainer,
+                    borderRadius: 12,
+                  }}
+                  items={faqs.slice(0, 3).map((faq) => ({
+                    ...faq,
+                    label: `❓ ${faq.label}`,
+                  }))}
+                />
+              </Col>
+              <Col xs={24} md={24} lg={12}>
+                <Collapse
+                  accordion
+                  expandIcon={({ isActive }) => (
+                    <CaretRightOutlined rotate={isActive ? 90 : 0} />
+                  )}
+                  size="large"
+                  style={{
+                    background: token.colorBgContainer,
+                    borderRadius: 12,
+                  }}
+                  items={faqs.slice(3, 6).map((faq) => ({
+                    ...faq,
+                    label: `❓ ${faq.label}`,
+                  }))}
+                />
+              </Col>
+            </Row>
+          </div>
+        </ScrollFadeIn>
       </Content>
 
       {/* Footer */}
