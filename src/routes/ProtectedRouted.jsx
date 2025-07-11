@@ -6,7 +6,6 @@ const ProtectedRoute = ({ children, requiredRoles }) => {
   const { accessToken, user } = useSelector((state) => state.auth); // Add loading state
   const location = useLocation();
 
-
   if (!accessToken) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

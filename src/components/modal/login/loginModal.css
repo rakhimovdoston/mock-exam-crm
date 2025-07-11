@@ -1,0 +1,15 @@
+.register-button {
+  background: none;
+  border: none;
+  color: gray;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  outline: none;
+}
+
+.register-button:hover {
+  color: #c7152e; /* Change text color on hover */
+}
+.register-button:focus {
+  outline: none; /* Ensure no border or outline appears on focus */
+}

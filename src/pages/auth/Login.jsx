@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Form, Input, Button, message, Image, Col } from "antd";
+import { Form, Input, Button, Image, Col } from "antd";
 import logo from "../../assets/logo.jpeg"
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
