@@ -179,13 +179,13 @@ const Home = () => {
                 key={i}
                 d={`
         M0,${60 + i * 40}
-        C240,${200 + i * 60},
+        C240,${400 + i * 60},
         1200,${-40 + i * 60},
         1440,${60 + i * 40}
       `}
                 fill="none"
                 stroke="url(#lineGradient)"
-                strokeWidth="2.5"
+                strokeWidth="1.5"
                 opacity="0.35"
               />
             ))}

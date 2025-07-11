@@ -3,11 +3,13 @@ import { motion } from "framer-motion";
 import { Button, Col, Row, Typography } from "antd";
 import hero from "../../assets/hero.png"; // Ensure this path is correct
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const { Title, Paragraph } = Typography;
 
 const HeroSection = ({ setOpen }) => {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
