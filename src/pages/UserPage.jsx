@@ -107,6 +107,7 @@ const UserPage = () => {
           Exit
         </Button>
       </div>
+      
       {error || !data || !data.data ? (
         <div
           style={{
