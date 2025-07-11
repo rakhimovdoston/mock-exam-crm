@@ -29,25 +29,34 @@ const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
 const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
 const UserDetails = React.lazy(() => import("./pages/dashboard/UserDetailts"));
 const HomePage = React.lazy(() => import("./pages/HomePage"));
-const WritingDetails = React.lazy(() => import("./pages/create/WritingDetails"));
-const WritingHistory = React.lazy(() => import('./pages/details/WritingHistory'));
-const ReadingHistory = React.lazy(() => import('./pages/details/ReadingHistory'));
-const ListeningHistory = React.lazy(() => import('./pages/details/Listeninghistory'));
+const WritingDetails = React.lazy(() =>
+  import("./pages/create/WritingDetails")
+);
+const WritingHistory = React.lazy(() =>
+  import("./pages/details/WritingHistory")
+);
+const ReadingHistory = React.lazy(() =>
+  import("./pages/details/ReadingHistory")
+);
+const ListeningHistory = React.lazy(() =>
+  import("./pages/details/Listeninghistory")
+);
+const Home = React.lazy(() => import("./pages/Home"));
 
 const { Content: AntContent } = Layout;
 
 function App() {
-  const { accessToken, isLoggedIn, user } = useSelector((state) => state.auth);
+  const {user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isLoggedIn && accessToken) {
-      dispatch(fetchProfile());
-    } else {
-      navigate("/login");
-    }
-  }, [isLoggedIn, accessToken]);
+  // useEffect(() => {
+  //   if (isLoggedIn && accessToken) {
+  //     dispatch(fetchProfile());
+  //   } else {
+  //     navigate("/login");
+  //   }
+  // }, [isLoggedIn, accessToken]);
 
   return (
     <Layout style={{ width: "100%", height: "100vh" }}>
@@ -69,10 +78,11 @@ function App() {
           }
         >
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="*" element={<NotFoundPage />} />
             <Route
-              path="/"
+              path="/start"
               element={
                 <ProtectedRoute>
                   {["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_ADMIN"].some(
@@ -113,9 +123,15 @@ function App() {
               <Route path="ielts/writing" element={<Writing />} />
               <Route path="ielts/writing/:id" element={<WritingDetails />} />
               <Route path="ielts/writing/create" element={<NewWriting />} />
-              <Route path="history/:userId/writing/:id" element={<WritingHistory />} />
+              <Route
+                path="history/:userId/writing/:id"
+                element={<WritingHistory />}
+              />
               <Route path="history/:id/reading" element={<ReadingHistory />} />
-              <Route path="history/:id/listening" element={<ListeningHistory />} />
+              <Route
+                path="history/:id/listening"
+                element={<ListeningHistory />}
+              />
             </Route>
             <Route
               path="exam"

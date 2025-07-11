@@ -57,7 +57,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false;
-        localStorage.setItem("roles", action.payload.roles)
+        localStorage.setItem("roles", action.payload.roles);
         state.user = action.payload; // Set user profile data
       })
       .addCase(fetchProfile.rejected, (state, action) => {
