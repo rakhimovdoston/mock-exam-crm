@@ -3,14 +3,14 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Node, Transforms } from "slate";
 import { ReactEditor, useSlateStatic } from "slate-react";
-import { updateAnswer } from "../../../store/answerReducer";
-import { getValueFromAnswer } from "../../../utils";
-import { updateForUserAnswers } from "../../../store/examReducer";
-import ListItemViewDragAndDropElement from "./view/ListItemViewDragAndDropElement";
+import { updateAnswer } from "../../../../store/answerReducer";
+import { getValueFromAnswer } from "../../../../utils";
+import { updateForUserAnswers } from "../../../../store/examReducer";
+import ListItemViewDragAndDropElement from "./ListItemViewDragAndDropElement";
 
 const { Option } = Select;
 
-const ListItemElement = ({
+const ListItemViewElement = ({
   attributes,
   children,
   element,
@@ -270,4 +270,4 @@ const ListItemElement = ({
   );
 };
 
-export default ListItemElement;
+export default ListItemViewElement;

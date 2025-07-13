@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Form, Input, Button, message, Image, Col } from "antd";
-import logo from "../../assets/logo.jpeg"
+import logo from "../../assets/logo.jpeg";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { useDispatch } from "react-redux";
@@ -13,10 +13,9 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const onFinish = async(values) => {
+  const onFinish = async (values) => {
     setLoading(true);
     try {
-
       const response = await apiClient.post("api/v1/auth/authenticate", values);
 
       if (response.code !== 200) {
@@ -26,15 +25,16 @@ const Login = () => {
       }
 
       const { access_token, refresh_token } = response.data;
-      
-      dispatch(login({ accessToken: access_token, refreshToken: refresh_token }));
+
+      dispatch(
+        login({ accessToken: access_token, refreshToken: refresh_token })
+      );
       navigate("/");
       toast.success("Login successful!");
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Usernae or password is incorrect.");
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -78,13 +78,11 @@ const Login = () => {
             width={100}
             preview={false}
           />
-          <h2 style={{ marginLeft: "10px" }}>Mock Exam System</h2>
+          <h2 style={{ marginLeft: "10px" }}>Everest CDI Mock</h2>
         </Col>
         <Form.Item
           name="username"
-          rules={[
-            { required: true, message: "Please input your Username!" },
-          ]}
+          rules={[{ required: true, message: "Please input your Username!" }]}
         >
           <Input prefix={<UserOutlined />} type="text" placeholder="Username" />
         </Form.Item>

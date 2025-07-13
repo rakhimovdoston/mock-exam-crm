@@ -1,15 +1,13 @@
 import React, { useCallback, useMemo } from "react";
-import { createEditor, Element, Node } from "slate";
+import { createEditor, Node } from "slate";
 import { withHistory } from "slate-history";
-import { Editable, Slate, withReact } from "slate-react";
-import TableElement from "./elements/TableElement";
+import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 import TableRowElement from "./elements/TableRowElement";
 import TableCellElement from "./elements/TableCellElement";
 import ImageElement from "./elements/ImageElement";
 import InputElement from "./elements/InputElement";
 import OrderedListElement from "./elements/OrderedListElement";
 import UnorderedListElement from "./elements/UnorderedListElement";
-import ListItemElement from "./elements/ListItemElement";
 import SpanElement from "./elements/SpanElement";
 import ParagraphElement from "./elements/ParagraprhElement";
 import ReadOnlyMultipleChoiceElement from "./elements/ReadOnlyMultipleChoiceElement";
@@ -17,6 +15,10 @@ import Leaf from "./elements/Leaf";
 import DefaultElement from "./elements/DefaultElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
 import TableElementViewer from "./elements/TableElementViewer";
+import ListItemViewElement from "./elements/view/ListItemViewElement";
+import { DragProvider } from "./contexts/DragContext";
+import { useDispatch } from "react-redux";
+import { updateAnswer } from "../../store/answerReducer";
 
 const initialValue = [
   {
@@ -69,7 +71,10 @@ function injectSelectoptions(nodes) {
 
 function injectHeadingOptions(content, headings, type) {
   const headOptions = [];
-  if (headings && type === "Matching Headings" || type === 'Matching Information') {
+  if (
+    (headings && type === "Matching Headings") ||
+    type === "Matching Information"
+  ) {
     for (let i = 0; i < headings; i++) {
       headOptions.push({
         key: String.fromCharCode(65 + i),
@@ -120,8 +125,7 @@ function injectHeadingOptions(content, headings, type) {
   return inject(content);
 }
 
-const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
-  
+const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline; // Save the original method
@@ -136,7 +140,11 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
     return baseEditor;
   }, []);
 
+  const dispatch = useDispatch();
+
   const renderElement = useCallback((props) => {
+    const path = ReactEditor.findPath(editor, props.element);
+    const index = path[path.length - 1];
     switch (props.element.type) {
       case "table":
         return <TableElementViewer {...props} />;
@@ -153,7 +161,14 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
       case "unordered-list":
         return <UnorderedListElement {...props} />;
       case "list-item":
-        return <ListItemElement {...props} />;
+        return (
+          <ListItemViewElement
+            {...props}
+            is_passage={is_passage}
+            index={index}
+            startQuestionNumber={1}
+          />
+        );
       case "span":
         return <SpanElement {...props} />;
       case "paragraph":
@@ -175,6 +190,12 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
     return injectHeadingOptions(content || initialValue, headings, type);
   }, [content, headings]);
 
+  const onDropAnswer = (key, value) => {
+    console.log("Drop Answer", key, value);
+
+    dispatch(updateAnswer({ key, value }));
+  };
+
   return (
     <div
       style={{
@@ -184,24 +205,30 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
         boxSizing: "border-box",
       }}
     >
-      <Slate key={JSON.stringify(content)} editor={editor} initialValue={preparedContent}>
-        <Editable
-          style={{
-            padding: "0 10px",
-            fontSize: "16px",
-            border: "none",
-            overflowY: "auto",
-            borderRadius: "4px",
-            minHeight: "50px",
-            maxHeight: "100%",
-          }}
-          autoFocus
-          readOnly={true}
-          placeholder="Type something..."
-          renderElement={renderElement}
-          renderLeaf={renderLeaf}
-        />
-      </Slate>
+      <DragProvider onDropAnswer={onDropAnswer}>
+        <Slate
+          key={JSON.stringify(content)}
+          editor={editor}
+          initialValue={preparedContent}
+        >
+          <Editable
+            style={{
+              padding: "0 10px",
+              fontSize: "16px",
+              border: "none",
+              overflowY: "auto",
+              borderRadius: "4px",
+              minHeight: "50px",
+              maxHeight: "100%",
+            }}
+            autoFocus
+            readOnly={true}
+            placeholder="Type something..."
+            renderElement={renderElement}
+            renderLeaf={renderLeaf}
+          />
+        </Slate>
+      </DragProvider>
     </div>
   );
 };

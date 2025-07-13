@@ -7,7 +7,7 @@ const answerReducer = createSlice({
   },
   reducers: {
     initializeAnswers: (state, action) => {
-        const { numberOfAnswers, startNumber, initKeys } = action.payload;
+        let { numberOfAnswers, startNumber, initKeys } = action.payload;
         const answers = [];
         let i = startNumber;
         if (!initKeys || initKeys.length < 0) 

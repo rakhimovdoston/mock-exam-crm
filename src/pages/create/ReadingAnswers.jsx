@@ -104,43 +104,60 @@ const ReadingAnswers = () => {
     }
   };
 
+  // const handleDragEnd = ({ active, over }) => {
+  //   console.log("Drag Ended", active, over);
+    
+  //   if (over && active.data.current.type === "heading") {
+  //     const headingText = active.data.current.text;
+  //     const dropZoneId = over.id;
+
+  //     dispatch(updateAnswer({ key: dropZoneId, value: headingText }));
+  //   }
+  // };
+
+  // const handleDragStart = (event) => {
+  //   console.log("Drag started:", event);
+  // };
+
   return (
     <Layout style={{ padding: "20px 10px", borderRadius: "10px" }}>
-      <div
-        style={{
-          display: "flex",
-          gap: "20px",
-          marginTop: "20px",
-          maxHeight: "calc(100vh - 250px)",
-        }}
-      >
-        <Layout
-          style={{
-            flex: 1,
-            width: "50%",
-            borderRight: "1px solid #ddd",
-            paddingRight: "20px",
-            height: "100%",
-            overflowY: "scroll",
-          }}
-        >
-          <RichTextViewer content={data.data.content} is_passage={true} />
-        </Layout>
+      {/* <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}> */}
         <div
           style={{
-            flex: 1,
-            width: "50%",
-            overflowY: "scroll",
-            paddingLeft: "20px",
+            display: "flex",
+            gap: "20px",
+            marginTop: "20px",
+            maxHeight: "calc(100vh - 250px)",
           }}
         >
-          <QuestionComponent
-            type={"reading"}
-            difficultType={data?.data?.type}
-            countLists={countLists()}
-          />
+          <Layout
+            style={{
+              flex: 1,
+              width: "50%",
+              borderRight: "1px solid #ddd",
+              paddingRight: "20px",
+              height: "100%",
+              overflowY: "scroll",
+            }}
+          >
+            <RichTextViewer content={data.data.content} is_passage={true} />
+          </Layout>
+          <div
+            style={{
+              flex: 1,
+              width: "50%",
+              overflowY: "scroll",
+              paddingLeft: "20px",
+            }}
+          >
+            <QuestionComponent
+              type={"reading"}
+              difficultType={data?.data?.type}
+              countLists={countLists()}
+            />
+          </div>
         </div>
-      </div>
+      {/* </DndContext> */}
       <Divider />
       <div style={{ textAlign: "right" }}>
         <Button

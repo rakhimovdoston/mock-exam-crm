@@ -22,6 +22,10 @@ export const getInitValue = (data, type) => {
       };
 };
 
+export const getQuestionNumbersForHeadins = (count) => {
+  return 1 + "-" + (count || 0);
+};
+
 export const getQuestionNumbers = (question) => {
   if (question.type === "Multiple Choice (Multiple answers)")
     return getMinMaxFromMultipleAnswer(question.content);
@@ -142,6 +146,12 @@ export const getStartByQuestionType = (type, module = "READING") => {
     }
   }
   return 0;
+};
+
+export const isMatchinHeadings = (questions) => {
+  if (!questions || questions.length === 0) return false;
+  const lastQuestion = questions[questions.length - 1];
+  return lastQuestion.type === "Matching Headings";
 };
 
 export const getLastQuestionId = (questions) => {
@@ -309,12 +319,18 @@ export function checkKey(answer, userAnswers) {
 export function checkKeys(answer, userAnswers) {
   let count = 0;
 
-  const filteredUserAnswers = userAnswers.filter(userAnswer => userAnswer.keys != null);
+  const filteredUserAnswers = userAnswers.filter(
+    (userAnswer) => userAnswer.keys != null
+  );
 
   for (const userAnswer of filteredUserAnswers) {
     if (answer.keys === userAnswer.keys) {
       for (const value of userAnswer.values || []) {
-        if (answer.values.map(v => v.trim().toLowerCase()).includes(value.trim().toLowerCase())) {
+        if (
+          answer.values
+            .map((v) => v.trim().toLowerCase())
+            .includes(value.trim().toLowerCase())
+        ) {
           count++;
         }
       }
@@ -326,22 +342,34 @@ export function checkKeys(answer, userAnswers) {
 
 export const getNumberByPassageType = (type) => {
   switch (type) {
-    case "easy": return "1-13"
-    case "medium": return "14-26"
-    case "hard": return "27-40"
-    case "part_1": return "1-10"
-    case "part_2": return "10-20"
-    case "part_1": return "20-30"
-    case "part_1": return "30-40"
-    default: "";
+    case "easy":
+      return "1-13";
+    case "medium":
+      return "14-26";
+    case "hard":
+      return "27-40";
+    case "part_1":
+      return "1-10";
+    case "part_2":
+      return "10-20";
+    case "part_1":
+      return "20-30";
+    case "part_1":
+      return "30-40";
+    default:
+      "";
   }
-}
+};
 
 export const getPassageNumberByPassageType = (type) => {
   switch (type) {
-    case "easy": return "1"
-    case "medium": return "2"
-    case "hard": return "3"
-    default: return "";
+    case "easy":
+      return "1";
+    case "medium":
+      return "2";
+    case "hard":
+      return "3";
+    default:
+      return "";
   }
-}
+};

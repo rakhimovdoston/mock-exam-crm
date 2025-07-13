@@ -3,14 +3,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
-import { Button, Select, Skeleton, Typography, Spin } from "antd";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, Select, Skeleton, Typography } from "antd";
+import { DeleteOutlined, EditOutlined, MenuOutlined } from "@ant-design/icons";
 import {
   getInitValue,
   getLastQuestionId,
   getQuestionNumbers,
+  getQuestionNumbersForHeadins,
   getStartByQuestionType,
   getTitle,
+  isMatchinHeadings,
   renumberSlateQuestionsSmart,
 } from "../../utils";
 import DeleteModal from "../modal/DeleteModal";
@@ -28,8 +30,7 @@ import apiClient from "../../services/api";
 
 const { Option } = Select;
 
-const QuestionComponent = ({ type, difficultType, countLists }) => {  
-  
+const QuestionComponent = ({ type, difficultType, countLists }) => {
   const { id } = useParams();
   const [isDelete, setDelete] = useState(false);
   const [selectQuestionType, setSelectQuestionType] = useState("all");
@@ -58,11 +59,11 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
     if (data && data.data?.questions) {
       const multiAnswerKeys = data.data.questions
         .filter((q) => q.type === "Multiple Choice (Multiple answers)")
-        .map(q => getQuestionNumbers(q));
-        
+        .map((q) => getQuestionNumbers(q));
+
       setInitKeys([...new Set(multiAnswerKeys)]);
     }
-  }, [data]);  
+  }, [data]);
 
   useEffect(() => {
     if (data && data.data) {
@@ -72,13 +73,22 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
         dispatch(setAnswers(questionsAnswers));
         return;
       }
-      const lastQuestionId = getLastQuestionId(data?.data.questions);
+      const startByQuestionType =
+        getStartByQuestionType(
+          difficultType,
+          type === "listening" ? "LISTENING" : "READING"
+        ) + 1;
+      let lastQuestionId = getLastQuestionId(data?.data.questions);
+      lastQuestionId = isMatchinHeadings(data?.data.questions)
+        ? lastQuestionId
+          ? lastQuestionId + countLists
+          : startByQuestionType + countLists - 1
+        : lastQuestionId;
       if (lastQuestionId > 0) {
         dispatch(
           initializeAnswers({
             numberOfAnswers: lastQuestionId,
-            startNumber:
-              getStartByQuestionType(difficultType, type === 'listening' ? "LISTENING" : "READING") + 1,
+            startNumber: startByQuestionType,
             initKeys: initKeys,
           })
         );
@@ -86,48 +96,48 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
     }
   }, [data, initKeys]);
 
-  const handleDragEnd = async (result) => {
-    if (!result.destination) return;
-    const reordered = Array.from(questions);
-    const [movedItem] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, movedItem);
-    const updateQuestions = [];
-    let count = 1;
-    for (const ques of reordered) {
-      const start = getStart(updateQuestions);
-      updateQuestions.push({
-        id: ques.id,
-        type: ques.type,
-        content: renumberSlateQuestionsSmart(ques.content, start + 1),
-        order: count,
-      });
-      count = count + 1;
-    }
-    const requestBody = {
-      questions: updateQuestions.map((ques) => {
-        return {
-          id: ques.id,
-          questionType: ques.type,
-          questionContent: ques.content,
-          order: ques.order,
-        };
-      }),
-    };
-    try {
-      const response = await apiClient.put(
-        `api/v1/${type}/update/${id}/questions`,
-        requestBody
-      );
-      if (response.code != 200) {
-        toast.error(response.error || "Failed delete message");
-        return;
-      }
-      setRefresh(!refresh);
-    } catch (error) {
-      toast.error("Reordering failed to save");
-    }
-    setQuestions(updateQuestions);
-  };
+  // const handleDragEnd = async (result) => {
+  //   if (!result.destination) return;
+  //   const reordered = Array.from(questions);
+  //   const [movedItem] = reordered.splice(result.source.index, 1);
+  //   reordered.splice(result.destination.index, 0, movedItem);
+  //   const updateQuestions = [];
+  //   let count = 1;
+  //   for (const ques of reordered) {
+  //     const start = getStart(updateQuestions);
+  //     updateQuestions.push({
+  //       id: ques.id,
+  //       type: ques.type,
+  //       content: renumberSlateQuestionsSmart(ques.content, start + 1),
+  //       order: count,
+  //     });
+  //     count = count + 1;
+  //   }
+  //   const requestBody = {
+  //     questions: updateQuestions.map((ques) => {
+  //       return {
+  //         id: ques.id,
+  //         questionType: ques.type,
+  //         questionContent: ques.content,
+  //         order: ques.order,
+  //       };
+  //     }),
+  //   };
+  //   try {
+  //     const response = await apiClient.put(
+  //       `api/v1/${type}/update/${id}/questions`,
+  //       requestBody
+  //     );
+  //     if (response.code != 200) {
+  //       toast.error(response.error || "Failed delete message");
+  //       return;
+  //     }
+  //     setRefresh(!refresh);
+  //   } catch (error) {
+  //     toast.error("Reordering failed to save");
+  //   }
+  //   setQuestions(updateQuestions);
+  // };
 
   if (loading) return <Skeleton active />;
   if (!data || error)
@@ -140,7 +150,7 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
     const startByQuestionType = getStartByQuestionType(
       difficultType,
       type === "reading" ? "READING" : "LISTENING"
-    );    
+    );
     return lastQuestionNumber > 0
       ? lastQuestionNumber
       : startByQuestionType + lastQuestionNumber;
@@ -187,72 +197,80 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
         </Button>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+      {/* <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="questions">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {questions.map((question, index) => (
-                <Draggable
-                  draggableId={String(question.id)}
-                  index={index}
-                  key={question.id}
-                >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      style={{
-                        background: snapshot.isDragging ? "#e6f7ff" : "white",
-                        padding: 16,
-                        marginBottom: 8,
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        ...provided.draggableProps.style,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <p style={{ fontSize: 20, fontWeight: "bold" }}>
-                          Questions {getQuestionNumbers(question)}
-                        </p>
-                        <div style={{ display: "flex", gap: 10 }}>
-                          <Button
-                            icon={<EditOutlined />}
-                            onClick={() => {
-                              setSelectedQuestion(question);
-                              setUpdate(true);
-                            }}
-                          />
-                          <Button
-                            icon={<DeleteOutlined />}
-                            danger
-                            onClick={() => {
-                              setSelectedQuestion(question);
-                              setDelete(true);
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <RichTextViewer
-                        content={question.content}
-                        headings={countLists}
-                        type={question.type}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
+            <div ref={provided.innerRef} {...provided.droppableProps}> */}
+      <div style={{ marginTop: 16 }}>
+        {questions.map((question, index) => (
+          // <Draggable draggableId={String(question.id)} index={index} key={question.id}>
+          //   {(provided, snapshot) => (
+          //     <div
+          //       ref={provided.innerRef}
+          //       {...provided.draggableProps}
+          //       {...provided.dragHandleProps}
+          //       style={{
+          //         background: snapshot.isDragging ? "#e6f7ff" : "white",
+          //         padding: 16,
+          //         marginBottom: 8,
+          //         border: "1px solid #ccc",
+          //         borderRadius: 4,
+          //         ...provided.draggableProps.style,
+          //       }}
+          //     >
+          <div
+            key={question.id}
+            style={{
+              background: "transparent",
+              padding: 16,
+              marginBottom: 8,
+              border: "1px solid #ccc",
+              borderRadius: 4,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <p style={{ fontSize: 20, fontWeight: "bold" }}>
+                Questions {question.type === 'Matching Headings' ? getQuestionNumbersForHeadins(countLists) : getQuestionNumbers(question)}
+              </p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setSelectedQuestion(question);
+                    setUpdate(true);
+                  }}
+                />
+                <Button
+                  icon={<DeleteOutlined />}
+                  danger
+                  onClick={() => {
+                    setSelectedQuestion(question);
+                    setDelete(true);
+                  }}
+                />
+              </div>
+            </div>
+            <RichTextViewer
+              content={question.content}
+              headings={countLists}
+              type={question.type}
+            />
+          </div>
+          //     )}
+          // </Draggable>
+        ))}
+      </div>
+      {/* {provided.placeholder}
             </div>
           )}
         </Droppable>
-      </DragDropContext>
+      </DragDropContext> */}
 
       <QuestionModal
         isOpen={isModalOpen}
@@ -263,7 +281,7 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
           type === "reading" ? readings_inits : listening_inits,
           selectQuestionType
         )}
-        reading={type === 'reading'}
+        reading={type === "reading"}
         startQuestionId={getStart(data?.data?.questions)}
         isRefresh={refresh}
         setRefresh={setRefresh}
@@ -278,7 +296,10 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
             questions={questions}
             setOpen={setDelete}
             type={type}
-            start={getStartByQuestionType(difficultType, type === 'reading' ? "READING": 'LISTENING')}
+            start={getStartByQuestionType(
+              difficultType,
+              type === "reading" ? "READING" : "LISTENING"
+            )}
             refresh={refresh}
             setRefresh={setRefresh}
           />
@@ -289,7 +310,10 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
             questions={questions}
             setOpen={setUpdate}
             type={type}
-            start={getStartByQuestionType(difficultType, type === 'reading' ? "READING": 'LISTENING')}
+            start={getStartByQuestionType(
+              difficultType,
+              type === "reading" ? "READING" : "LISTENING"
+            )}
             refresh={refresh}
             setRefresh={setRefresh}
           />
