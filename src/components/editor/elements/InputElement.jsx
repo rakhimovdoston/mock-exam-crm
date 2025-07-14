@@ -8,7 +8,13 @@ import { getValueFromAnswer } from "../../../utils";
 import { updateForUserAnswers } from "../../../store/examReducer";
 import { useLocation } from "react-router-dom";
 
-const InputElement = ({ attributes, element, children, view = true }) => {
+const InputElement = ({
+  attributes,
+  element,
+  children,
+  view = true,
+  dragAndDrop = false,
+}) => {
   const location = useLocation();
   const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
@@ -73,7 +79,64 @@ const InputElement = ({ attributes, element, children, view = true }) => {
     setIsModalOpen(false);
   };
 
-  const hasAnswer = Boolean(inpValue || selectedValues)
+  const handleDrop = (e, questionNumber) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData("drag-item");
+    if (data) {
+      const dropped = JSON.parse(data);
+      if (answers.length > 0) {
+        dispatch(updateAnswer({ key: questionNumber, value: dropped.value }));
+      } else {
+        dispatch(
+          updateForUserAnswers({ key: questionNumber, value: dropped.value })
+        );
+      }
+    }
+  };
+
+  const getValueDragAndDrop = () => {
+    for (const ans of answers) {
+      if (ans.key === element.placeholder) return ans.value;
+    }
+    return "";
+  };
+
+  if (dragAndDrop) {
+    const questionNumber = parseInt(element.placeholder, 10);
+    return (
+      <div style={{ display: "inline-flex" }}>
+        <div
+          onDrop={(e) => handleDrop(e, questionNumber)}
+          onDragOver={(e) => e.preventDefault()}
+          // onDragEnter={handleDragEnter}
+          // onDragLeave={handleDragLeave}
+          style={{
+            width: getValueDragAndDrop() ? "fit-content" : 100,
+            minHeight: 10,
+            border: `2px dashed #ccc`,
+            borderRadius: 6,
+            background: "#fafafa",
+            margin: "4px",
+            fontSize: 14,
+            display: "flex",
+            padding: "1px 8px",
+            justifyContent: "center",
+            alignItems: "center",
+            fontWeight: 500,
+          }}
+        >
+          {getValueDragAndDrop() ? (
+            <strong>{getValueDragAndDrop()}</strong>
+          ) : (
+            <strong style={{ opacity: 1 }}>{questionNumber}</strong>
+          )}
+        </div>
+        <span>{children}</span>
+      </div>
+    );
+  }
+
+  const hasAnswer = Boolean(inpValue || selectedValues);
 
   return (
     <span
@@ -84,7 +147,7 @@ const InputElement = ({ attributes, element, children, view = true }) => {
       {checkUrl() && view ? (
         <>
           <Button
-          type={hasAnswer ? "primary": "default"}
+            type={hasAnswer ? "primary" : "default"}
             style={{ width: "100px" }}
             onClick={() => setIsModalOpen(true)}
           >

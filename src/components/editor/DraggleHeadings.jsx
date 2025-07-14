@@ -10,18 +10,6 @@ const DraggableHeading = ({ element }) => {
 
   const handleDragStart = (e) => {
     setIsDragging(true);
-
-    // Custom drag image
-    // const ghost = dragRef.current.cloneNode(true);
-    // ghost.style.position = "absolute";
-    // ghost.style.top = "-9999px";
-    // ghost.style.opacity = "0.6";
-    // ghost.style.backgroundColor = "#dbe9ff";
-    // ghost.style.border = "2px dashed #1677FF";
-    // ghost.style.cursor = "grabbing";
-    // document.body.appendChild(ghost);
-    // e.dataTransfer.setDragImage(ghost, 0, 0);
-
     e.dataTransfer.setData(
       "drag-item",
       JSON.stringify({
@@ -29,10 +17,6 @@ const DraggableHeading = ({ element }) => {
         value: text,
       })
     );
-
-    // setTimeout(() => {
-    //   document.body.removeChild(ghost);
-    // }, 0);
   };
 
   const handleDragEnd = () => {

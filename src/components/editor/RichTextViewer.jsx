@@ -19,6 +19,7 @@ import ListItemViewElement from "./elements/view/ListItemViewElement";
 import { DragProvider } from "./contexts/DragContext";
 import { useDispatch } from "react-redux";
 import { updateAnswer } from "../../store/answerReducer";
+import { canDragAndDrop } from "./editorUtils";
 
 const initialValue = [
   {
@@ -143,6 +144,7 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
   const dispatch = useDispatch();
 
   const renderElement = useCallback((props) => {
+    const checkDragAndDrop = canDragAndDrop(content, type);
     const path = ReactEditor.findPath(editor, props.element);
     const index = path[path.length - 1];
     switch (props.element.type) {
@@ -155,11 +157,22 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
       case "image":
         return <ImageElement {...props} />;
       case "input":
-        return <InputElement {...props} />;
+        return <InputElement {...props} dragAndDrop={checkDragAndDrop} />;
       case "ordered-list":
-        return <OrderedListElement {...props} />;
+        return (
+          <OrderedListElement
+            {...props}
+          />
+        );
       case "unordered-list":
-        return <UnorderedListElement {...props} />;
+        return (
+          <UnorderedListElement
+            {...props}
+            is_passage={is_passage}
+            type={type}
+            dragAndDrop={checkDragAndDrop}
+          />
+        );
       case "list-item":
         return (
           <ListItemViewElement
@@ -167,6 +180,8 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
             is_passage={is_passage}
             index={index}
             startQuestionNumber={1}
+            dragAndDrop={checkDragAndDrop}
+            type={type}
           />
         );
       case "span":
@@ -191,8 +206,6 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
   }, [content, headings]);
 
   const onDropAnswer = (key, value) => {
-    console.log("Drop Answer", key, value);
-
     dispatch(updateAnswer({ key, value }));
   };
 

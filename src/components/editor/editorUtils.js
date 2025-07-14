@@ -234,3 +234,18 @@ export const handleKeyDown = (editor, event) => {
     Editor.insertText(editor, "\t");
   }
 };
+
+export const canDragAndDrop = (content, type) => {
+  if (type === "Matching Sentence Endings" || type === "Summary Completion") {
+    return content.some((node) => {
+      if (node.type === "unordered-list") {
+        return true;
+      }
+      if (node.children) {
+        return canDragAndDrop(node.children, type);
+      }
+      return false;
+    });
+  }
+  return false;
+};

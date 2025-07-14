@@ -18,6 +18,7 @@ const ListItemViewElement = ({
   is_passage,
   index,
   startQuestionNumber,
+  dragAndDrop = false,
 }) => {
   const headingOptions = element.headingOptions || null;
   const questionType = element.questionsType || null;
@@ -76,7 +77,7 @@ const ListItemViewElement = ({
     (questionType === "Yes/No/Not Given" ||
       questionType === "True/False/Not Given");
 
-  if (is_passage || questionType === "Matching Headings") {
+  if ((is_passage || questionType === "Matching Headings") || dragAndDrop) {    
     return (
       <ListItemViewDragAndDropElement
         attributes={attributes}

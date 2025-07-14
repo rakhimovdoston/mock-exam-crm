@@ -146,11 +146,16 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
     );
 
   const getStart = (questions) => {
-    const lastQuestionNumber = getLastQuestionId(questions);
+    let lastQuestionNumber = getLastQuestionId(questions);
     const startByQuestionType = getStartByQuestionType(
       difficultType,
-      type === "reading" ? "READING" : "LISTENING"
+      type === "listening" ? "LISTENING" : "READING"
     );
+    lastQuestionNumber = isMatchinHeadings(data?.data.questions)
+      ? lastQuestionNumber
+        ? lastQuestionNumber + countLists
+        : startByQuestionType + countLists
+      : lastQuestionNumber;
     return lastQuestionNumber > 0
       ? lastQuestionNumber
       : startByQuestionType + lastQuestionNumber;
@@ -236,7 +241,10 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
               }}
             >
               <p style={{ fontSize: 20, fontWeight: "bold" }}>
-                Questions {question.type === 'Matching Headings' ? getQuestionNumbersForHeadins(countLists) : getQuestionNumbers(question)}
+                Questions{" "}
+                {question.type === "Matching Headings"
+                  ? getQuestionNumbersForHeadins(countLists)
+                  : getQuestionNumbers(question)}
               </p>
               <div style={{ display: "flex", gap: 10 }}>
                 <Button
