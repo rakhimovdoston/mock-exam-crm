@@ -18,36 +18,9 @@ const plans = [
     tagColor: "processing",
     buttonText: "Demo Test",
   },
-  // {
-  //   name: "Premium Plan",
-  //   price: "$19.99 / month",
-  //   description: [
-  //     "✔ Unlimited Mock Tests",
-  //     "✔ Band Score Reports",
-  //     "✔ Answer Explanations",
-  //     "✔ Transcripts + AI Evaluation",
-  //   ],
-  //   tag: "Most Popular",
-  //   tagColor: "processing",
-  //   buttonText: "Upgrade Now",
-  //   highlighted: true,
-  // },
-  // {
-  //   name: "Single Test",
-  //   price: "$4.99",
-  //   description: [
-  //     "✔ 1 Full Mock Test",
-  //     "✔ Band Score & Feedback",
-  //     "✖️ No History Tracking",
-  //     "✖️ Transcripts + AI Evaluation",
-  //   ],
-  //   tag: "Pay Once",
-  //   tagColor: "processing",
-  //   buttonText: "Buy Now",
-  // },
   {
     name: "IELTS Mock Test",
-    price: "100,000 sum",
+    price: "65,000 sum",
     description: [
       "✔ 1 Full Mock Test",
       "✔ Band Score & Feedback",
@@ -55,6 +28,22 @@ const plans = [
     ],
     tag: "Recommended",
     tagColor: "success",
+    buttonText: "Payment",
+    paymentDetails: {
+      cardNumber: "8600 XXXX XXXX XXXX",
+      telegramBot: "https://t.me/d0st0nj0n",
+    },
+  },
+  {
+    name: "IELTS Mock Test",
+    price: "150,000 sum",
+    description: [
+      "✔ 3 Full Mock Test",
+      "✔ Band Score & Feedback",
+      "✔ Feedback explanations",
+    ],
+    tag: "",
+    tagColor: "processing",
     buttonText: "Payment",
     paymentDetails: {
       cardNumber: "8600 XXXX XXXX XXXX",

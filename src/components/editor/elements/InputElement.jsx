@@ -113,6 +113,7 @@ const InputElement = ({ attributes, element, children, view = true }) => {
         </>
       ) : (
         <Input
+        
           type={element.inputType || "text"}
           id={"ques-" + (element.placeholder || "input")}
           placeholder={element.placeholder}
