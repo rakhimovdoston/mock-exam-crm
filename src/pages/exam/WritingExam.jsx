@@ -159,7 +159,7 @@ const WritingExam = () => {
         return;
       }
       toast.success("Answers submitted successfully!");
-      navigate("/exam");
+      navigate(`/exam/${id}`);
     } catch (error) {
       console.error("Error submitting answers:", error);
       toast.error("Failed to submit answers. Please try again.");

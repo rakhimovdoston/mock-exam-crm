@@ -118,7 +118,7 @@ function App() {
               <Route path="history/:id/listening" element={<ListeningHistory />} />
             </Route>
             <Route
-              path="exam"
+              path="exam/:id"
               element={
                 <ProtectedRoute>
                   <UserPage />

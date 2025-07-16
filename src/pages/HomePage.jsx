@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import { Button, Layout, Typography, Card } from "antd";
-import { LogoutOutlined, PlayCircleOutlined } from "@ant-design/icons";
+import {
+  AudioOutlined,
+  LogoutOutlined,
+  PlayCircleOutlined,
+} from "@ant-design/icons";
 import { logout } from "../store/authReducer";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiClient from "../services/api";
 import { enterFullScreen } from "../utils/documentUtils";
+import { sampleAudio } from "../assets";
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -16,13 +21,29 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const handleCheckAudio = async () => {
+
+    const stream =
+    await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+
+    const audio = new Audio(sampleAudio);
+
+    setIsAudioPlaying(true);
+    audio.play().catch(() => {
+      toast.error("Audio faylni o'qib bo'lmadi. Iltimos, ovozni tekshiring.");
+    });
+
+    audio.onended = () => {
+      setIsAudioPlaying(false);
+    };
+  };
 
   const handleStartExam = async () => {
     enterFullScreen();
-    if (localStorage.getItem("exam_start")) {
-      navigate("exam");
-      return;
-    }
     setLoading(true);
     try {
       const response = await apiClient.get("api/v1/exam/start");
@@ -30,8 +51,7 @@ const HomePage = () => {
         toast.error("No new questions are available. Please wait.");
         return;
       }
-      localStorage.setItem("exam_start", response.data.id);
-      navigate(`/exam`);
+      navigate(`/exam/${response.data.name}`);
     } catch (error) {
       toast.error("Unable to start the exam. Please try again later.");
     } finally {
@@ -44,7 +64,7 @@ const HomePage = () => {
       style={{
         minHeight: "100vh",
         background:
-          "url('https://images.unsplash.com/photo-1581090700227-1e8c9672717d') center/cover no-repeat",
+          "url('https://unsplash.com/photo-1581090700227-1e8c9672717d') center/cover no-repeat",
         backdropFilter: "blur(5px)",
       }}
     >
@@ -61,7 +81,7 @@ const HomePage = () => {
         <Button
           icon={<LogoutOutlined />}
           danger
-          type="primary"
+          // type="primary"
           onClick={() => dispatch(logout())}
         >
           Exit
@@ -87,17 +107,50 @@ const HomePage = () => {
             padding: "40px 30px",
             backdropFilter: "blur(12px)",
             textAlign: "center",
-            color: "#fff",
+            // color: "#fff",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
           }}
-          bordered={false}
         >
-          <Title level={3} style={{marginBottom: "10px" }}>
+          <Title level={3} style={{ marginBottom: "10px" }}>
             Hi "{user?.firstname}" 👋
           </Title>
           <Text style={{ fontSize: "16px" }}>
             Your IELTS Mock Exam is ready!
           </Text>
+          <div style={{ margin: "20px 0", textAlign: "left" }}>
+            <Text strong style={{}}>
+              🎧 Before you start:
+            </Text>
+            <ul style={{ paddingLeft: "20px" }}>
+              <li>Use headphones for best experience.</li>
+              <li>Make sure your device sound is on.</li>
+              <li>Click below to test the audio.</li>
+            </ul>
+            <Button
+              icon={<AudioOutlined />}
+              type="default"
+              size="middle"
+              loading={isAudioPlaying}
+              onClick={handleCheckAudio}
+              style={{
+                marginTop: "8px",
+                fontWeight: "bold",
+                borderRadius: "8px",
+                color: "#10b981",
+                borderColor: "#10b981",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = "#059669";
+                e.target.style.color = "#059669";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = "#10b981";
+                e.target.style.color = "#10b981";
+              }}
+            >
+              Check Audio
+            </Button>
+          </div>
           <br />
           <br />
           <Button

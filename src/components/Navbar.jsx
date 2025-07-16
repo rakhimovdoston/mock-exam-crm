@@ -1,80 +1,120 @@
-import React, { useState } from "react";
-import { Image, Layout, Menu } from "antd";
+import React from "react";
+import { Image, Layout, Menu, theme, Tooltip } from "antd";
 import {
   UserOutlined,
-  TeamOutlined,
   FileTextOutlined,
-  ExclamationCircleOutlined,
+  SoundOutlined,
+  BookOutlined,
+  EditOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
-import { Link } from "react-router-dom";
+import { logout } from "../store/authReducer";
+import { useDispatch } from "react-redux";
 
 const { Sider } = Layout;
 
-const Navbar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+const Navbar = ({ collapsed }) => {
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
+  const selectedKey = location.pathname || "/dashboard";
+
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login"); // Redirect to login page
   };
 
-  const deftaultSelectedKey = location.pathname || "/dashboard";
-
   return (
-    <Sider collapsible collapsed={collapsed} onCollapse={toggleCollapse}>
+    <Sider
+      collapsible
+      collapsed={collapsed}
+      width={220}
+      trigger={null}
+      style={{
+        position: "relative",
+        background: colorBgContainer, // dark blue
+        // boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
+        minHeight: "100vh",
+      }}
+    >
       <div
         className="logo"
-        style={{ color: "white", textAlign: "center", padding: "16px" }}
+        style={{
+          textAlign: "center",
+          padding: "16px",
+          transition: "all 0.3s ease",
+        }}
       >
         <Link to="/dashboard">
           <Image
             src={logo}
-            style={{ borderRadius: "8px" }}
             alt="Mock Exam Logo"
-            width={collapsed ? 40 : 100} // Adjust size based on collapsed state
             preview={false}
+            width={collapsed ? 40 : 120}
+            style={{
+              borderRadius: "10px",
+              boxShadow: "0 4px 10px rgba(255, 255, 255, 0.1)",
+              transition: "all 0.3s ease",
+            }}
           />
         </Link>
       </div>
 
       <Menu
-        theme="dark"
+        theme="light"
         mode="inline"
-        defaultSelectedKeys={[deftaultSelectedKey]}
+        selectedKeys={[selectedKey]}
+        defaultOpenKeys={["/dashboard/ielts"]}
+        style={{
+          // backgroundColor: "#0f172a",
+          fontWeight: "500",
+        }}
         items={[
           {
             key: "/dashboard",
             icon: <FileTextOutlined />,
-            label: <Link to="/dashboard">Dashboard</Link>,
+            label: <Link to="/dashboard">Home</Link>,
           },
           {
             key: "/dashboard/users",
             icon: <UserOutlined />,
             label: <Link to="/dashboard/users">Users</Link>,
           },
-          // {
-          //   key: "/dashboard/exams",
-          //   icon: <TeamOutlined />,
-          //   label: <Link to="/dashboard/exams">Exams</Link>,
-          // },
           {
-            key: "/dashboard/ielts",
-            icon: <ExclamationCircleOutlined />,
-            label: "IELTS",
-            children: [
-              {
-                key: "/dashboard/ielts/listening",
-                label: <Link to="/dashboard/ielts/listening">Listening</Link>,
-              },
-              {
-                key: "/dashboard/ielts/reading",
-                label: <Link to="/dashboard/ielts/reading">Reading</Link>,
-              },
-              {
-                key: "/dashboard/ielts/writing",
-                label: <Link to="/dashboard/ielts/writing">Writing</Link>,
-              },
-            ],
+            key: "/dashboard/ielts/listening",
+            icon: <SoundOutlined />,
+            label: <Link to="/dashboard/ielts/listening">Listening</Link>,
+          },
+          {
+            key: "/dashboard/ielts/reading",
+            icon: <BookOutlined />,
+            label: <Link to="/dashboard/ielts/reading">Reading</Link>,
+          },
+          {
+            key: "/dashboard/ielts/writing",
+            icon: <EditOutlined />,
+            label: <Link to="/dashboard/ielts/writing">Writing</Link>,
+          },
+          {
+            key: "logout",
+            icon: <LogoutOutlined />,
+            label: (
+              <span onClick={handleLogout} style={{ cursor: "pointer" }}>
+                Logout
+              </span>
+            ),
+            style: {
+              color: "red",
+              position: "absolute",
+              bottom: 0,
+            },
           },
         ]}
       />

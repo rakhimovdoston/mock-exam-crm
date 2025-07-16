@@ -71,3 +71,12 @@ button:focus-visible {
 .highlighted-text {
   background-color: yellow;
 }
+
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: #1e293b !important;
+  border-left: 4px solid #22c55e;
+}
+
+.ant-menu-dark .ant-menu-item:hover {
+  background-color: #334155 !important;
+}
