@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSlateStatic, ReactEditor } from "slate-react";
 import { Transforms } from "slate";
 import { Input, Button, Card, Tooltip } from "antd";
@@ -10,6 +10,14 @@ const MultipleChoiceElement = ({ attributes, children, element }) => {
   // Local state for question and options
   const [localQuestion, setLocalQuestion] = useState(element.question || "");
   const [localOptions, setLocalOptions] = useState(element.options || []);
+
+  useEffect(() => {
+    setLocalOptions(element.options || []);
+  }, [element.options]);
+
+  useEffect(() => {
+    setLocalQuestion(element.question || "");
+  }, [element.question]);
 
   const handleQuestionChange = (e) => {
     setLocalQuestion(e.target.value); // Update local state only
@@ -90,6 +98,7 @@ const MultipleChoiceElement = ({ attributes, children, element }) => {
             value={localQuestion}
             onChange={handleQuestionChange} // Update local state only
             onBlur={handleQuestionBlur} // Update Slate state on blur
+            onKeyDown={(e) => e.stopPropagation()}
             placeholder="Enter your question here..."
             style={{ flex: 1 }}
           />
@@ -106,11 +115,14 @@ const MultipleChoiceElement = ({ attributes, children, element }) => {
               alignItems: "center",
             }}
           >
-            <span style={{ width: 20, fontWeight: 700 }}>{String.fromCharCode(65 + index)}.</span>
+            <span style={{ width: 20, fontWeight: 700 }}>
+              {String.fromCharCode(65 + index)}.
+            </span>
             <Input
               value={option}
               onChange={(event) => handleOptionChange(index, event)} // Update local state only
               onBlur={() => handleOptionBlur(index)} // Update Slate state on blur
+              onKeyDown={(e) => e.stopPropagation()}
               style={{ flex: 1 }}
               placeholder={`Option ${index + 1}`}
             />

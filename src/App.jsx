@@ -5,6 +5,7 @@ import { Layout, Spin } from "antd";
 import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./routes/ProtectedRouted";
 import { fetchProfile } from "./store/authReducer";
+import ReadingUpdate from "./pages/update/ReadingUpdate";
 
 // Lazy load pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -106,6 +107,7 @@ function App() {
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />
               <Route path="ielts/reading/create" element={<NewReading />} />
+              <Route path="ielts/reading/:id/update" element={<ReadingUpdate />} />
               <Route
                 path="ielts/reading/:id/questions"
                 element={<ReadingAnswers />}

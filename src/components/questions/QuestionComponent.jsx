@@ -4,8 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import { Button, Select, Skeleton, Typography } from "antd";
-import { DeleteOutlined, EditOutlined, MenuOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import {
+  existMatchingHeadingsQuestions,
   getInitValue,
   getLastQuestionId,
   getQuestionNumbers,
@@ -147,11 +148,13 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
 
   const getStart = (questions) => {
     let lastQuestionNumber = getLastQuestionId(questions);
+    // difficultType
     const startByQuestionType = getStartByQuestionType(
       difficultType,
       type === "listening" ? "LISTENING" : "READING"
     );
-    lastQuestionNumber = isMatchinHeadings(data?.data.questions)
+
+    lastQuestionNumber = isMatchinHeadings(data?.data?.questions)
       ? lastQuestionNumber
         ? lastQuestionNumber + countLists
         : startByQuestionType + countLists
@@ -243,7 +246,7 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
               <p style={{ fontSize: 20, fontWeight: "bold" }}>
                 Questions{" "}
                 {question.type === "Matching Headings"
-                  ? getQuestionNumbersForHeadins(countLists)
+                  ? getQuestionNumbersForHeadins(countLists, difficultType)
                   : getQuestionNumbers(question)}
               </p>
               <div style={{ display: "flex", gap: 10 }}>
@@ -254,14 +257,16 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
                     setUpdate(true);
                   }}
                 />
-                <Button
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={() => {
-                    setSelectedQuestion(question);
-                    setDelete(true);
-                  }}
-                />
+                {question.type !== "Matching Headings" && (
+                  <Button
+                    icon={<DeleteOutlined />}
+                    danger
+                    onClick={() => {
+                      setSelectedQuestion(question);
+                      setDelete(true);
+                    }}
+                  />
+                )}
               </div>
             </div>
             <RichTextViewer
@@ -304,24 +309,54 @@ const QuestionComponent = ({ type, difficultType, countLists }) => {
             questions={questions}
             setOpen={setDelete}
             type={type}
-            start={getStartByQuestionType(
-              difficultType,
-              type === "reading" ? "READING" : "LISTENING"
-            )}
+            start={
+              existMatchingHeadingsQuestions(questions)
+                ? countLists +
+                  getStartByQuestionType(
+                    difficultType,
+                    type === "reading" ? "READING" : "LISTENING"
+                  )
+                : getStartByQuestionType(
+                    difficultType,
+                    type === "reading" ? "READING" : "LISTENING"
+                  )
+            }
             refresh={refresh}
             setRefresh={setRefresh}
           />
           <UpdateModal
-            number={getQuestionNumbers(selectedQuestion)}
+            number={
+              selectedQuestion.type === "Matching Headings"
+                ? getStartByQuestionType(
+                    difficultType,
+                    type === "reading" ? "READING" : "LISTENING"
+                  ) +
+                  1 +
+                  "-" +
+                  (countLists +
+                    getStartByQuestionType(
+                      difficultType,
+                      type === "reading" ? "READING" : "LISTENING"
+                    ))
+                : getQuestionNumbers(selectedQuestion)
+            }
             selectedQuestion={selectedQuestion}
             open={isUpdate}
             questions={questions}
             setOpen={setUpdate}
             type={type}
-            start={getStartByQuestionType(
-              difficultType,
-              type === "reading" ? "READING" : "LISTENING"
-            )}
+            start={
+              existMatchingHeadingsQuestions(questions)
+                ? countLists +
+                  getStartByQuestionType(
+                    difficultType,
+                    type === "reading" ? "READING" : "LISTENING"
+                  )
+                : getStartByQuestionType(
+                    difficultType,
+                    type === "reading" ? "READING" : "LISTENING"
+                  )
+            }
             refresh={refresh}
             setRefresh={setRefresh}
           />

@@ -69,6 +69,12 @@ const DeleteModal = ({
   };
 
   const getStart = (startQuestion) => {
+    if (!startQuestion || startQuestion.length === 0) return 0;
+    const lastQuestion = startQuestion[startQuestion.length - 1];
+
+    if (lastQuestion.type === "Matching Headings") {
+      return start;
+    }
     let startByQuestions = getLastQuestionId(startQuestion);
     if (startByQuestions == 0) {
       startByQuestions = start;

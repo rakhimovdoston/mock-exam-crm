@@ -75,7 +75,7 @@ const OrderedListElement = ({ attributes, children, element }) => {
       style={{
         listStyle: element.listStyleType || "decimal",
         padding: "0 0 0 20px",
-        width: "clamp(550px, 100%, 900px)",
+        width: "clamp(450px, 100%, 900px)",
       }}
       start={checkISDecimal(element)}
     >

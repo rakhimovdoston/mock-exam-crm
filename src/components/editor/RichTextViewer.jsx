@@ -20,6 +20,7 @@ import { DragProvider } from "./contexts/DragContext";
 import { useDispatch } from "react-redux";
 import { updateAnswer } from "../../store/answerReducer";
 import { canDragAndDrop } from "./editorUtils";
+import { getStartByQuestionType } from "../../utils";
 
 const initialValue = [
   {
@@ -126,7 +127,13 @@ function injectHeadingOptions(content, headings, type) {
   return inject(content);
 }
 
-const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
+const RichTextViewer = ({
+  content,
+  headings,
+  type,
+  is_passage = false,
+  difficultType = "default",
+}) => {
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline; // Save the original method
@@ -159,11 +166,7 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
       case "input":
         return <InputElement {...props} dragAndDrop={checkDragAndDrop} />;
       case "ordered-list":
-        return (
-          <OrderedListElement
-            {...props}
-          />
-        );
+        return <OrderedListElement {...props} />;
       case "unordered-list":
         return (
           <UnorderedListElement
@@ -179,7 +182,7 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
             {...props}
             is_passage={is_passage}
             index={index}
-            startQuestionNumber={1}
+            startQuestionNumber={getStartByQuestionType(difficultType) + 1}
             dragAndDrop={checkDragAndDrop}
             type={type}
           />

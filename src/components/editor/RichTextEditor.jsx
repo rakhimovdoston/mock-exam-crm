@@ -21,6 +21,7 @@ import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultip
 import { Modal, Progress } from "antd";
 import apiClient from "../../services/api";
 import { ResizableTableCell } from "./elements/ResizableTableCell";
+import { toast } from "react-toastify";
 
 const initialValue = [
   {
@@ -92,15 +93,13 @@ const RichTextEditor = ({
   const handlePaste = (editor, event) => {
     const clipboardData = event.clipboardData;
     const items = clipboardData.items;
-    
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      console.log("Working: ", item);
-      
       if (item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (file) {
-          insertImage(file)
+          insertImage(file);
         }
       }
     }
@@ -122,6 +121,12 @@ const RichTextEditor = ({
           setUploadProgress(percentCompleted);
         },
       });
+      if (response.code !== 200) {
+        toast.error(
+          response.message || "Failed to upload image. Please try again."
+        );
+        return;
+      }
 
       const image = {
         type: "image",
@@ -135,7 +140,7 @@ const RichTextEditor = ({
       });
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image. Please try again.");
+      toast.error(error.response.data.message || "Failed to upload image. Please try again.");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -168,7 +173,11 @@ const RichTextEditor = ({
         }}
       >
         {!readonly && (
-          <Toolbar is_passage={is_passage} startInputId={startQuestionId} insertImage={insertImage} />
+          <Toolbar
+            is_passage={is_passage}
+            startInputId={startQuestionId}
+            insertImage={insertImage}
+          />
         )}
         <Editable
           style={{

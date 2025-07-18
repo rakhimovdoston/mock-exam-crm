@@ -22,8 +22,9 @@ export const getInitValue = (data, type) => {
       };
 };
 
-export const getQuestionNumbersForHeadins = (count) => {
-  return 1 + "-" + (count || 0);
+export const getQuestionNumbersForHeadins = (count, difficultType) => {
+  const startQuestionType = getStartByQuestionType(difficultType);
+  return startQuestionType + 1 + "-" + (startQuestionType + count || 0);
 };
 
 export const getQuestionNumbers = (question) => {
@@ -118,6 +119,19 @@ export const getMinMaxQuestionIds = (content) => {
   return ids[0] + "-" + ids[ids.length - 1] || "";
 };
 
+export const getQuestionType = (type) => {
+  switch (type) {
+    case "easy":
+      return "Reading passage 1";
+    case "medium":
+      return "Reading passage 2";
+    case "hard":
+      return "Reading passage 3";
+    default:
+      return "Reading passage 1";
+  }
+};
+
 export const getStartByQuestionType = (type, module = "READING") => {
   if (module === "READING") {
     switch (type) {
@@ -152,6 +166,13 @@ export const isMatchinHeadings = (questions) => {
   if (!questions || questions.length === 0) return false;
   const lastQuestion = questions[questions.length - 1];
   return lastQuestion.type === "Matching Headings";
+};
+
+export const existMatchingHeadingsQuestions = (questions) => {
+  for (const question of questions) {
+    if (question.type === "Matching Headings") return true;
+  }
+  return false;
 };
 
 export const getLastQuestionId = (questions) => {

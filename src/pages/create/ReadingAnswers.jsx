@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Spin, Result, Button, Divider, Layout } from "antd";
+import { Spin, Result, Button, Divider, Layout, Typography, Flex } from "antd";
 import useApiRequest from "../../hooks/useApiRequest";
 import emptyCart from "../../assets/not_found.svg";
 import { toast } from "react-toastify";
@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearAnswers } from "../../store/answerReducer";
 import apiClient from "../../services/api";
 import QuestionComponent from "../../components/questions/QuestionComponent";
+import { getQuestionType } from "../../utils";
+import { EditOutlined } from "@ant-design/icons";
 
 const ReadingAnswers = () => {
   const { id } = useParams();
@@ -62,7 +64,7 @@ const ReadingAnswers = () => {
   const countLists = () => {
     let count = 0;
     for (const node of data.data.content) {
-      if (node.type === "ordered-list") {
+      if (node.type === "ordered-list" || node.type === "unordered-list") {
         count +=
           node.children?.filter((child) => child.type === "list-item").length ||
           0;
@@ -106,7 +108,7 @@ const ReadingAnswers = () => {
 
   // const handleDragEnd = ({ active, over }) => {
   //   console.log("Drag Ended", active, over);
-    
+
   //   if (over && active.data.current.type === "heading") {
   //     const headingText = active.data.current.text;
   //     const dropZoneId = over.id;
@@ -122,41 +124,56 @@ const ReadingAnswers = () => {
   return (
     <Layout style={{ padding: "20px 10px", borderRadius: "10px" }}>
       {/* <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}> */}
-        <div
+      <div
+        style={{
+          display: "flex",
+          gap: "20px",
+          marginTop: "20px",
+          maxHeight: "calc(100vh - 250px)",
+        }}
+      >
+        <Layout
           style={{
-            display: "flex",
-            gap: "20px",
-            marginTop: "20px",
-            maxHeight: "calc(100vh - 250px)",
+            flex: 1,
+            width: "50%",
+            borderRight: "1px solid #ddd",
+            paddingRight: "20px",
+            height: "100%",
+            overflowY: "scroll",
           }}
         >
-          <Layout
-            style={{
-              flex: 1,
-              width: "50%",
-              borderRight: "1px solid #ddd",
-              paddingRight: "20px",
-              height: "100%",
-              overflowY: "scroll",
-            }}
-          >
-            <RichTextViewer content={data.data.content} is_passage={true} />
-          </Layout>
-          <div
-            style={{
-              flex: 1,
-              width: "50%",
-              overflowY: "scroll",
-              paddingLeft: "20px",
-            }}
-          >
-            <QuestionComponent
-              type={"reading"}
-              difficultType={data?.data?.type}
-              countLists={countLists()}
+          <Flex justify="space-between" align="center">
+            <Typography.Title level={4}>
+              {getQuestionType(data?.data?.type)}
+            </Typography.Title>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                navigate(`/dashboard/ielts/reading/${id}/update`);
+              }}
             />
-          </div>
+          </Flex>
+          <RichTextViewer
+            content={data.data.content}
+            is_passage={true}
+            difficultType={data?.data?.type}
+          />
+        </Layout>
+        <div
+          style={{
+            flex: 1,
+            width: "50%",
+            overflowY: "scroll",
+            paddingLeft: "20px",
+          }}
+        >
+          <QuestionComponent
+            type={"reading"}
+            difficultType={data?.data?.type}
+            countLists={countLists()}
+          />
         </div>
+      </div>
       {/* </DndContext> */}
       <Divider />
       <div style={{ textAlign: "right" }}>

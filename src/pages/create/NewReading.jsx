@@ -39,7 +39,10 @@ const NewReading = () => {
     };
     setLoading(true);
     try {
-      const response = await apiClient.post("api/v1/reading/create/passage", data);
+      const response = await apiClient.post(
+        "api/v1/reading/create/passage",
+        data
+      );
       if (response.code !== 200) {
         console.error("Failed to save reading passage:", response);
         toast.error("Failed to save reading passage.");
@@ -80,7 +83,12 @@ const NewReading = () => {
       </div>
       <div>
         <p>Write or paste the reading passage in the editor below:</p>
-        <RichTextEditor is_passage={true} value={value} setValue={setValue} />
+        <RichTextEditor
+          is_passage={true}
+          value={value}
+          setValue={setValue}
+          passage_type={selectType}
+        />
       </div>
       <Flex style={{ justifyContent: "flex-end", marginTop: "10px" }}>
         <Button
