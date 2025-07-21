@@ -16,11 +16,13 @@ import DefaultElement from "./elements/DefaultElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
 import TableElementViewer from "./elements/TableElementViewer";
 import ListItemViewElement from "./elements/view/ListItemViewElement";
-import { DragProvider } from "./contexts/DragContext";
-import { useDispatch } from "react-redux";
-import { updateAnswer } from "../../store/answerReducer";
 import { canDragAndDrop } from "./editorUtils";
 import { getStartByQuestionType } from "../../utils";
+import { DragProvider } from "./contexts/DragContext";
+import { updateAnswer } from "../../store/answerReducer";
+import { useDispatch } from "react-redux";
+import { useLocation } from "react-router-dom";
+import { updateForUserAnswers } from "../../store/examReducer";
 
 const initialValue = [
   {
@@ -134,6 +136,8 @@ const RichTextViewer = ({
   is_passage = false,
   difficultType = "default",
 }) => {
+  const dispatch = useDispatch();
+  const location = useLocation();
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline; // Save the original method
@@ -147,8 +151,6 @@ const RichTextViewer = ({
 
     return baseEditor;
   }, []);
-
-  const dispatch = useDispatch();
 
   const renderElement = useCallback((props) => {
     const checkDragAndDrop = canDragAndDrop(content, type);
@@ -209,7 +211,11 @@ const RichTextViewer = ({
   }, [content, headings]);
 
   const onDropAnswer = (key, value) => {
-    dispatch(updateAnswer({ key, value }));
+    if (location.pathname.includes("/dashboard/ielts")) {
+      dispatch(updateAnswer({ key, value }));
+    } else {
+      dispatch(updateForUserAnswers({key, value}))
+    }
   };
 
   return (

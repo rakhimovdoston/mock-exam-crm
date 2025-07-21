@@ -27,6 +27,7 @@ import {
 import useApiRequest from "../../hooks/useApiRequest";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
+import { MaskedInput } from "antd-mask-input";
 
 const { Title, Text } = Typography;
 
@@ -208,6 +209,7 @@ const UserDetails = () => {
       email: user?.email,
       username: user?.username,
       password: "",
+      phone: user?.phone,
     });
   };
 
@@ -306,6 +308,27 @@ const UserDetails = () => {
                   <Input />
                 </Form.Item>
                 <Form.Item
+                  name="phone"
+                  label="Phone"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter your phone number!",
+                    },
+                    {
+                      pattern: /^\+998 \(\d{2}\) \d{3}-\d{2}-\d{2}$/,
+                      message: "Invalid phone number format",
+                    },
+                  ]}
+                >
+                  <MaskedInput
+                    mask="+998 (00) 000-00-00"
+                    placeholder="+998 (__) ___-__-__"
+                  />
+                </Form.Item>
+              </div>
+              <div style={{ display: "flex", width: "100%", gap: "10px" }}>
+                <Form.Item
                   label="Username"
                   style={{ flex: 1 }}
                   name="username"
@@ -313,14 +336,14 @@ const UserDetails = () => {
                 >
                   <Input />
                 </Form.Item>
+                <Form.Item
+                  label="Password"
+                  name="password"
+                  rules={[{ required: true, message: "Password is required" }]}
+                >
+                  <Input.Password />
+                </Form.Item>
               </div>
-              <Form.Item
-                label="Password"
-                name="password"
-                rules={[{ required: true, message: "Password is required" }]}
-              >
-                <Input.Password />
-              </Form.Item>
               <Space>
                 <Button
                   type="primary"
@@ -345,6 +368,9 @@ const UserDetails = () => {
               </div>
               <Text>
                 Email: <b>{user?.email}</b>
+              </Text>
+              <Text>
+                Phone: <b>{user?.phone}</b>
               </Text>
               <Text>
                 Login: <b>{user?.username}</b>

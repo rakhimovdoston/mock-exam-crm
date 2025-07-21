@@ -70,14 +70,19 @@ const ListItemViewElement = ({
   const isModernMatching =
     questionType &&
     (questionType === "Matching Information" ||
-      questionType === "Matching Features");
+      questionType === "Matching Features" ||
+      questionType === "Matching");
 
   const checkQuestionTypes =
     questionType &&
     (questionType === "Yes/No/Not Given" ||
       questionType === "True/False/Not Given");
 
-  if ((is_passage && parentNode.type === 'unordered-list' || questionType === "Matching Headings") || dragAndDrop) {    
+  if (
+    (is_passage && parentNode.type === "unordered-list") ||
+    questionType === "Matching Headings" ||
+    dragAndDrop
+  ) {
     return (
       <ListItemViewDragAndDropElement
         attributes={attributes}

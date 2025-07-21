@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiClient from "../services/api";
 import { enterFullScreen } from "../utils/documentUtils";
+import { logo } from "../assets";
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
@@ -18,11 +19,6 @@ const HomePage = () => {
   const [loading, setLoading] = useState();
 
   const handleStartExam = async () => {
-    enterFullScreen();
-    if (localStorage.getItem("exam_start")) {
-      navigate("exam");
-      return;
-    }
     setLoading(true);
     try {
       const response = await apiClient.get("api/v1/exam/start");
@@ -32,8 +28,8 @@ const HomePage = () => {
         );
         return;
       }
-      localStorage.setItem("exam_start", response.data.id);
-      navigate(`/exam`);
+      enterFullScreen();
+      navigate(`/exam/${response.data.name}`);
     } catch (error) {
       toast.error(
         "No new questions have been added yet, please wait for questions to be added."
@@ -53,6 +49,7 @@ const HomePage = () => {
           borderBottom: "1px solid #646cff",
         }}
       >
+        <img src={logo} alt="Logo" width={50} />
         <Title level={3} style={{ color: "white", margin: 0 }}>
           Welcome, {user?.firstname} {user?.lastname}
         </Title>
@@ -84,25 +81,6 @@ const HomePage = () => {
           size="large"
           icon={<PlayCircleOutlined />}
           onClick={handleStartExam}
-          // style={{
-          //   background: "linear-gradient(90deg, #646cff, #4096ff)",
-          //   border: "none",
-          //   color: "white",
-          //   fontSize: "18px",
-          //   fontWeight: "bold",
-          //   padding: "10px 30px",
-          //   borderRadius: "8px",
-          //   boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-          //   transition: "transform 0.2s, box-shadow 0.2s",
-          // }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = "scale(1.05)";
-            e.target.style.boxShadow = "0 6px 12px rgba(0, 0, 0, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = "scale(1)";
-            e.target.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
-          }}
         >
           Start Exam
         </Button>

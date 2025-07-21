@@ -15,7 +15,7 @@ const DeleteModal = ({
   start,
   setRefresh,
   refresh,
-}) => {
+}) => {  
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
 
@@ -69,7 +69,7 @@ const DeleteModal = ({
   };
 
   const getStart = (startQuestion) => {
-    if (!startQuestion || startQuestion.length === 0) return 0;
+    if (!startQuestion || startQuestion.length === 0) return start;
     const lastQuestion = startQuestion[startQuestion.length - 1];
 
     if (lastQuestion.type === "Matching Headings") {

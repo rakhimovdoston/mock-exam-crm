@@ -13,6 +13,7 @@ import {
   getNumberByPassageType,
   getPassageNumberByPassageType,
   getQuestionNumbers,
+  getQuestionNumbersForHeadins,
 } from "../../utils";
 import { toast } from "react-toastify";
 
@@ -148,7 +149,7 @@ const ReadingExam = () => {
   const countListHeader = (content) => {
     let count = 0;
     for (const node of content) {
-      if (node.type === "ordered-list") {
+      if (node.type === "ordered-list" || node.type === "unordered-list") {
         count +=
           node.children?.filter((child) => child.type === "list-item").length ||
           0;
@@ -253,7 +254,7 @@ const ReadingExam = () => {
                       which are based on Reading Passage{" "}
                       {getPassageNumberByPassageType(selectedPart)} below.
                     </p>
-                    <RichTextViewer content={part.content} type={""} />
+                    <RichTextViewer content={part.content} type={""} is_passage={true} difficultType={part.type} />
                   </div>
                 </Splitter.Panel>
                 <Splitter.Panel style={{ padding: "10px" }}>
@@ -266,7 +267,9 @@ const ReadingExam = () => {
                           color: "#1677ff",
                         }}
                       >
-                        Questions {getQuestionNumbers(question)}
+                        Questions {question.type === "Matching Headings"
+                                          ? getQuestionNumbersForHeadins(countListHeader(part.content), part.type)
+                                          : getQuestionNumbers(question)}
                       </p>
                       <RichTextViewer
                         headings={countListHeader(part.content)}

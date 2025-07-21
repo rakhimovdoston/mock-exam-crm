@@ -24,9 +24,12 @@ const OrderedListElement = ({ attributes, children, element }) => {
   const checkMatchingInformation =
     itemElement &&
     (itemElement.questionsType === "Matching Information" ||
-      itemElement.questionsType === "Matching Features");
+      itemElement.questionsType === "Matching Features" ||
+      itemElement.questionsType === "Matching");
 
   if (isDecimal(element) && checkMatchingInformation) {
+    console.log("Element: ", element);
+
     return (
       <div style={{ width: "100%" }}>
         <table

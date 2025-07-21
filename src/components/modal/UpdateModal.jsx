@@ -23,6 +23,7 @@ const UpdateModal = ({
 }) => {
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
+  console.log("Start update: ", start);
 
   const [value, setValue] = useState(selectedQuestion.content);
 
@@ -96,15 +97,17 @@ const UpdateModal = ({
     }
   };
 
-  const getStart = (startQuestion) => {
-    if (!startQuestion || startQuestion.length === 0) return 0;
-    const lastQuestion = startQuestion[startQuestion.length - 1];
+  const getStart = (questionStartAfterChange) => {
+    if (!questionStartAfterChange || questionStartAfterChange.length === 0)
+      return start;
+    const lastQuestion =
+      questionStartAfterChange[questionStartAfterChange.length - 1];
 
     if (lastQuestion.type === "Matching Headings") {
       return start;
     }
 
-    let startByQuestions = getLastQuestionId(startQuestion);
+    let startByQuestions = getLastQuestionId(questionStartAfterChange);
     if (startByQuestions == 0) {
       startByQuestions = start;
     }

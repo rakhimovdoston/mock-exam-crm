@@ -6,11 +6,12 @@ import emptyCart from "../../assets/not_found.svg";
 import { toast } from "react-toastify";
 import RichTextViewer from "../../components/editor/RichTextViewer";
 import { useDispatch, useSelector } from "react-redux";
-import { clearAnswers } from "../../store/answerReducer";
+import { clearAnswers, updateAnswer } from "../../store/answerReducer";
 import apiClient from "../../services/api";
 import QuestionComponent from "../../components/questions/QuestionComponent";
 import { getQuestionType } from "../../utils";
 import { EditOutlined } from "@ant-design/icons";
+import { DragProvider } from "../../components/editor/contexts/DragContext";
 
 const ReadingAnswers = () => {
   const { id } = useParams();
@@ -106,24 +107,8 @@ const ReadingAnswers = () => {
     }
   };
 
-  // const handleDragEnd = ({ active, over }) => {
-  //   console.log("Drag Ended", active, over);
-
-  //   if (over && active.data.current.type === "heading") {
-  //     const headingText = active.data.current.text;
-  //     const dropZoneId = over.id;
-
-  //     dispatch(updateAnswer({ key: dropZoneId, value: headingText }));
-  //   }
-  // };
-
-  // const handleDragStart = (event) => {
-  //   console.log("Drag started:", event);
-  // };
-
   return (
     <Layout style={{ padding: "20px 10px", borderRadius: "10px" }}>
-      {/* <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}> */}
       <div
         style={{
           display: "flex",
@@ -174,7 +159,6 @@ const ReadingAnswers = () => {
           />
         </div>
       </div>
-      {/* </DndContext> */}
       <Divider />
       <div style={{ textAlign: "right" }}>
         <Button

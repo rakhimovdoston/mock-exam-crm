@@ -1,5 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getQuestionNumbers } from "../utils";
+import {
+  countListHeaderOrDragDrop,
+  getQuestionNumbers,
+  getStartByQuestionType,
+} from "../utils";
 
 const examReducer = createSlice({
   name: "exam",
@@ -9,8 +13,10 @@ const examReducer = createSlice({
   reducers: {
     initilalizeExam: (state, action) => {
       const data = action.payload;
+
+      console.log(data);
+
       const answers = data.map((element) => {
-        // We'll collect all questions in a flat array
         const flatAnswers = [];
 
         element.questions.forEach((question) => {
@@ -21,6 +27,15 @@ const examReducer = createSlice({
               keys: quesNumbers,
               values: [],
             });
+          } else if (question.type === "Matching Headings") {
+            const countHeader = countListHeaderOrDragDrop(element.content);
+            const start = getStartByQuestionType(element.type);
+            for (let i = start + 1; i <= start + countHeader; i++) {
+              flatAnswers.push({
+                key: i,
+                value: "",
+              });
+            }
           } else {
             const [start, end] = quesNumbers.split("-").map(Number);
             for (let i = start; i <= end; i++) {

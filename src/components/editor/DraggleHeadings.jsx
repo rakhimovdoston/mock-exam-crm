@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 const DraggableHeading = ({ element }) => {
   const text = element.children[0]?.text;
   const { answers } = useSelector((state) => state.answer);
+  const examAnswers = useSelector((state) => state.exam);
   const [isDragging, setIsDragging] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false); // 👈 new state
   const dragRef = useRef(null);
@@ -24,12 +25,18 @@ const DraggableHeading = ({ element }) => {
     setIsMouseDown(false);
   };
 
-  const isUsed = answers.some((ans) => ans.value === text);
+  const isUsed = () => {
+    const usedInUserAnswers = answers.some((ans) => ans.value === text);
+    const usedInExamAnswers = examAnswers.answers.some((examAnswer) =>
+      examAnswer.answers.some((exAns) => exAns.value === text)
+    );
+    return usedInUserAnswers || usedInExamAnswers;
+  };
 
   return (
     <div
       ref={dragRef}
-      draggable={!isUsed}
+      draggable={!isUsed()}
       onMouseDown={() => setIsMouseDown(true)} // 👈 real click detection
       onMouseUp={() => setIsMouseDown(false)} // 👈 reset on mouse up
       onDragStart={handleDragStart}
@@ -40,14 +47,14 @@ const DraggableHeading = ({ element }) => {
         width: "fit-content",
         borderRadius: "5px",
         backgroundColor: isDragging ? "#dbe9ff" : "#fff",
-        cursor: isUsed ? "default" : "grab", // 👈 fix here
+        cursor: isUsed() ? "default" : "grab", // 👈 fix here
         fontSize: "14px",
         opacity: isDragging ? 0.7 : 1,
         marginBottom: "4px",
         userSelect: "none",
         fontWeight: "bold",
-        textDecoration: isUsed ? "line-through" : "none",
-        textDecorationColor: isUsed ? "#ff4d4f" : "none",
+        textDecoration: isUsed() ? "line-through" : "none",
+        textDecorationColor: isUsed() ? "#ff4d4f" : "none",
         border: isDragging ? "2px dashed #1677FF" : "1px solid #ddd",
         transition: "all 0.2s ease-in-out",
       }}

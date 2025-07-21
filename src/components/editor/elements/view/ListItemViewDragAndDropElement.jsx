@@ -15,6 +15,7 @@ const ListItemViewDragAndDropElement = ({
 }) => {
   const { onDropAnswer } = useDrag();
   const { answers } = useSelector((state) => state.answer);
+  const examAnswers = useSelector((state) => state.exam)
   const questionNumber = startNumber + index;
   const [isOver, setIsOver] = useState(false);
   const questionType = element.questionsType || null;
@@ -63,9 +64,19 @@ const ListItemViewDragAndDropElement = ({
   };
 
   const getValue = (number) => {
-    for (const ans of answers) {
-      if (ans.key === number) {
-        return ans.value;
+    if (answers.length > 0) {
+      for (const ans of answers) {
+        if (ans.key === number) {
+          return ans.value;
+        }
+      }
+    } else {
+      for (const examAnswer of examAnswers.answers) {
+        for (const exAns of examAnswer.answers) {
+          if (exAns.key === number) {
+            return exAns.value;
+          }
+        }
       }
     }
     return null;

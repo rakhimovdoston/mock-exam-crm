@@ -19,6 +19,7 @@ import {
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
+import { logo } from "../../assets";
 
 const { Header, Footer, Content } = Layout;
 
@@ -159,7 +160,7 @@ const WritingExam = () => {
         return;
       }
       toast.success("Answers submitted successfully!");
-      navigate("/exam");
+      navigate(`/exam/${id}`);
     } catch (error) {
       console.error("Error submitting answers:", error);
       toast.error("Failed to submit answers. Please try again.");
@@ -233,9 +234,16 @@ const WritingExam = () => {
               alignItems: "center",
             }}
           >
-            <span style={{ fontSize: "20px", fontWeight: 700 }}>
-              Writing Test
-            </span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              {/* {type === "reading" ? "Reading Test" : "Listening Test"} */}
+              <img src={logo} alt="Logo" width={100} />
+            </div>
             <span
               style={{
                 fontSize: "16px",

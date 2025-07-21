@@ -6,33 +6,19 @@ import {
   Divider,
   Flex,
   Layout,
+  Progress,
   Select,
-  Skeleton,
   Spin,
   Typography,
   Upload,
 } from "antd";
-import { DeleteOutlined, UploadOutlined } from "@ant-design/icons";
-import RichTextViewer from "../../components/editor/RichTextViewer";
-import QuestionModal from "../../components/modal/QuestionModal";
-import {
-  getInitValue,
-  getLastQuestionId,
-  getQuestionNumbers,
-  getStartByQuestionType,
-  getTitle,
-} from "../../utils";
-import { listening_inits } from "../../data/listening";
-import { setQuestionType } from "../../store/questionReducer";
+import { UploadOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  clearAnswers,
-  initializeAnswers,
-  setAnswers,
+  clearAnswers
 } from "../../store/answerReducer";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
-import DeleteModal from "../../components/modal/DeleteModal";
 import QuestionComponent from "../../components/questions/QuestionComponent";
 
 const { Option } = Select;
@@ -42,13 +28,8 @@ const NewListening = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [selectQuestionType, setSelectQuestionType] = useState("all");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [initKeys, setInitKeys] = useState([]);
   const [isRefresh, setRefresh] = useState(false);
-  const [isDelete, setDelete] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const { answers } = useSelector((state) => state.answer);
@@ -66,6 +47,7 @@ const NewListening = () => {
     }
     const formData = new FormData();
     formData.append("audio", file);
+    formData.append("id", id);
 
     try {
       const response = await apiClient.post("api/v1/file/audio", formData, {
@@ -86,7 +68,6 @@ const NewListening = () => {
       }
 
       setRefresh(!isRefresh);
-      setAudioFile(response.data.url);
     } catch (error) {
       console.error("Error uploading audio file:", error);
       toast.error("An error occurred while uploading the audio file.");

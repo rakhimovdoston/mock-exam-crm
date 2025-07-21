@@ -50,7 +50,7 @@ const Navbar = () => {
           {
             key: "/dashboard/users",
             icon: <UserOutlined />,
-            label: <Link to="/dashboard/users">Users</Link>,
+            label: <Link to="/dashboard/users">Students</Link>,
           },
           // {
           //   key: "/dashboard/exams",

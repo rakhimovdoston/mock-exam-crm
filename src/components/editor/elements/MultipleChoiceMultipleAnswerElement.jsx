@@ -39,7 +39,9 @@ const MultipleChoiceMultipleAnswerElement = ({
   const checkIsAnswer = (option, answers) => {
     if (answers.length > 0) {
       const keys = getKeys();
+      
       const answer = answers.find((a) => a.keys === keys);
+      
       if (answer && answer.values && answer.values.includes(option)) {
         return true;
       }
@@ -89,6 +91,8 @@ const MultipleChoiceMultipleAnswerElement = ({
             <Checkbox
               checked={checkIsAnswer(opt, answers)}
               onChange={(e) => {
+                console.log("Clicked:");
+                
                 if (answers.length > 0) {
                   dispatch(
                     updateMultipleAnswer({ keys: getKeys(), values: opt })

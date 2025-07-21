@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Button, Spin } from "antd";
+import { Card, Button, Spin, Layout } from "antd";
 import {
   FullscreenExitOutlined,
   FullscreenOutlined,
@@ -8,15 +8,16 @@ import {
 import { useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
 import useApiRequest from "../hooks/useApiRequest";
-import { useNavigate } from "react-router-dom";
+import { redirect, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { enterFullScreen, isFullScreen } from "../utils/documentUtils";
+import { logo } from "../assets";
 
 const UserPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const id = localStorage.getItem("exam_start");
+  const { id } = useParams();
 
   const { data, loading, error } = useApiRequest(`api/v1/exam/get/${id}`, [id]);
 
@@ -49,6 +50,10 @@ const UserPage = () => {
       .toString()
       .padStart(2, "0")} minutes ${secs.toString().padStart(2, "0")} seconds`;
   };
+
+  const getDisable = (writing, listening, reading) => {
+    return !(writing && reading && listening);
+  }
 
   if (loading) {
     return (
@@ -83,29 +88,35 @@ const UserPage = () => {
     >
       <div
         style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
+          width: "100%",
           display: "flex",
+          justifyContent: 'space-between',
+          padding: '0 20px',
           gap: "10px",
         }}
       >
-        <Button
-          onClick={enterFullScreen}
-          icon={
-            isFullScreen() ? <FullscreenExitOutlined /> : <FullscreenOutlined />
-          }
-        ></Button>
-        <Button
-          danger
-          icon={<LogoutOutlined />}
-          onClick={() => {
-            localStorage.removeItem("exam_start");
-            navigate("/");
-          }}
-        >
-          Exit
-        </Button>
+        <img src={logo} alt="Logo" width={100} />
+        <div style={{display: 'flex', gap: '10px'}}>
+          <Button
+            onClick={enterFullScreen}
+            icon={
+              isFullScreen() ? (
+                <FullscreenExitOutlined />
+              ) : (
+                <FullscreenOutlined />
+              )
+            }
+          ></Button>
+          <Button
+            danger
+            icon={<LogoutOutlined />}
+            onClick={() => {
+              navigate("/");
+            }}
+          >
+            Exit
+          </Button>
+        </div>
       </div>
       {error || !data || !data.data ? (
         <div
@@ -150,7 +161,7 @@ const UserPage = () => {
                             audio: true,
                           });
                         if (stream) {
-                          navigate(`/listening/${data.data.id}`);
+                          navigate(`/listening/${id}`);
                         }
                       } catch (error) {
                         console.error("Audio permission error: ", error);
@@ -179,7 +190,7 @@ const UserPage = () => {
                 <Button
                   type="primary"
                   disabled={data.data.reading}
-                  onClick={() => navigate(`/reading/${data.data.id}`)}
+                  onClick={() => navigate(`/reading/${id}`)}
                 >
                   Start
                 </Button>
@@ -192,16 +203,14 @@ const UserPage = () => {
                 <Button
                   type="primary"
                   disabled={data.data.writing}
-                  onClick={() => navigate(`/writing/${data.data.id}`)}
+                  onClick={() => navigate(`/writing/${id}`)}
                 >
                   Start
                 </Button>
               </div>
             </Card>
             <Button
-              disabled={
-                !data.data.writing && !data.data.listening && !data.data.reading
-              }
+              disabled={getDisable(data.data.writing, data.data.listening, data.data.reading)}
               onClick={() => {
                 localStorage.removeItem("exam_start");
                 dispatch(logout());

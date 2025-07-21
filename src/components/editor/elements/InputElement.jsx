@@ -95,8 +95,18 @@ const InputElement = ({
   };
 
   const getValueDragAndDrop = () => {
-    for (const ans of answers) {
-      if (ans.key === element.placeholder) return ans.value;
+    if (answers.length > 0) {
+      for (const ans of answers) {
+        if (ans.key === element.placeholder) return ans.value;
+      }
+    } else {
+      for (const examAnswer of userAnswers.answers) {
+        for (const exAns of examAnswer.answers) {
+          if (exAns.key === element.placeholder) {
+            return exAns.value;
+          }
+        }
+      }
     }
     return "";
   };

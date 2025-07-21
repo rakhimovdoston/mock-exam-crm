@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { dateFormat, getColor } from "../../utils";
 import moment from "moment";
 import dayjs from "dayjs";
+import { MaskedInput } from "antd-mask-input";
 
 const User = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -115,7 +116,7 @@ const User = () => {
       });
   };
 
-  const handleCreateUser = (values) => {
+  const handleCreateUser = (values) => {    
     apiClient
       .post("/api/v1/admin/user/save", values)
       .then((response) => {
@@ -345,6 +346,25 @@ const User = () => {
             ]}
           >
             <Input placeholder="Enter user email" />
+          </Form.Item>
+          <Form.Item
+            name="phone"
+            label="Phone"
+            rules={[
+              {
+                required: true,
+                message: "Please enter your phone number!",
+              },
+              {
+                pattern: /^\+998 \(\d{2}\) \d{3}-\d{2}-\d{2}$/,
+                message: "Invalid phone number format",
+              },
+            ]}
+          >
+            <MaskedInput
+              mask="+998 (00) 000-00-00"
+              placeholder="+998 (__) ___-__-__"
+            />
           </Form.Item>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
             <Form.Item
