@@ -30,10 +30,20 @@ const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
 const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
 const UserDetails = React.lazy(() => import("./pages/dashboard/UserDetailts"));
 const HomePage = React.lazy(() => import("./pages/HomePage"));
-const WritingDetails = React.lazy(() => import("./pages/create/WritingDetails"));
-const WritingHistory = React.lazy(() => import('./pages/details/WritingHistory'));
-const ReadingHistory = React.lazy(() => import('./pages/details/ReadingHistory'));
-const ListeningHistory = React.lazy(() => import('./pages/details/Listeninghistory'));
+const WritingDetails = React.lazy(() =>
+  import("./pages/create/WritingDetails")
+);
+const WritingHistory = React.lazy(() =>
+  import("./pages/details/WritingHistory")
+);
+const ReadingHistory = React.lazy(() =>
+  import("./pages/details/ReadingHistory")
+);
+const ListeningHistory = React.lazy(() =>
+  import("./pages/details/Listeninghistory")
+);
+const ContestPage = React.lazy(() => import("./pages/dashboard/ContestPage"));
+const UserBookingPage = React.lazy(() => import("./pages/booking/UserBookingPage"));
 
 const { Content: AntContent } = Layout;
 
@@ -102,12 +112,17 @@ function App() {
             >
               <Route path="" element={<DashboardPage />} />
               <Route path="users" element={<User />} />
+              <Route path="user/:id/booking" element={<UserBookingPage />} />
               <Route path="user/:id" element={<UserDetails />} />
+              <Route path="contest" element={<ContestPage />} />
               <Route path="ielts/listening" element={<Listening />} />
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />
               <Route path="ielts/reading/create" element={<NewReading />} />
-              <Route path="ielts/reading/:id/update" element={<ReadingUpdate />} />
+              <Route
+                path="ielts/reading/:id/update"
+                element={<ReadingUpdate />}
+              />
               <Route
                 path="ielts/reading/:id/questions"
                 element={<ReadingAnswers />}
@@ -115,9 +130,15 @@ function App() {
               <Route path="ielts/writing" element={<Writing />} />
               <Route path="ielts/writing/:id" element={<WritingDetails />} />
               <Route path="ielts/writing/create" element={<NewWriting />} />
-              <Route path="history/:userId/writing/:id" element={<WritingHistory />} />
+              <Route
+                path="history/:userId/writing/:id"
+                element={<WritingHistory />}
+              />
               <Route path="history/:id/reading" element={<ReadingHistory />} />
-              <Route path="history/:id/listening" element={<ListeningHistory />} />
+              <Route
+                path="history/:id/listening"
+                element={<ListeningHistory />}
+              />
             </Route>
             <Route
               path="exam/:id"

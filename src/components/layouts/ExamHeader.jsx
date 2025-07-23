@@ -31,7 +31,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
     } else if (totalExamTimeInSeconds) {
       setTimeLeft(totalExamTimeInSeconds);
     } else {
-      setTimeLeft(35 * 60);
+      setTimeLeft(30 * 60);
     }
   }, [type, totalExamTimeInSeconds]);
 
@@ -59,7 +59,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
         <span style={{ fontWeight: "bold" }}>
           {minutes > 0
             ? minutes.toString().padStart(2, "0")
-            : seconds.toString().padStart(2, "0")}
+            : secs.toString().padStart(2, "0")}
         </span>{" "}
         {minutes > 0 ? "minutes" : "seconds"} remaining
       </span>
@@ -72,6 +72,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
       type: type,
       questionAnswers: answers,
     };
+    console.log(request);
     try {
       const response = await apiClient.post(
         `/api/v1/exam/answers/${id}`,
@@ -184,7 +185,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
         centered
       >
         <Result
-          title="Are you sure you want to submit?"
+          title={timeLeft <= 0 ? "Time is up. send your answers" : "Are you sure you want to submit?"}
           // extra={
           //   <Button type="primary" key="console">
           //     Go Console

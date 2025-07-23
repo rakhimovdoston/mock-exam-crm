@@ -14,8 +14,6 @@ const examReducer = createSlice({
     initilalizeExam: (state, action) => {
       const data = action.payload;
 
-      console.log(data);
-
       const answers = data.map((element) => {
         const flatAnswers = [];
 

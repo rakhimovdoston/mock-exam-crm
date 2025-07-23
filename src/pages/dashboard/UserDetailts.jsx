@@ -208,7 +208,7 @@ const UserDetails = () => {
       lastname: user?.lastname,
       email: user?.email,
       username: user?.username,
-      password: "",
+      password: user?.password,
       phone: user?.phone,
     });
   };
@@ -374,6 +374,9 @@ const UserDetails = () => {
               </Text>
               <Text>
                 Login: <b>{user?.username}</b>
+              </Text>
+              <Text>
+                Password: <b>{user?.password}</b>
               </Text>
               <Button type="primary" onClick={handleEdit}>
                 Edit Details

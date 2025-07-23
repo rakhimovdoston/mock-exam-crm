@@ -5,6 +5,7 @@ import {
   TeamOutlined,
   FileTextOutlined,
   ExclamationCircleOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import logo from "../assets/logo.jpeg";
 import { Link } from "react-router-dom";
@@ -52,11 +53,11 @@ const Navbar = () => {
             icon: <UserOutlined />,
             label: <Link to="/dashboard/users">Students</Link>,
           },
-          // {
-          //   key: "/dashboard/exams",
-          //   icon: <TeamOutlined />,
-          //   label: <Link to="/dashboard/exams">Exams</Link>,
-          // },
+          {
+            key: "/dashboard/contest",
+            icon: <TrophyOutlined />,
+            label: <Link to="/dashboard/contest">Contests</Link>,
+          },
           {
             key: "/dashboard/ielts",
             icon: <ExclamationCircleOutlined />,
@@ -73,7 +74,7 @@ const Navbar = () => {
               {
                 key: "/dashboard/ielts/writing",
                 label: <Link to="/dashboard/ielts/writing">Writing</Link>,
-              },
+              }
             ],
           },
         ]}

@@ -8,6 +8,7 @@ import ExamHeader from "../../components/layouts/ExamHeader";
 import RichTextViewer from "../../components/editor/RichTextViewer";
 import { getQuestionNumbers } from "../../utils";
 import { initilalizeExam } from "../../store/examReducer";
+import { toast } from "react-toastify";
 
 const { Content } = Layout;
 
@@ -138,12 +139,6 @@ const ListeningExam = () => {
 
     const audioEl = audioRef.current;
     audioEl.src = audios[currentAudioIndex];
-    console.log(
-      "Playing audio: ",
-      audios[currentAudioIndex],
-      " currentIndex: ",
-      currentAudioIndex
-    );
 
     audioEl.play().catch((err) => console.error("Audio playback failed:", err));
     const handleEnded = () => {
@@ -188,7 +183,6 @@ const ListeningExam = () => {
         }
       };
     });
-    console.log("Total count: ", loadedCount);
   }, [audios]);
 
   if (loading) {
