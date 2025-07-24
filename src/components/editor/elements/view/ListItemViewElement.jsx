@@ -71,7 +71,7 @@ const ListItemViewElement = ({
     questionType &&
     (questionType === "Matching Information" ||
       questionType === "Matching Features" ||
-      questionType === "Matching");
+      questionType === "Matching" || questionType === 'Map & Plan Labelling');
 
   const checkQuestionTypes =
     questionType &&
@@ -144,6 +144,10 @@ const ListItemViewElement = ({
       </tr>
     );
   }
+  
+
+  if (questionType === 'Map & Plan Labelling' && parentNode.listStyleType === 'upper-alpha')
+    return <div></div>
 
   return (
     <li {...attributes}>

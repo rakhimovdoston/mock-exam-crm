@@ -1,6 +1,6 @@
 import React from "react";
 
-const OrderedListElement = ({ attributes, children, element }) => {
+const OrderedListElement = ({ attributes, children, element }) => {  
   const checkISDecimal = (element) => {
     return element.listStyleType === "decimal" ? element.start : 1;
   };
@@ -25,10 +25,10 @@ const OrderedListElement = ({ attributes, children, element }) => {
     itemElement &&
     (itemElement.questionsType === "Matching Information" ||
       itemElement.questionsType === "Matching Features" ||
-      itemElement.questionsType === "Matching");
+      itemElement.questionsType === "Matching" || itemElement.questionsType === 'Map & Plan Labelling');
+      
 
   if (isDecimal(element) && checkMatchingInformation) {
-    console.log("Element: ", element);
 
     return (
       <div style={{ width: "100%" }}>
