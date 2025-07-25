@@ -7,6 +7,7 @@ import {
   BookOutlined,
   EditOutlined,
   LogoutOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
@@ -86,6 +87,11 @@ const Navbar = ({ collapsed }) => {
             key: "/dashboard/users",
             icon: <UserOutlined />,
             label: <Link to="/dashboard/users">Users</Link>,
+          },
+          {
+            key: "/dashboard/context",
+            icon: <TrophyOutlined />,
+            label: <Link to="/dashboard/context">Context</Link>,
           },
           {
             key: "/dashboard/ielts/listening",

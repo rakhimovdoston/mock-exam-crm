@@ -5,7 +5,6 @@ import {
   Path,
   Node,
   Element as SlateElement,
-  start,
 } from "slate";
 import { useSlate } from "slate-react";
 import {
@@ -23,18 +22,14 @@ import {
   BoldOutlined,
   ItalicOutlined,
   UnderlineOutlined,
-  AlignLeftOutlined,
-  AlignCenterOutlined,
-  AlignRightOutlined,
-  TableOutlined,
   DeleteOutlined,
-  UploadOutlined,
-  OrderedListOutlined,
-  UnorderedListOutlined,
-  FormOutlined,
-  CheckSquareOutlined,
-  PlusCircleOutlined,
   PlusOutlined,
+  AppstoreAddOutlined,
+  PictureOutlined,
+  EditOutlined,
+  BarsOutlined,
+  CheckCircleOutlined,
+  DotChartOutlined,
 } from "@ant-design/icons";
 import { insertTable, isFormatActive, toggleFormat } from "./editorUtils";
 import { toast } from "react-toastify";
@@ -368,107 +363,96 @@ const Toolbar = ({ is_passage, startInputId = 0, insertImage }) => {
         </Space>
       </Modal>
 
-      <Space style={{ marginBottom: "10px" }} wrap>
-        <Tooltip title="Bold (Ctrl+B)">
-          <Button
-            type={isFormatActive(editor, "bold") ? "primary" : "default"}
-            icon={<BoldOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleFormat(editor, "bold");
-            }}
-          />
-        </Tooltip>
-        <Tooltip title="Italic (Ctrl+I)">
-          <Button
-            type={isFormatActive(editor, "italic") ? "primary" : "default"}
-            icon={<ItalicOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleFormat(editor, "italic");
-            }}
-          />
-        </Tooltip>
-        <Tooltip title="Underline (Ctrl+U)">
-          <Button
-            type={isFormatActive(editor, "underline") ? "primary" : "default"}
-            icon={<UnderlineOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleFormat(editor, "underline");
-            }}
-          />
-        </Tooltip>
-        <Popover
-          content={content}
-          open={popoverVisible}
-          onOpenChange={setPopoverVisible}
-          title="Insert Table"
-          trigger="click"
-        >
-          <Button icon={<TableOutlined />} />
-        </Popover>
-        <Tooltip title="Upload Image">
-          <Upload
-            showUploadList={false}
-            accept="image/*"
-            beforeUpload={(file) => {
-              insertImage(file);
-              return false; // Prevent default upload behavior
-            }}
-          >
-            <Button icon={<UploadOutlined />} />
-          </Upload>
-        </Tooltip>
-        {!is_passage && (
-          <Tooltip title="Insert Input">
+      <Space style={{ marginBottom: "10px" }}>
+        <Space.Compact>
+          <Tooltip title="Bold">
             <Button
-              icon={<FormOutlined />}
+              type={isFormatActive(editor, "bold") ? "primary" : "default"}
+              icon={<BoldOutlined />}
               onMouseDown={(e) => {
                 e.preventDefault();
-                insertInput("text");
+                toggleFormat(editor, "bold");
               }}
             />
           </Tooltip>
-        )}
-        {!is_passage && (
-          <Dropdown menu={{ items: multipleChoiceItems }} trigger={["hover"]}>
-            <Button icon={<CheckSquareOutlined />} />
-          </Dropdown>
-        )}
-        <Dropdown menu={{ items: orderedListMenuItems }} trigger={["hover"]}>
-          <Button icon={<OrderedListOutlined />}></Button>
-        </Dropdown>
-        <Tooltip title="Unordered List">
-          <Button
-            icon={<UnorderedListOutlined />}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              insertList("unordered-list");
-            }}
-          />
-        </Tooltip>
-        {/* <Tooltip title="Clear Area">
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            onClick={() => {
-              Transforms.delete(editor, {
-                at: [],
-                match: () => true,
-              });
 
-              Transforms.insertNodes(editor, {
-                type: "paragraph",
-                children: [{ text: "" }],
-              });
-              const firstNodePath = Editor.start(editor, [0]);
-              Transforms.select(editor, firstNodePath);
-          
-              editor.history = { undos: [], redos: [] };
-            }}
-          />
-        </Tooltip> */}
+          <Tooltip title="Italic">
+            <Button
+              type={isFormatActive(editor, "italic") ? "primary" : "default"}
+              icon={<ItalicOutlined />}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                toggleFormat(editor, "italic");
+              }}
+            />
+          </Tooltip>
+
+          <Tooltip title="Underline">
+            <Button
+              type={isFormatActive(editor, "underline") ? "primary" : "default"}
+              icon={<UnderlineOutlined />}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                toggleFormat(editor, "underline");
+              }}
+            />
+          </Tooltip>
+
+          <Popover
+            content={content}
+            open={popoverVisible}
+            onOpenChange={setPopoverVisible}
+            title="Insert Table"
+            trigger="click"
+          >
+            <Button icon={<AppstoreAddOutlined />} />
+          </Popover>
+
+          <Tooltip title="Insert Image">
+            <Upload
+              showUploadList={false}
+              accept="image/*"
+              beforeUpload={(file) => {
+                insertImage(file);
+                return false;
+              }}
+            >
+              <Button icon={<PictureOutlined />} />
+            </Upload>
+          </Tooltip>
+
+          {!is_passage && (
+            <Tooltip title="Insert Input">
+              <Button
+                icon={<EditOutlined />}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  insertInput("text");
+                }}
+              />
+            </Tooltip>
+          )}
+
+          {!is_passage && (
+            <Dropdown menu={{ items: multipleChoiceItems }} trigger={["hover"]}>
+              <Button icon={<CheckCircleOutlined />} />
+            </Dropdown>
+          )}
+
+          <Dropdown menu={{ items: orderedListMenuItems }} trigger={["hover"]}>
+            <Button icon={<BarsOutlined />} />
+          </Dropdown>
+
+          <Tooltip title="Unordered List">
+            <Button
+              icon={<DotChartOutlined />}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                insertList("unordered-list");
+              }}
+            />
+          </Tooltip>
+        </Space.Compact>
       </Space>
     </>
   );

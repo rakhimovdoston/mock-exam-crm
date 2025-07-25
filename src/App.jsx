@@ -33,6 +33,9 @@ const WritingDetails = React.lazy(() => import("./pages/create/WritingDetails"))
 const WritingHistory = React.lazy(() => import('./pages/details/WritingHistory'));
 const ReadingHistory = React.lazy(() => import('./pages/details/ReadingHistory'));
 const ListeningHistory = React.lazy(() => import('./pages/details/Listeninghistory'));
+const ContextsPage = React.lazy(() => import("./pages/dashboard/ContextsPage"));
+const ContextDetailPage = React.lazy(() => import("./pages/dashboard/ContextDetailPage"));
+const ContextCreatePage = React.lazy(() => import("./pages/dashboard/ContextCreatePage"));
 
 const { Content: AntContent } = Layout;
 
@@ -103,6 +106,9 @@ function App() {
               <Route path="users" element={<User />} />
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="ielts/listening" element={<Listening />} />
+              <Route path="context" element={<ContextsPage />} />
+              <Route path="context/create" element={<ContextCreatePage />} />
+              <Route path="context/:id" element={<ContextDetailPage />} />
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />
               <Route path="ielts/reading/create" element={<NewReading />} />

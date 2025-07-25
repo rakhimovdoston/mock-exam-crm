@@ -23,8 +23,9 @@ export const getInitValue = (data, type) => {
 };
 
 export const getQuestionNumbers = (question) => {
-  if (question.type === "Multiple Choice (Multiple answers)")
+  if (question.type === "Multiple Choice (Multiple answers)") {    
     return getMinMaxFromMultipleAnswer(question.content);
+  }
 
   if (
     question.type === "Multiple Choice" ||
