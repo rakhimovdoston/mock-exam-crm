@@ -72,7 +72,6 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
       type: type,
       questionAnswers: answers,
     };
-    console.log(request);
     try {
       const response = await apiClient.post(
         `/api/v1/exam/answers/${id}`,
