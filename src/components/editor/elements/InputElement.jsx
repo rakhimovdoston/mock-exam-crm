@@ -73,7 +73,7 @@ const InputElement = ({ attributes, element, children, view = true }) => {
     setIsModalOpen(false);
   };
 
-  const hasAnswer = Boolean(inpValue || selectedValues)
+  const hasAnswer = Boolean(inpValue || selectedValues);
 
   return (
     <span
@@ -84,7 +84,7 @@ const InputElement = ({ attributes, element, children, view = true }) => {
       {checkUrl() && view ? (
         <>
           <Button
-          type={hasAnswer ? "primary": "default"}
+            type={hasAnswer ? "primary" : "default"}
             style={{ width: "100px" }}
             onClick={() => setIsModalOpen(true)}
           >
@@ -118,6 +118,11 @@ const InputElement = ({ attributes, element, children, view = true }) => {
           placeholder={element.placeholder}
           value={inpValue || inputValue || getValue()}
           onChange={handleChange}
+          autoComplete="off"
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="off"
+          allowClear={false}
           onBlur={handleBlur}
           style={{
             padding: "4px",

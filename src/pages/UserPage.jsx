@@ -88,7 +88,7 @@ const UserPage = () => {
   const handleAudioAccess = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (stream) navigate(`/listening/${data.data.id}`);
+      if (stream) navigate(`/listening/${id}`);
     } catch (err) {
       if (err.name === "NotAllowedError") {
         toast.info("Please enable microphone access in your browser settings.");
@@ -182,8 +182,8 @@ const UserPage = () => {
               title="Reading"
               desc="Test your reading comprehension."
               icon={<BookOutlined />}
-              disabled={data?.data?.reading || !data?.data?.listening}
-              onClick={() => navigate(`/reading/${data.data.id}`)}
+              disabled={data?.data?.reading}
+              onClick={() => navigate(`/reading/${id}`)}
             />
           </Col>
           <Col>
@@ -191,8 +191,8 @@ const UserPage = () => {
               title="Writing"
               desc="Demonstrate your writing skills."
               icon={<EditOutlined />}
-              disabled={data?.data?.writing || !data?.data?.reading}
-              onClick={() => navigate(`/writing/${data.data.id}`)}
+              disabled={data?.data?.writing}
+              onClick={() => navigate(`/writing/${id}`)}
             />
           </Col>
         </Row>
@@ -203,9 +203,9 @@ const UserPage = () => {
             type="default"
             danger
             disabled={
-              !data?.data?.listening &&
-              !data?.data?.reading &&
-              !data?.data?.writing
+              !(data?.data?.listening &&
+              data?.data?.reading &&
+              data?.data?.writing)
             }
             onClick={() => {
               dispatch(logout());

@@ -60,6 +60,11 @@ const InputViewElement = ({ attributes, element, children }) => {
         id={"ques-" + (element.placeholder || "input")}
         placeholder={element.placeholder}
         value={inpValue || inputValue || getValue()}
+        autoComplete="off"
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
+        allowClear={false}
         onChange={handleChange}
         onBlur={handleBlur}
         style={{
