@@ -66,7 +66,9 @@ const WritingExam = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setIsModalVisible(true); // Show modal when timeLeft reaches 0
-          handleModalOk();
+          setTimeout(() => {
+            handleModalOk();
+          }, 2000);
           return 0;
         }
         return prevTime - 1;

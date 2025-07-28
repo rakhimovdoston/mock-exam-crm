@@ -43,7 +43,9 @@ const ListeningHistory = React.lazy(() =>
   import("./pages/details/Listeninghistory")
 );
 const ContestPage = React.lazy(() => import("./pages/dashboard/ContestPage"));
-const UserBookingPage = React.lazy(() => import("./pages/booking/UserBookingPage"));
+const UserBookingPage = React.lazy(() =>
+  import("./pages/booking/UserBookingPage")
+);
 
 const { Content: AntContent } = Layout;
 

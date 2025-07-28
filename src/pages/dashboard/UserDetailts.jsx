@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Spin,
   Typography,
@@ -12,22 +12,27 @@ import {
   Input,
   Button,
   Form,
-  Modal,
+  theme,
+  Tooltip,
 } from "antd";
 import {
   ReadOutlined,
-  EyeOutlined,
   SoundOutlined,
   EditOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   AudioOutlined,
+  ReloadOutlined,
+  CloseCircleOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { MaskedInput } from "antd-mask-input";
+import ScoreBox from "../../components/ScoreBox";
+import { calculateDuration, formatDate } from "../../utils/dateUtils";
 
 const { Title, Text } = Typography;
 
@@ -44,142 +49,10 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const ScoreBox = ({ id, icon, label, score, setRefresh, userId }) => {
-  const [isSpeakingModalVisible, setIsSpeakingModalVisible] = useState(false);
-  const [selectedSpeakingScore, setSelectedSpeakingScore] = useState(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSpeakingModalOk = async () => {
-    if (errorMessage) {
-      toast.error("Score must be between 0.0 and 9.0");
-      return;
-    }
-    setLoading(true);
-    const requestBody = {
-      examId: id,
-      type: "speaking",
-      score: selectedSpeakingScore,
-    };
-    try {
-      const response = await apiClient.post(
-        `api/v1/history/set-score/${userId}`,
-        requestBody
-      );
-      if (response.code !== 200) {
-        toast.error(response.message || "Set Score some error");
-        return;
-      }
-      setIsSpeakingModalVisible(false);
-      setRefresh((prev) => prev + 1);
-    } catch (err) {
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSpeakingModalCancel = () => {
-    setErrorMessage("");
-    setSelectedSpeakingScore(null);
-    setIsSpeakingModalVisible(false);
-  };
-
-  const handleInputChange = (e) => {
-    const value = parseFloat(e.target.value);
-    setSelectedSpeakingScore(e.target.value);
-    if (value < 0 || value > 9) {
-      setErrorMessage("Score must be between 0.0 and 9.0");
-    } else {
-      setErrorMessage("");
-    }
-  };
-
-  return (
-    <>
-      <Card
-        size="small"
-        style={{
-          minWidth: 120,
-          textAlign: "center",
-          backgroundColor: "#f0f5ff",
-          border: "1px solid #1890ff",
-          borderRadius: "8px",
-        }}
-      >
-        <Space direction="vertical">
-          {icon}
-          <Text strong>{label}</Text>
-          <Text>{score ?? "0.0"} ball</Text>
-          {label === "Speaking" ? (
-            <Button
-              onClick={() => {
-                setIsSpeakingModalVisible(true);
-                setSelectedSpeakingScore(score);
-              }}
-            >
-              Set score
-            </Button>
-          ) : (
-            <Link
-              to={
-                label === "Writing"
-                  ? `/dashboard/history/${userId}/${label.toLowerCase()}/${id}`
-                  : `/dashboard/history/${id}/${label.toLowerCase()}`
-              }
-            >
-              <Button type="dashed" icon={<EyeOutlined />} />
-            </Link>
-          )}
-        </Space>
-      </Card>
-      <Modal
-        title="Speaking Assessment"
-        open={isSpeakingModalVisible}
-        onOk={handleSpeakingModalOk}
-        okButtonProps={{
-          disabled: loading,
-          loading: loading,
-        }}
-        onCancel={handleSpeakingModalCancel}
-      >
-        <p>Current Speaking Score: {selectedSpeakingScore ?? "0.0"} ball</p>
-        <Input
-          min={0.0}
-          max={9.0}
-          value={selectedSpeakingScore}
-          placeholder="Enter new speaking score (5.5)"
-          type="number"
-          onChange={handleInputChange}
-        />
-        {errorMessage && (
-          <p style={{ color: "red", marginTop: "10px" }}>{errorMessage}</p>
-        )}
-      </Modal>
-    </>
-  );
-};
-
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString();
-};
-
-const calculateDuration = (start, end) => {
-  if (!start || !end) return "N/A";
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const diffMs = endDate - startDate;
-
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-  return `${hours}h ${minutes}m ${seconds}s`;
-};
-
 const UserDetails = () => {
   const { id } = useParams();
 
+  const { token } = theme.useToken();
   const [refresh, setRefresh] = useState(1);
   const [questionRefresh, setQuestionRefresh] = useState(1);
   const { data, loading } = useApiRequest(`api/v1/admin/user/by/${id}`, [
@@ -187,7 +60,7 @@ const UserDetails = () => {
     refresh,
   ]);
   const { data: historyData, loading: historyLoading } = useApiRequest(
-    `api/v1/history/all/${id}`,
+    `api/v1/booking/by-user?userId=${id}`,
     [id, questionRefresh]
   );
 
@@ -265,6 +138,36 @@ const UserDetails = () => {
     } catch (err) {
       toast.error(err.message || "There was an error sending the answer");
       console.log("Answer Error: ", err);
+    } finally {
+      setAnswerLoading(false);
+    }
+  };
+
+  const refreshExamAnswer = async (item) => {
+    if (item.type === "booking") {
+      toast.error("This session not pass exam");
+      return;
+    }
+    setAnswerLoading(true);
+    const requestBody = {
+      userId: id,
+      examId: item.id,
+    };
+    try {
+      const response = await apiClient.post(
+        "api/v1/history/refresh-answer",
+        requestBody
+      );
+      
+      if (response.code != 200) {
+        toast.error(
+          response.message || "There was an some problem refresh the answer"
+        );
+        return;
+      }
+      setQuestionRefresh((prev) => prev + 1);
+    } catch (err) {
+      toast.error(err.message || "There was an error refresh the answer");
     } finally {
       setAnswerLoading(false);
     }
@@ -386,12 +289,13 @@ const UserDetails = () => {
         </Space>
       </Card>
 
-      <Divider>Test History</Divider>
+      <Divider>Booking and Test History</Divider>
 
       {historyLoading ? (
         <Spin />
       ) : (
         <List
+          loading={historyLoading}
           grid={{ gutter: 24, column: 1 }}
           dataSource={history}
           renderItem={(item) => (
@@ -401,36 +305,30 @@ const UserDetails = () => {
                   <div
                     style={{
                       display: "flex",
-                      justifyContent: "space-between",
                       alignItems: "center",
+                      gap: "20px",
                     }}
                   >
-                    <Text>
-                      <CalendarOutlined /> Test Date:{" "}
-                      {formatDate(item.startDate)}
-                    </Text>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    <Title
+                      level={3}
+                      style={{
+                        fontWeight: "bold",
+                        margin: "0",
+                        color: token.colorPrimary,
+                      }}
                     >
-                      {!user?.email && (
-                        <p style={{ fontSize: "14px", color: "red" }}>
-                          Please enter the user's email address to send answers.
-                        </p>
-                      )}
-                      {item.status == "success" && (
-                        <p style={{ fontSize: "14px", color: "green" }}>
-                          Answer sent to User
-                        </p>
-                      )}
-                      <Button
-                        type="primary"
-                        disabled={user?.email ? false : true}
-                        onClick={() => sendAnswerToUser(item)}
-                        loading={answerLoading}
-                      >
-                        Send answer
-                      </Button>
-                    </div>
+                      {item.mockPackages.name}
+                    </Title>
+                    <Text>
+                      <CalendarOutlined /> Registered Date:{" "}
+                      {formatDate(item.date)}
+                    </Text>
+                    <Text>
+                      Total Session: {item.mockPackages.totalSessions}
+                    </Text>
+                    <Text>
+                      Speaking Session: {item.mockPackages.speakingSessions}
+                    </Text>
                   </div>
                 }
                 variant={"borderless"}
@@ -439,52 +337,257 @@ const UserDetails = () => {
                   boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                 }}
               >
-                <Row justify="space-between" align="top">
-                  <Col>
-                    <Space>
-                      <Text>
-                        <ClockCircleOutlined /> Duration:{" "}
-                        {calculateDuration(item.startDate, item.endDate)}
-                      </Text>
-                    </Space>
-                  </Col>
-                  <Col>
-                    <Space>
-                      <ScoreBox
-                        id={item.id}
-                        icon={<ReadOutlined />}
-                        label="Reading"
-                        score={item.reading}
-                        userId={id}
-                        setRefresh={setQuestionRefresh}
-                      />
-                      <ScoreBox
-                        id={item.id}
-                        icon={<SoundOutlined />}
-                        label="Listening"
-                        score={item.listening}
-                        userId={id}
-                        setRefresh={setQuestionRefresh}
-                      />
-                      <ScoreBox
-                        id={item.id}
-                        icon={<EditOutlined />}
-                        label="Writing"
-                        score={item.writing}
-                        userId={id}
-                        setRefresh={setQuestionRefresh}
-                      />
-                      <ScoreBox
-                        id={item.id}
-                        icon={<AudioOutlined />}
-                        label="Speaking"
-                        score={item.speaking}
-                        userId={id}
-                        setRefresh={setQuestionRefresh}
-                      />
-                    </Space>
-                  </Col>
-                </Row>
+                <List
+                  grid={{ gutter: 24, column: 1 }}
+                  dataSource={item.results}
+                  renderItem={(result) => {
+                    const isBeforeDate = new Date(result.testDate) > new Date();
+                    return (
+                      <List.Item>
+                        {result.type === "mock_exam" ? (
+                          <Card
+                            title={
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <Text>
+                                  <CalendarOutlined /> Test Date:{" "}
+                                  {formatDate(result.startDate)}
+                                </Text>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 10,
+                                  }}
+                                >
+                                  {result.status &&
+                                    (result.status === "success" ? (
+                                      <CheckCircleOutlined
+                                        style={{
+                                          color: token.colorPrimary,
+                                          fontSize: 20,
+                                        }}
+                                      />
+                                    ) : (
+                                      <CloseCircleOutlined
+                                        style={{
+                                          color: token.colorError,
+                                          fontSize: 20,
+                                        }}
+                                      />
+                                    ))}
+                                  <Tooltip title="Recalculate the student's answer">
+                                    <Button
+                                      icon={<ReloadOutlined />}
+                                      loading={answerLoading}
+                                      onClick={() => refreshExamAnswer(result)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="Send to user his answer">
+                                    <Button
+                                      type="primary"
+                                      disabled={user?.email ? false : true}
+                                      onClick={() => sendAnswerToUser(result)}
+                                      loading={answerLoading}
+                                    >
+                                      Send answer
+                                    </Button>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            }
+                          >
+                            <Row justify="space-between" align="top">
+                              <Col>
+                                <Space
+                                  style={{
+                                    width: "100%",
+                                    display: "flex",
+                                    justifyContent: "flex-start",
+                                    flexDirection: "column",
+                                    alignItems: "flex-start",
+                                  }}
+                                >
+                                  <Text>
+                                    <ClockCircleOutlined /> Duration:{" "}
+                                    <span
+                                      style={{
+                                        color: token.colorPrimary,
+                                      }}
+                                    >
+                                      {calculateDuration(
+                                        result.startDate,
+                                        result.endDate
+                                      )}
+                                    </span>
+                                  </Text>
+                                  <Text style={{ fontWeight: "bold" }}>
+                                    <ClockCircleOutlined /> Test Time:{" "}
+                                    <span
+                                      style={{
+                                        color: token.colorPrimary,
+                                      }}
+                                    >
+                                      {result.time}
+                                    </span>
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      textAlign: "start",
+                                      fontWeight: 600,
+                                      color: token.colorPrimary,
+                                    }}
+                                  >
+                                    {result.examStatus}
+                                  </Text>
+                                </Space>
+                              </Col>
+                              <Col>
+                                <Space>
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<ReadOutlined />}
+                                    label="Reading"
+                                    score={result.reading}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                  />
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<SoundOutlined />}
+                                    label="Listening"
+                                    score={result.listening}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                  />
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<EditOutlined />}
+                                    label="Writing"
+                                    score={result.writing}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                  />
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<AudioOutlined />}
+                                    label="Speaking"
+                                    score={result.speaking}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                  />
+                                </Space>
+                              </Col>
+                            </Row>
+                          </Card>
+                        ) : (
+                          <Card>
+                            <Row justify="space-between" align="top">
+                              <Col>
+                                <Space
+                                  style={{
+                                    width: "100%",
+                                    display: "flex",
+                                    justifyContent: "flex-start",
+                                    flexDirection: "column",
+                                    alignItems: "flex-start",
+                                  }}
+                                >
+                                  <Text style={{ fontWeight: "bold" }}>
+                                    <ClockCircleOutlined /> Test Date:{" "}
+                                    <span
+                                      style={{
+                                        color: !isBeforeDate
+                                          ? token.colorError
+                                          : token.colorPrimary,
+                                      }}
+                                    >
+                                      {formatDate(result.testDate)}
+                                    </span>
+                                  </Text>
+                                  <Text style={{ fontWeight: "bold" }}>
+                                    <ClockCircleOutlined /> Test Time:{" "}
+                                    <span
+                                      style={{
+                                        color: !isBeforeDate
+                                          ? token.colorError
+                                          : token.colorPrimary,
+                                      }}
+                                    >
+                                      {result.time}
+                                    </span>
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      textAlign: "start",
+                                      fontWeight: 600,
+                                      color: !isBeforeDate
+                                        ? token.colorError
+                                        : token.colorPrimary,
+                                    }}
+                                  >
+                                    {!isBeforeDate
+                                      ? "The student did not pass the exam"
+                                      : "Exam is waiting"}
+                                  </Text>
+                                </Space>
+                              </Col>
+                              <Col>
+                                <Space>
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<ReadOutlined />}
+                                    label="Reading"
+                                    score={result.reading}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                    booking
+                                    isBeforeDate={isBeforeDate}
+                                  />
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<SoundOutlined />}
+                                    label="Listening"
+                                    score={result.listening}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                    booking
+                                    isBeforeDate={isBeforeDate}
+                                  />
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<EditOutlined />}
+                                    label="Writing"
+                                    score={result.writing}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                    booking
+                                    isBeforeDate={isBeforeDate}
+                                  />
+                                  <ScoreBox
+                                    id={result.id}
+                                    icon={<AudioOutlined />}
+                                    label="Speaking"
+                                    score={result.speaking}
+                                    userId={id}
+                                    setRefresh={setQuestionRefresh}
+                                    booking
+                                    isBeforeDate={isBeforeDate}
+                                  />
+                                </Space>
+                              </Col>
+                            </Row>
+                          </Card>
+                        )}
+                      </List.Item>
+                    );
+                  }}
+                />
               </Card>
             </List.Item>
           )}

@@ -12,23 +12,62 @@ import {
   Spin,
   Typography,
   Flex,
+  Tooltip,
 } from "antd";
 import { toast } from "react-toastify";
+import { OpenAIOutlined } from "@ant-design/icons";
 import apiClient from "../../services/api";
+
+const FeedbackBox = ({ title, feedback }) => {
+  return (
+    <div style={{ marginTop: 10, display: "flex", flexDirection: "column" }}>
+      <Typography.Text style={{ fontWeight: "bold", fontSize: 18 }}>
+        {title}: ({feedback.score})
+      </Typography.Text>
+
+      <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+        <b>Reason</b>: {feedback.reason}
+      </Typography.Text>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {feedback.mistakes.map((item, index) => (
+          <div key={index} style={{ display: "flex", flexDirection: "column" }}>
+            <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+              <b>Mistakes: </b>
+              {item.mistake}
+            </Typography.Text>
+            <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+              <b>Explanation: </b>
+              {item.explanation}
+            </Typography.Text>
+            <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+              <b>Improved Version: </b>
+              {item.improved_version}
+            </Typography.Text>
+          </div>
+        ))}
+      </div>
+      <Divider />
+    </div>
+  );
+};
 
 const WritingWriting = () => {
   const { userId, id } = useParams();
-
-  const { data, loading, error } = useApiRequest(
-    `api/v1/history/mock-exam/${id}?type=writing`,
-    [id]
-  );
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedScore, setSelectedScore] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [refresh, setRefresh] = useState(0);
+
+  const { data, loading, error } = useApiRequest(
+    `api/v1/history/mock-exam/${id}?type=writing`,
+    [id, refresh]
+  );
+
+  useEffect(() => {
+    if (!loading && data && data.data) setSelectedScore(data.data.score);
+  }, [data]);
 
   const handleModalOk = async () => {
     if (errorMessage) {
@@ -68,6 +107,29 @@ const WritingWriting = () => {
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setErrorMessage("");
+  };
+
+  const checkAIAgain = async () => {
+    const requestBody = {
+      examId: id,
+      userId: userId,
+    };
+    setIsLoading(true);
+    try {
+      const response = await apiClient.post(
+        "api/v1/history/check",
+        requestBody
+      );
+      if (response.code != 200) {
+        toast.error(response.message || "Failed checking with AI");
+        return;
+      }
+      setRefresh((prev) => prev + 1);
+    } catch (err) {
+      toast.error(err.message || "Error checking with AI");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -142,6 +204,29 @@ const WritingWriting = () => {
           <Typography.Text strong style={{ fontSize: "16px" }}>
             💯 Current Score: {selectedScore ?? "Not set"}
           </Typography.Text>
+          <Tooltip title="Let AI check your writing for feedback">
+            <Button
+              type="primary"
+              icon={<OpenAIOutlined />}
+              loading={isLoading}
+              onClick={() => checkAIAgain()}
+              style={{
+                background: "linear-gradient(90deg, #7b2ff7 0%, #f107a3 100%)",
+                color: "#fff",
+                border: "none",
+                fontWeight: "600",
+                fontSize: "16px",
+                padding: "10px 28px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 14px rgba(123, 47, 247, 0.4)",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              AI Checking
+            </Button>
+          </Tooltip>
           <Button type="primary" onClick={() => setIsModalVisible(true)}>
             Set Score
           </Button>
@@ -149,7 +234,7 @@ const WritingWriting = () => {
       </Flex>
 
       {/* Questions Rendering */}
-      {data.data.questions.map((question, index) => {
+      {data.data.questions.map((question) => {
         const answer = data.data.answers.find(
           (ans) => ans.writingId === question.id
         );
@@ -206,6 +291,54 @@ const WritingWriting = () => {
                 </div>
               </Col>
             </Row>
+            {answer.feedback && (
+              <>
+                <Divider />
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <Typography.Title level={3}>Feedback:</Typography.Title>
+
+                  <Typography.Text style={{ fontWeight: "bold", fontSize: 18 }}>
+                    Overall: ({answer.feedback.overall_band})
+                  </Typography.Text>
+
+                  <Typography.Text
+                    style={{ fontWeight: "normal", fontSize: 16 }}
+                  >
+                    {answer.feedback.summary}
+                  </Typography.Text>
+                  {answer.feedback.task_response && (
+                    <FeedbackBox
+                      title={"Task Response"}
+                      feedback={answer.feedback.task_response}
+                    />
+                  )}
+                  {answer.feedback.task_achievement && (
+                    <FeedbackBox
+                      title={"Task Achievement"}
+                      feedback={answer.feedback.task_achievement}
+                    />
+                  )}
+                  {answer.feedback.coherence_and_cohesion && (
+                    <FeedbackBox
+                      title={"Coherence and cohesion"}
+                      feedback={answer.feedback.coherence_and_cohesion}
+                    />
+                  )}
+                  {answer.feedback.lexical_resource && (
+                    <FeedbackBox
+                      title={"Lexical Resource"}
+                      feedback={answer.feedback.lexical_resource}
+                    />
+                  )}
+                  {answer.feedback.grammatical_range_and_accuracy && (
+                    <FeedbackBox
+                      title={"Grammatical range and accuracy"}
+                      feedback={answer.feedback.grammatical_range_and_accuracy}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         );
       })}

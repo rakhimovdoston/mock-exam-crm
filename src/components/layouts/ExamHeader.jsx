@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
 import AnswerReviewModal from "../modal/AnswerReviewModal";
-import {logo} from '../../assets'
+import { logo } from "../../assets";
 
 const { Header } = Layout;
 
@@ -41,7 +41,9 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setIsModalVisible(true);
-          handleModalOk();
+          setTimeout(() => {
+            handleModalOk(); // vaqti o‘tib bo‘lsa ham keyincha call qilinsin
+          }, 2000);
           return 0;
         }
         return prevTime - 1;
@@ -115,7 +117,13 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
             alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center", alignItems: 'center' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             {/* {type === "reading" ? "Reading Test" : "Listening Test"} */}
             <img src={logo} alt="Logo" width={100} />
           </div>
@@ -184,12 +192,11 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
         centered
       >
         <Result
-          title={timeLeft <= 0 ? "Time is up. send your answers" : "Are you sure you want to submit?"}
-          // extra={
-          //   <Button type="primary" key="console">
-          //     Go Console
-          //   </Button>
-          // }
+          title={
+            timeLeft <= 0
+              ? "Time is up. send your answers"
+              : "Are you sure you want to submit?"
+          }
         />
       </Modal>
     </>
