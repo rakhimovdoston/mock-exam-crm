@@ -8,6 +8,7 @@ import ExamHeader from "../../components/layouts/ExamHeader";
 import RichTextViewer from "../../components/editor/RichTextViewer";
 import { getQuestionNumbers } from "../../utils";
 import { initilalizeExam } from "../../store/examReducer";
+import { toast } from "react-toastify";
 
 const { Content } = Layout;
 

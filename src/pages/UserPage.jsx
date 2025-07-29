@@ -90,10 +90,31 @@ const UserPage = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (stream) navigate(`/listening/${id}`);
     } catch (err) {
-      if (err.name === "NotAllowedError") {
-        toast.info("Please enable microphone access in your browser settings.");
-      } else {
-        toast.error("Microphone access failed.");
+      switch (err.name) {
+        case "NotAllowedError":
+          toast.info("Please enable microphone access in your browser settings.");
+          break;
+        case "NotFoundError":
+          toast.error("No microphone device found. Please connect a microphone.");
+          break;
+        case "NotReadableError":
+          toast.error("Microphone is in use by another application.");
+          break;
+        case "OverconstrainedError":
+          toast.error("Microphone settings are not supported by any available device.");
+          break;
+        case "SecurityError":
+          toast.error("Microphone access requires a secure connection (HTTPS).");
+          break;
+        case "AbortError":
+          toast.error("Microphone access was aborted unexpectedly.");
+          break;
+        case "TypeError":
+          toast.error("Invalid media constraints provided.");
+          break;
+        default:
+          toast.error("Microphone access failed.");
+          break;
       }
     }
   };

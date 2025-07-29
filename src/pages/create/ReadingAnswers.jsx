@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Spin, Result, Button, Divider, Layout } from "antd";
+import { Spin, Result, Button, Divider, Layout, Flex, Typography } from "antd";
+import { EditOutlined } from "@ant-design/icons";
 import useApiRequest from "../../hooks/useApiRequest";
 import emptyCart from "../../assets/not_found.svg";
 import { toast } from "react-toastify";
@@ -9,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearAnswers } from "../../store/answerReducer";
 import apiClient from "../../services/api";
 import QuestionComponent from "../../components/questions/QuestionComponent";
+import { getStartByQuestionType, getTextByType } from "../../utils";
 
 const ReadingAnswers = () => {
   const { id } = useParams();
@@ -124,6 +126,16 @@ const ReadingAnswers = () => {
             overflowY: "scroll",
           }}
         >
+          <Flex justify="space-between" align="center">
+            <Typography.Title level={3}>{getTextByType(data?.data?.type)}</Typography.Title>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                setSelectedQuestion(question);
+                setUpdate(true);
+              }}
+            />
+          </Flex>
           <RichTextViewer content={data.data.content} is_passage={true} />
         </Layout>
         <div

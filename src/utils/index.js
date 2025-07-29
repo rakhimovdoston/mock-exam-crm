@@ -23,7 +23,7 @@ export const getInitValue = (data, type) => {
 };
 
 export const getQuestionNumbers = (question) => {
-  if (question.type === "Multiple Choice (Multiple answers)") {    
+  if (question.type === "Multiple Choice (Multiple answers)") {
     return getMinMaxFromMultipleAnswer(question.content);
   }
 
@@ -310,12 +310,18 @@ export function checkKey(answer, userAnswers) {
 export function checkKeys(answer, userAnswers) {
   let count = 0;
 
-  const filteredUserAnswers = userAnswers.filter(userAnswer => userAnswer.keys != null);
+  const filteredUserAnswers = userAnswers.filter(
+    (userAnswer) => userAnswer.keys != null
+  );
 
   for (const userAnswer of filteredUserAnswers) {
     if (answer.keys === userAnswer.keys) {
       for (const value of userAnswer.values || []) {
-        if (answer.values.map(v => v.trim().toLowerCase()).includes(value.trim().toLowerCase())) {
+        if (
+          answer.values
+            .map((v) => v.trim().toLowerCase())
+            .includes(value.trim().toLowerCase())
+        ) {
           count++;
         }
       }
@@ -327,22 +333,47 @@ export function checkKeys(answer, userAnswers) {
 
 export const getNumberByPassageType = (type) => {
   switch (type) {
-    case "easy": return "1-13"
-    case "medium": return "14-26"
-    case "hard": return "27-40"
-    case "part_1": return "1-10"
-    case "part_2": return "10-20"
-    case "part_1": return "20-30"
-    case "part_1": return "30-40"
-    default: "";
+    case "easy":
+      return "1-13";
+    case "medium":
+      return "14-26";
+    case "hard":
+      return "27-40";
+    case "part_1":
+      return "1-10";
+    case "part_2":
+      return "10-20";
+    case "part_1":
+      return "20-30";
+    case "part_1":
+      return "30-40";
+    default:
+      "";
   }
-}
+};
 
 export const getPassageNumberByPassageType = (type) => {
   switch (type) {
-    case "easy": return "1"
-    case "medium": return "2"
-    case "hard": return "3"
-    default: return "";
+    case "easy":
+      return "1";
+    case "medium":
+      return "2";
+    case "hard":
+      return "3";
+    default:
+      return "";
   }
-}
+};
+
+export const getTextByType = (type) => {
+  switch (type) {
+    case "easy":
+      return "Reading Passage 1";
+    case "medium":
+      return "Reading Passage 2";
+    case "hard":
+      return "Reading Passage 3";
+    default:
+      return "";
+  }
+};

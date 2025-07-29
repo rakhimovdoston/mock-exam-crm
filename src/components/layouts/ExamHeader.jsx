@@ -40,7 +40,6 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setIsModalVisible(true);
-          handleModalOk();
           return 0;
         }
         return prevTime - 1;
