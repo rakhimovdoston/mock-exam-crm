@@ -10,8 +10,9 @@ import { updateForUserAnswers } from "../../../../store/examReducer";
 const InputViewElement = ({ attributes, element, children }) => {
   const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
-  const {answers} = useSelector((state) => state.answer);
+  const { answers } = useSelector((state) => state.answer);
   const userAnswers = useSelector((state) => state.exam);
+  const { size } = useSelector((state) => state.app);
   const inpValue = getValueFromAnswer(element.placeholder, answers);
 
   const [inputValue, setInputValue] = useState(element.value || "");
@@ -25,29 +26,24 @@ const InputViewElement = ({ attributes, element, children }) => {
     setInputValue(e.target.value);
     const idNumber = parseInt(e.target.id.replace("ques-", ""), 10);
     if (answers.length > 0) {
-      dispatch(updateAnswer({key: idNumber, value: e.target.value}));
+      dispatch(updateAnswer({ key: idNumber, value: e.target.value }));
     } else {
-      dispatch(updateForUserAnswers({key: idNumber, value: e.target.value}));
+      dispatch(updateForUserAnswers({ key: idNumber, value: e.target.value }));
     }
   };
 
   const handleBlur = () => {
-    Transforms.setNodes(
-      editor,
-      { value: inputValue },
-      { at: path }
-    );
+    Transforms.setNodes(editor, { value: inputValue }, { at: path });
   };
 
   const getValue = () => {
     for (const anss of userAnswers.answers) {
       for (const ans of anss.answers) {
-        if (ans.key === element.placeholder)
-          return ans.value
+        if (ans.key === element.placeholder) return ans.value;
       }
     }
     return "";
-  }
+  };
 
   return (
     <span
@@ -60,11 +56,17 @@ const InputViewElement = ({ attributes, element, children }) => {
         id={"ques-" + (element.placeholder || "input")}
         placeholder={element.placeholder}
         value={inpValue || inputValue || getValue()}
+        autoComplete="off"
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
+        allowClear={false}
         onChange={handleChange}
         onBlur={handleBlur}
         style={{
           padding: "4px",
           borderRadius: "10px",
+          fontSize: `${size}px`,
           textAlign: "center",
         }}
       />
@@ -72,6 +74,5 @@ const InputViewElement = ({ attributes, element, children }) => {
     </span>
   );
 };
-
 
 export default InputViewElement;

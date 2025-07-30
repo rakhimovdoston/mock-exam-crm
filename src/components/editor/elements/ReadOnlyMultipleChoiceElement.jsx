@@ -10,6 +10,7 @@ const ReadOnlyMultipleChoiceElement = ({ element }) => {
   const dispatch = useDispatch();
   const { answers } = useSelector((state) => state.answer);
   const userAnswer = useSelector((state) => state.exam);
+  const {size} = useSelector(state => state.app);
 
   const value = getValueFromAnswer(element.id, answers);
 
@@ -40,10 +41,11 @@ const ReadOnlyMultipleChoiceElement = ({ element }) => {
           alignItems: "center",
           gap: "10px",
           marginBottom: "10px",
+          fontSize: `${size}px`
         }}
       >
-        <span style={{ fontWeight: 500, fontSize: "16px" }}>{element.id}.</span>
-        <span style={{ fontWeight: "bold", fontSize: "18px" }}>
+        <span style={{ fontWeight: 500, fontSize: `${size}px` }}>{element.id}.</span>
+        <span style={{ fontWeight: "bold", fontSize: `${size}px` }}>
           {element.question}
         </span>
       </div>
@@ -62,7 +64,7 @@ const ReadOnlyMultipleChoiceElement = ({ element }) => {
         style={{ display: "flex", flexDirection: "column", gap: "6px" }}
       >
         {element.options.map((opt, idx) => (
-          <Radio key={idx} value={opt}>
+          <Radio key={idx} value={opt} style={{fontSize: `${size}px`}}>
             <span style={{ fontWeight: 500 }}>
               {String.fromCharCode(65 + idx)}.
             </span>{" "}

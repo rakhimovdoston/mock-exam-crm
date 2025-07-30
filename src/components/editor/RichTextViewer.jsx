@@ -1,4 +1,11 @@
-import React, { useCallback, useMemo } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import { createEditor, Node } from "slate";
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
@@ -16,13 +23,14 @@ import DefaultElement from "./elements/DefaultElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
 import TableElementViewer from "./elements/TableElementViewer";
 import ListItemViewElement from "./elements/view/ListItemViewElement";
-import { canDragAndDrop } from "./editorUtils";
+import { canDragAndDrop, toggleFormat } from "./editorUtils";
 import { getStartByQuestionType } from "../../utils";
 import { DragProvider } from "./contexts/DragContext";
 import { updateAnswer } from "../../store/answerReducer";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { updateForUserAnswers } from "../../store/examReducer";
+import { Button, Flex } from "antd";
 
 const initialValue = [
   {
@@ -138,6 +146,8 @@ const RichTextViewer = ({
 }) => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const { size } = useSelector((state) => state.app);
+
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline; // Save the original method
@@ -151,6 +161,45 @@ const RichTextViewer = ({
 
     return baseEditor;
   }, []);
+
+  const [menuPosition, setMenuPosition] = useState(null);
+  const [selectionText, setSelectionText] = useState("");
+
+  const handleMouseUp = (e) => {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+      setMenuPosition(null);
+      return;
+    }
+
+    const text = selection.toString();
+    if (!text) {
+      setMenuPosition(null);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    // Agar rect noto‘g‘ri bo‘lsa (0,0 yoki -1), menyuni ko‘rsatmaymiz
+    if (rect.width === 0 && rect.height === 0) {
+      setMenuPosition(null);
+      return;
+    }
+
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const preferAbove = spaceAbove > 60;
+
+    const top = preferAbove
+      ? rect.top + window.scrollY - 50
+      : rect.bottom + window.scrollY + 10;
+
+    const left = Math.min(rect.left + window.scrollX, window.innerWidth - 150);
+
+    setSelectionText(text);
+    setMenuPosition({ top, left });
+  };
 
   const renderElement = useCallback((props) => {
     const checkDragAndDrop = canDragAndDrop(content, type);
@@ -214,7 +263,7 @@ const RichTextViewer = ({
     if (location.pathname.includes("/dashboard/ielts")) {
       dispatch(updateAnswer({ key, value }));
     } else {
-      dispatch(updateForUserAnswers({key, value}))
+      dispatch(updateForUserAnswers({ key, value }));
     }
   };
 
@@ -226,6 +275,7 @@ const RichTextViewer = ({
         overflowY: "auto",
         boxSizing: "border-box",
       }}
+      onMouseUp={handleMouseUp}
     >
       <DragProvider onDropAnswer={onDropAnswer}>
         <Slate
@@ -233,10 +283,58 @@ const RichTextViewer = ({
           editor={editor}
           initialValue={preparedContent}
         >
+          {menuPosition && (
+            <div
+              style={{
+                position: "absolute",
+                top: `${menuPosition.top - 50}px`,
+                left: menuPosition.left,
+                background: "#fff",
+                borderRadius: "5px",
+                zIndex: 1000,
+                boxShadow: "0 2px 8px rgba(2, 23, 255, 0.55)",
+              }}
+            >
+              <Flex align="center" gap={5} style={{ padding: "5px" }}>
+                <Button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleFormat(editor, "highlight", "#FFFF00");
+                    setMenuPosition(undefined);
+                  }}
+                  style={{ fontSize: "12px", background: "#FFFF00" }}
+                />
+                <Button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleFormat(editor, "highlight", "#ADD8E6");
+                    setMenuPosition(undefined);
+                  }}
+                  style={{ fontSize: "12px", background: "#ADD8E6" }}
+                />
+                <Button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleFormat(editor, "highlight", "#90EE90");
+                    setMenuPosition(undefined);
+                  }}
+                  style={{ fontSize: "12px", background: "#90EE90" }}
+                />
+                <Button
+                  type="dashed"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleFormat(editor, "highlight", "transparent");
+                    setMenuPosition(undefined);
+                  }}
+                />
+              </Flex>
+            </div>
+          )}
           <Editable
             style={{
               padding: "0 10px",
-              fontSize: "16px",
+              fontSize: `${size}px`,
               border: "none",
               overflowY: "auto",
               borderRadius: "4px",
@@ -254,5 +352,4 @@ const RichTextViewer = ({
     </div>
   );
 };
-
 export default RichTextViewer;

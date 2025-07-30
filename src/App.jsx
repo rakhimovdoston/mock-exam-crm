@@ -63,6 +63,14 @@ function App() {
   }, [isLoggedIn, accessToken]);
 
   return (
+    // <ConfigProvider
+    //   theme={{
+    //     algorithm:
+    //       localStorage.getItem("theme") === "dark"
+    //         ? theme.darkAlgorithm
+    //         : theme.darkAlgorithm,
+    //   }}
+    // >
     <Layout style={{ width: "100%", height: "100vh" }}>
       <ToastContainer />
       <AntContent>
@@ -178,6 +186,7 @@ function App() {
         </Suspense>
       </AntContent>
     </Layout>
+    // </ConfigProvider>
   );
 }
 

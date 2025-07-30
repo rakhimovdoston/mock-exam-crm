@@ -8,6 +8,7 @@ const Leaf = ({ attributes, children, leaf }) => {
         fontWeight: leaf.bold ? "bold" : "normal",
         fontStyle: leaf.italic ? "italic" : "normal",
         textDecoration: leaf.underline ? "underline" : "none",
+        backgroundColor: leaf.highlight || "transparent",
       }}
     >
       {children}

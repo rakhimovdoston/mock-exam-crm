@@ -13,12 +13,12 @@ export const isFormatActive = (editor, format) => {
   return marks ? marks[format] === true : false;
 };
 
-export const toggleFormat = (editor, format) => {
+export const toggleFormat = (editor, format, value = "") => {
   const isActive = isFormatActive(editor, format);
   if (isActive) {
     Editor.removeMark(editor, format);
   } else {
-    Editor.addMark(editor, format, true);
+    Editor.addMark(editor, format, value === "" ? true : value);
   }
 };
 

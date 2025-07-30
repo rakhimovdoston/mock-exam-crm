@@ -21,6 +21,7 @@ const InputElement = ({
   const { answers } = useSelector((state) => state.answer);
   const userAnswers = useSelector((state) => state.exam);
   const inpValue = getValueFromAnswer(element.placeholder, answers);
+  const { size } = useSelector((state) => state.app);
 
   const [selectedValues, setSelectedValues] = useState(element.value || "");
 
@@ -127,7 +128,7 @@ const InputElement = ({
             borderRadius: 6,
             background: "#fafafa",
             margin: "4px",
-            fontSize: 14,
+            fontSize: `${size}px`,
             display: "flex",
             padding: "1px 8px",
             justifyContent: "center",
@@ -190,12 +191,18 @@ const InputElement = ({
           id={"ques-" + (element.placeholder || "input")}
           placeholder={element.placeholder}
           value={inpValue || inputValue || getValue()}
+          autoComplete="off"
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="off"
+          allowClear={false}
           onChange={handleChange}
           onBlur={handleBlur}
           style={{
             padding: "4px",
             borderRadius: "10px",
             textAlign: "center",
+            fontSize: `${size}px`
           }}
         />
       )}

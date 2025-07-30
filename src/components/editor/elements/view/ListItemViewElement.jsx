@@ -27,6 +27,7 @@ const ListItemViewElement = ({
   const path = ReactEditor.findPath(editor, element);
   const { answers } = useSelector((state) => state.answer);
   const userAnswers = useSelector((state) => state.exam);
+  const { size } = useSelector((state) => state.app);
   const dispatch = useDispatch();
 
   const parentPath = path.slice(0, -1);
@@ -104,6 +105,7 @@ const ListItemViewElement = ({
             verticalAlign: "top",
             minWidth: "250px",
             border: "1px solid #ccc",
+            fontSize: `${size}px`
           }}
         >
           <strong>{itemNumber}.</strong> {children}
@@ -118,6 +120,7 @@ const ListItemViewElement = ({
               height: "auto",
               transition: "background-color 0.2s ease-in-out",
               border: "1px solid #ccc",
+              fontSize: `${size}px`
             }}
             onClick={() => {
               setSelected(opt.key);
@@ -153,11 +156,11 @@ const ListItemViewElement = ({
     <li {...attributes}>
       <div
         style={{
-          display: "flex",
+          // display: "flex",
           width: "100%",
-          alignItems: checkQuestionTypes ? undefined : "center",
-          flexDirection: checkQuestionTypes ? "column" : "row",
-          justifyContent: view ? "space-between" : undefined,
+          // alignItems: checkQuestionTypes ? undefined : "center",
+          // flexDirection: checkQuestionTypes ? "column" : "row",
+          // justifyContent: view ? "space-between" : undefined,
           marginBottom: "10px",
           gap: 10,
         }}
@@ -197,7 +200,7 @@ const ListItemViewElement = ({
                     <Radio
                       key={opt.key}
                       value={opt.key}
-                      style={{ fontWeight: 500 }}
+                      style={{ fontWeight: 500, fontSize: `${size}px` }}
                     >
                       {opt.value.toUpperCase()}
                     </Radio>
@@ -205,7 +208,7 @@ const ListItemViewElement = ({
                 </Radio.Group>
               ) : questionType === "Matching Headings" ? (
                 <Select
-                  style={{ width: "130px" }}
+                  style={{ width: "130px", fontSize: `${size}px` }}
                   defaultValue={""}
                   id={"ques-" + itemNumber}
                   value={selectValue || element.headingMatch || getValue()}
@@ -241,6 +244,7 @@ const ListItemViewElement = ({
                     gridTemplateColumns: "repeat(4, 1fr)",
                     gap: "10px",
                     width: "100%",
+                    fontSize: `${size}px`
                   }}
                   value={
                     selectValue || selected || checkedValue() || getValue()
@@ -268,6 +272,7 @@ const ListItemViewElement = ({
                       style={{
                         fontWeight: 500,
                         justifySelf: "center",
+                        fontSize: `${size}px`
                       }}
                     ></Radio>
                   ))}

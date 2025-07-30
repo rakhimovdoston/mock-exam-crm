@@ -1,7 +1,13 @@
 import React from "react";
+import { useSelector } from "react-redux";
 
 const TableRowElement = ({ attributes, children }) => {
-  return <tr {...attributes}>{children}</tr>;
+  const { size } = useSelector((state) => state.app);
+  return (
+    <tr {...attributes} style={{ fontSize: `${size}px` }}>
+      {children}
+    </tr>
+  );
 };
 
 export default TableRowElement;

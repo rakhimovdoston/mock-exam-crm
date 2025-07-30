@@ -18,6 +18,7 @@ const ListItemViewDragAndDropElement = ({
   const examAnswers = useSelector((state) => state.exam)
   const questionNumber = startNumber + index;
   const [isOver, setIsOver] = useState(false);
+  const { size } = useSelector((state) => state.app);
   const questionType = element.questionsType || null;
   const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
@@ -100,7 +101,7 @@ const ListItemViewDragAndDropElement = ({
     return (
       <li {...attributes}>
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-          <p style={{ margin: "0", padding: "0" }}>{children}</p>
+          <p style={{ margin: "0", padding: "0", fontSize: `${size}px` }}>{children}</p>
           <div
             onDrop={(e) => {
               e.preventDefault();
@@ -120,7 +121,7 @@ const ListItemViewDragAndDropElement = ({
               borderRadius: 6,
               background: isOver ? "#e6f0ff" : "#fafafa",
               marginBottom: 6,
-              fontSize: 14,
+              fontSize: `${size}px`,
               display: "flex",
               padding: "1px 8px",
               justifyContent: "center",

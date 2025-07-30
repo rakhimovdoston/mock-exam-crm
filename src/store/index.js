@@ -3,6 +3,7 @@ import authReducer from "./authReducer";
 import questionReducer from "./questionReducer";
 import answerReducer from "./answerReducer";
 import examReducer from "./examReducer";
+import appReducer from './appReducer';
 
 const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ const store = configureStore({
     question: questionReducer,
     answer: answerReducer,
     exam: examReducer, // Assuming you have an examReducer
+    app: appReducer,
   },
 });
 

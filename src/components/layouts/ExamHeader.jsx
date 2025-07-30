@@ -1,18 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Button, Modal, Result } from "antd";
+import {
+  Layout,
+  Button,
+  Modal,
+  Result,
+  Dropdown,
+  Flex,
+  Switch,
+  Select,
+} from "antd";
 import {
   ClockCircleOutlined,
   FullscreenExitOutlined,
   FullscreenOutlined,
   ProfileOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
 import AnswerReviewModal from "../modal/AnswerReviewModal";
 import { logo } from "../../assets";
+import store from "../../store";
+import { changeSize } from "../../store/appReducer";
 
 const { Header } = Layout;
 
@@ -24,6 +36,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const { answers } = useSelector((state) => state.exam);
   const [loading, setLoading] = useState(false);
   const [isReviewVisible, setIsReviewVisible] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (type === "reading") {
@@ -42,7 +55,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
           clearInterval(timer);
           setIsModalVisible(true);
           setTimeout(() => {
-            handleModalOk(); // vaqti o‘tib bo‘lsa ham keyincha call qilinsin
+            handleModalOk();
           }, 2000);
           return 0;
         }
@@ -56,8 +69,10 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const formatTime = (seconds) => {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+
+    if (seconds == 0) return <span>--</span>;
     return (
-      <span>
+      <span style={{ color: minutes <= 1 ? "red" : "black" }}>
         <span style={{ fontWeight: "bold" }}>
           {minutes > 0
             ? minutes.toString().padStart(2, "0")
@@ -70,10 +85,12 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
 
   const handleModalOk = async () => {
     setLoading(true);
+    const latestAnswer = store.getState().exam.answers;
     const request = {
       type: type,
-      questionAnswers: answers,
+      questionAnswers: latestAnswer,
     };
+
     try {
       const response = await apiClient.post(
         `/api/v1/exam/answers/${id}`,
@@ -135,7 +152,12 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
               gap: "8px",
             }}
           >
-            <ClockCircleOutlined style={{ fontSize: "16px" }} />
+            <ClockCircleOutlined
+              style={{
+                fontSize: "16px",
+                color: timeLeft <= 60 ? "red" : "black",
+              }}
+            />
             {formatTime(timeLeft)}
           </span>
           <div style={{ display: "flex", gap: 15 }}>
@@ -149,6 +171,52 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
                 )
               }
             />
+            <Dropdown
+              menu={{
+                items: [
+                  // {
+                  //   disabled: true,
+                  //   label: (
+                  //     <Flex justify="space-between" gap={20}>
+                  //       <span>Nigh Mode</span>
+                  //       <Switch
+                  //         defaultChecked={
+                  //           localStorage.getItem("theme") === 'dark'
+                  //         }
+                  //         onChange={(e) => {
+                  //           localStorage.setItem("theme", e ? "dark" : "white");
+                  //         }}
+                  //       />
+                  //     </Flex>
+                  //   ),
+                  //   key: "0",
+                  // },
+                  {
+                    label: (
+                      <Flex justify="space-between" align="center" gap={20}>
+                        <span>Text Size</span>
+                        <Select
+                          style={{ width: 90 }}
+                          defaultValue={
+                            localStorage.getItem("size") || "middle"
+                          }
+                          onChange={(e) => dispatch(changeSize({ size: e }))}
+                        >
+                          <Select.Option value="12">Small</Select.Option>
+                          <Select.Option value="16">Middle</Select.Option>
+                          <Select.Option value="20">Large</Select.Option>
+                        </Select>
+                      </Flex>
+                    ),
+                    disabled: true,
+                    key: "1",
+                  },
+                ],
+              }}
+              trigger={["click"]}
+            >
+              <Button icon={<SettingOutlined />} />
+            </Dropdown>
             <Button
               icon={<ProfileOutlined />}
               onClick={() => setIsReviewVisible(true)}
@@ -172,29 +240,31 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
       <Modal
         open={isModalVisible}
         closable={timeLeft > 0}
-        footer={[
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleModalOk}
-            loading={loading}
-          >
-            Submit
-          </Button>,
-          <Button
-            key="cancel"
-            onClick={handleModalCancel}
-            disabled={timeLeft <= 0}
-          >
-            Cancel
-          </Button>,
-        ]}
+        footer={
+          timeLeft > 0 && [
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleModalOk}
+              loading={loading}
+            >
+              Submit
+            </Button>,
+            <Button
+              key="cancel"
+              onClick={handleModalCancel}
+              disabled={timeLeft <= 0}
+            >
+              Cancel
+            </Button>,
+          ]
+        }
         centered
       >
         <Result
           title={
             timeLeft <= 0
-              ? "Time is up. send your answers"
+              ? "Time is up. sending your answers"
               : "Are you sure you want to submit?"
           }
         />

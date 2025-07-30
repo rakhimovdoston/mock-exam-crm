@@ -12,6 +12,7 @@ const MultipleChoiceMultipleAnswerElement = ({
   const dispatch = useDispatch();
   const { answers } = useSelector((state) => state.answer);
   const userAnswer = useSelector((state) => state.exam);
+  const { size } = useSelector((state) => state.app);
 
   const getValue = (questionNumber) => {
     switch (questionNumber) {
@@ -39,9 +40,9 @@ const MultipleChoiceMultipleAnswerElement = ({
   const checkIsAnswer = (option, answers) => {
     if (answers.length > 0) {
       const keys = getKeys();
-      
+
       const answer = answers.find((a) => a.keys === keys);
-      
+
       if (answer && answer.values && answer.values.includes(option)) {
         return true;
       }
@@ -70,19 +71,26 @@ const MultipleChoiceMultipleAnswerElement = ({
       {...attributes}
       style={{
         borderRadius: "8px",
-        fontSize: "16px",
+        fontSize: `${size}px`,
       }}
     >
-      <div>
+      <div style={{ fontSize: `${size}px` }}>
         <em>
           Choose <b>{getValue(element.questionNumber)}</b> letters{" "}
           <b>{getLetters(element.options)}</b>
         </em>
       </div>
-      <div style={{ marginBottom: "1rem" }}>
+      <div style={{ marginBottom: "1rem", fontSize: `${size}px` }}>
         <span>{element.question}</span>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+          fontSize: `${size}px`,
+        }}
+      >
         {element.options.map((opt, index) => (
           <div key={index} style={{ display: "flex", gap: "0.5rem" }}>
             <span style={{ fontWeight: "bold" }}>
@@ -91,8 +99,6 @@ const MultipleChoiceMultipleAnswerElement = ({
             <Checkbox
               checked={checkIsAnswer(opt, answers)}
               onChange={(e) => {
-                console.log("Clicked:");
-                
                 if (answers.length > 0) {
                   dispatch(
                     updateMultipleAnswer({ keys: getKeys(), values: opt })
@@ -106,7 +112,11 @@ const MultipleChoiceMultipleAnswerElement = ({
                   );
                 }
               }}
-              style={{ display: "flex", alignItems: "center" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                fontSize: `${size}px`,
+              }}
             >
               <span>{opt}</span>
             </Checkbox>
