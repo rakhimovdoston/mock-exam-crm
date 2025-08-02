@@ -8,7 +8,7 @@ import {
 import { useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
 import useApiRequest from "../hooks/useApiRequest";
-import { redirect, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { enterFullScreen, isFullScreen } from "../utils/documentUtils";
 import { logo } from "../assets";
@@ -53,7 +53,7 @@ const UserPage = () => {
 
   const getDisable = (writing, listening, reading) => {
     return !(writing && reading && listening);
-  }
+  };
 
   if (loading) {
     return (
@@ -90,13 +90,13 @@ const UserPage = () => {
         style={{
           width: "100%",
           display: "flex",
-          justifyContent: 'space-between',
-          padding: '0 20px',
+          justifyContent: "space-between",
+          padding: "0 20px",
           gap: "10px",
         }}
       >
         <img src={logo} alt="Logo" width={100} />
-        <div style={{display: 'flex', gap: '10px'}}>
+        <div style={{ display: "flex", gap: "10px" }}>
           <Button
             onClick={enterFullScreen}
             icon={
@@ -111,7 +111,7 @@ const UserPage = () => {
             danger
             icon={<LogoutOutlined />}
             onClick={() => {
-              navigate("/");
+              dispatch(logout());
             }}
           >
             Exit
@@ -189,7 +189,7 @@ const UserPage = () => {
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <Button
                   type="primary"
-                  disabled={data.data.reading}
+                  disabled={!data.data.listening || data.data.reading}
                   onClick={() => navigate(`/reading/${id}`)}
                 >
                   Start
@@ -202,7 +202,7 @@ const UserPage = () => {
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <Button
                   type="primary"
-                  disabled={data.data.writing}
+                  disabled={!data.data.reading || data.data.writing}
                   onClick={() => navigate(`/writing/${id}`)}
                 >
                   Start
@@ -210,7 +210,11 @@ const UserPage = () => {
               </div>
             </Card>
             <Button
-              disabled={getDisable(data.data.writing, data.data.listening, data.data.reading)}
+              disabled={getDisable(
+                data.data.writing,
+                data.data.listening,
+                data.data.reading
+              )}
               onClick={() => {
                 localStorage.removeItem("exam_start");
                 dispatch(logout());

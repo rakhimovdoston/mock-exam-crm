@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import ReactDOM from "react-dom";
 import { createEditor, Node } from "slate";
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
@@ -283,54 +284,57 @@ const RichTextViewer = ({
           editor={editor}
           initialValue={preparedContent}
         >
-          {menuPosition && (
-            <div
-              style={{
-                position: "absolute",
-                top: `${menuPosition.top - 50}px`,
-                left: menuPosition.left,
-                background: "#fff",
-                borderRadius: "5px",
-                zIndex: 1000,
-                boxShadow: "0 2px 8px rgba(2, 23, 255, 0.55)",
-              }}
-            >
-              <Flex align="center" gap={5} style={{ padding: "5px" }}>
-                <Button
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    toggleFormat(editor, "highlight", "#FFFF00");
-                    setMenuPosition(undefined);
-                  }}
-                  style={{ fontSize: "12px", background: "#FFFF00" }}
-                />
-                <Button
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    toggleFormat(editor, "highlight", "#ADD8E6");
-                    setMenuPosition(undefined);
-                  }}
-                  style={{ fontSize: "12px", background: "#ADD8E6" }}
-                />
-                <Button
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    toggleFormat(editor, "highlight", "#90EE90");
-                    setMenuPosition(undefined);
-                  }}
-                  style={{ fontSize: "12px", background: "#90EE90" }}
-                />
-                <Button
-                  type="dashed"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    toggleFormat(editor, "highlight", "transparent");
-                    setMenuPosition(undefined);
-                  }}
-                />
-              </Flex>
-            </div>
-          )}
+          {menuPosition &&
+            ReactDOM.createPortal(
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${menuPosition.top}px`,
+                  left: menuPosition.left,
+                  background: "#fff",
+                  borderRadius: "5px",
+                  zIndex: 1000,
+                  boxShadow: "0 2px 8px rgba(2, 23, 255, 0.55)",
+                }}
+              >
+                <Flex align="center" gap={5} style={{ padding: "5px" }}>
+                  <Button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleFormat(editor, "highlight", "#FFFF00");
+                      setMenuPosition();
+                    }}
+                    style={{ fontSize: "12px", background: "#FFFF00" }}
+                  />
+                  <Button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleFormat(editor, "highlight", "#ADD8E6");
+                      setMenuPosition();
+                    }}
+                    style={{ fontSize: "12px", background: "#ADD8E6" }}
+                  />
+                  <Button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleFormat(editor, "highlight", "#90EE90");
+                      setMenuPosition();
+                    }}
+                    style={{ fontSize: "12px", background: "#90EE90" }}
+                  />
+                  <Button
+                    type="dashed"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleFormat(editor, "highlight", "transparent");
+                      setMenuPosition();
+                    }}
+                  />
+                </Flex>
+              </div>,
+              document.body
+            )}
+
           <Editable
             style={{
               padding: "0 10px",

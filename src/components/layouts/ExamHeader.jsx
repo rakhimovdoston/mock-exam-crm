@@ -6,7 +6,6 @@ import {
   Result,
   Dropdown,
   Flex,
-  Switch,
   Select,
 } from "antd";
 import {
@@ -17,7 +16,7 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
@@ -33,7 +32,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const navigate = useNavigate();
-  const { answers } = useSelector((state) => state.exam);
+  // const { answers } = useSelector((state) => state.exam);
   const [loading, setLoading] = useState(false);
   const [isReviewVisible, setIsReviewVisible] = useState(false);
   const dispatch = useDispatch();

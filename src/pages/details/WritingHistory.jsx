@@ -20,14 +20,30 @@ import apiClient from "../../services/api";
 
 const FeedbackBox = ({ title, feedback }) => {
   return (
-    <div style={{ marginTop: 10, display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        marginTop: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
       <Typography.Text style={{ fontWeight: "bold", fontSize: 18 }}>
         {title}: ({feedback.score})
       </Typography.Text>
 
       <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+        <b>Strength</b>: {feedback.strength} {feedback.sticker}
+      </Typography.Text>
+
+      <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Reason</b>: {feedback.reason}
       </Typography.Text>
+      {feedback.suggestion && (
+        <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+          <b>Suggestion</b>: {feedback.suggestion}
+        </Typography.Text>
+      )}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {feedback.mistakes.map((item, index) => (
           <div key={index} style={{ display: "flex", flexDirection: "column" }}>
@@ -291,20 +307,28 @@ const WritingWriting = () => {
                 </div>
               </Col>
             </Row>
-            {answer.feedback && (
+            {answer?.feedback && (
               <>
                 <Divider />
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <Typography.Title level={3}>Feedback:</Typography.Title>
 
                   <Typography.Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                    Overall: ({answer.feedback.overall_band})
+                    Overall: ({answer?.feedback.overall_band})
                   </Typography.Text>
 
                   <Typography.Text
                     style={{ fontWeight: "normal", fontSize: 16 }}
                   >
                     {answer.feedback.summary}
+                  </Typography.Text>
+                  <Typography.Text
+                    style={{ fontWeight: "normal", fontSize: 16 }}
+                  >
+                    <b>Encouragement:</b> {answer.feedback.encouragement}{" "}
+                    {answer?.feedback?.stickers?.map((stick, index) => (
+                      <span key={index}>{stick} </span>
+                    ))}
                   </Typography.Text>
                   {answer.feedback.task_response && (
                     <FeedbackBox

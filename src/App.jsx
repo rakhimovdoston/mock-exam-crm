@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./routes/ProtectedRouted";
 import { fetchProfile } from "./store/authReducer";
 import ReadingUpdate from "./pages/update/ReadingUpdate";
+import BranchPage from "./pages/dashboard/BranchPage";
 
 // Lazy load pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -46,6 +47,7 @@ const ContestPage = React.lazy(() => import("./pages/dashboard/ContestPage"));
 const UserBookingPage = React.lazy(() =>
   import("./pages/booking/UserBookingPage")
 );
+const Branches = React.lazy(() => import("./pages/dashboard/BranchPage"));
 
 const { Content: AntContent } = Layout;
 
@@ -122,6 +124,7 @@ function App() {
             >
               <Route path="" element={<DashboardPage />} />
               <Route path="users" element={<User />} />
+              <Route path="branches" element={<BranchPage />} />
               <Route path="user/:id/booking" element={<UserBookingPage />} />
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="contest" element={<ContestPage />} />

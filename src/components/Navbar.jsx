@@ -6,6 +6,7 @@ import {
   FileTextOutlined,
   ExclamationCircleOutlined,
   TrophyOutlined,
+  BranchesOutlined,
 } from "@ant-design/icons";
 import logo from "../assets/logo.jpeg";
 import { Link } from "react-router-dom";
@@ -57,6 +58,11 @@ const Navbar = () => {
             key: "/dashboard/contest",
             icon: <TrophyOutlined />,
             label: <Link to="/dashboard/contest">Contests</Link>,
+          },
+          {
+            key: "/dashboard/branches",
+            icon: <BranchesOutlined />,
+            label: <Link to="/dashboard/branches">Branches</Link>,
           },
           {
             key: "/dashboard/ielts",

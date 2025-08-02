@@ -157,17 +157,23 @@ const ListeningExam = () => {
   }
 
   return (
-    <Layout style={{ position: "relative", height: "100vh" }}>
+    <Layout
+      style={{
+        position: "relative",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <ExamHeader
         type={"listening"}
-        totalExamTimeInSeconds={
-          Math.ceil(audioDurations.reduce((sum, dur) => sum + dur, 0))
-        }
+        totalExamTimeInSeconds={Math.ceil(
+          audioDurations.reduce((sum, dur) => sum + dur, 0)
+        )}
       />
       <Content style={{ padding: "40px", overflowY: "auto" }}>
         <div
           style={{
-            position: "relative",
             flex: 1,
             overflowY: "auto",
           }}
@@ -180,6 +186,7 @@ const ListeningExam = () => {
               key={part.type}
               style={{
                 display: selectPart === part.type ? "block" : "none",
+                position: "relative"
               }}
             >
               {part.questions.map((question) => (
