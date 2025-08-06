@@ -30,48 +30,18 @@ const MultipleChoiceMultipleAnswerElement = ({
   };
 
   const getLetters = (options) => {
-    return (
-      String.fromCharCode(65) +
-      "-" +
-      String.fromCharCode(65 + options.length - 1)
-    );
-  };
-
-  const checkIsAnswer = (option, answers) => {
-    if (answers.length > 0) {
-      const keys = getKeys();
-
-      const answer = answers.find((a) => a.keys === keys);
-
-      if (answer && answer.values && answer.values.includes(option)) {
-        return true;
-      }
-      return false;
-    } else {
-      const keys = getKeys();
-      for (const ans of userAnswer.answers) {
-        for (const a of ans.answers) {
-          if (a.keys === keys && a.values && a.values.includes(option)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-  };
-
-  const getKeys = () => {
-    const numbers = element.questionNumber;
-    const start = element.startInputId || 1;
-    return start + "-" + (start + numbers - 1);
+    return String.fromCharCode(65) + "-" + String.fromCharCode(65 + 5);
   };
 
   return (
-    <Card
+    <div
       {...attributes}
       style={{
-        borderRadius: "8px",
         fontSize: `${size}px`,
+        marginBottom: "1rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.5rem",
       }}
     >
       <div style={{ fontSize: `${size}px` }}>
@@ -80,18 +50,7 @@ const MultipleChoiceMultipleAnswerElement = ({
           <b>{getLetters(element.options)}</b>
         </em>
       </div>
-      <div style={{ marginBottom: "1rem", fontSize: `${size}px` }}>
-        <span>{element.question}</span>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-          fontSize: `${size}px`,
-        }}
-      >
-        {element.options.map((opt, index) => (
+      {/* {element.options.map((opt, index) => (
           <div key={index} style={{ display: "flex", gap: "0.5rem" }}>
             <span style={{ fontWeight: "bold" }}>
               {String.fromCharCode(65 + index)}.
@@ -121,10 +80,9 @@ const MultipleChoiceMultipleAnswerElement = ({
               <span>{opt}</span>
             </Checkbox>
           </div>
-        ))}
-      </div>
+        ))} */}
       {children}
-    </Card>
+    </div>
   );
 };
 

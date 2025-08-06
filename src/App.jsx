@@ -124,7 +124,7 @@ function App() {
             >
               <Route path="" element={<DashboardPage />} />
               <Route path="users" element={<User />} />
-              <Route path="branches" element={<BranchPage />} />
+              <Route path="venues" element={<BranchPage />} />
               <Route path="user/:id/booking" element={<UserBookingPage />} />
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="contest" element={<ContestPage />} />

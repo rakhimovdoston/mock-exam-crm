@@ -32,6 +32,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { updateForUserAnswers } from "../../store/examReducer";
 import { Button, Flex } from "antd";
+import MultipleChoiceOptionElement from "./elements/view/MultipleChoiceOptionElement";
+import CheckboxViewElement from "./elements/view/CheckboxViewElement";
 
 const initialValue = [
   {
@@ -41,6 +43,54 @@ const initialValue = [
     ],
   },
 ];
+
+const convertMultipleChoiceToSlateFriendly = (content) => {
+  return content.map((node) => {
+    if (
+      (node.type === "multiple-choice" ||
+        node.type === "multiple-choice-multiple-answer") &&
+      node.question &&
+      node.options
+    ) {
+      const id = node.id;
+      const questionParagraph = {
+        type: "span",
+        id: id,
+        questionNumber: node.questionNumber,
+        startInputId: node.startInputId,
+        children: [{ text: node.question }],
+      };
+
+      const optionNodes = node.options.map((opt) => ({
+        type:
+          node.type === "multiple-choice-multiple-answer"
+            ? "checkbox"
+            : "option",
+        id: id,
+        questionNumber: node.questionNumber,
+        startInputId: node.startInputId,
+        optionValue: opt,
+        children: [{ text: opt }],
+      }));
+
+      return {
+        ...node,
+        question: undefined,
+        options: undefined,
+        children: [questionParagraph, ...optionNodes],
+      };
+    }
+
+    if (Array.isArray(node.children)) {
+      return {
+        ...node,
+        children: convertMultipleChoiceToSlateFriendly(node.children),
+      };
+    }
+
+    return node;
+  });
+};
 
 function injectSelectoptions(nodes) {
   const extractOptionsFromList = (node) => {
@@ -151,7 +201,7 @@ const RichTextViewer = ({
 
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
-    const originalIsInline = baseEditor.isInline; // Save the original method
+    const originalIsInline = baseEditor.isInline;
 
     baseEditor.isInline = (element) => {
       return (
@@ -164,7 +214,6 @@ const RichTextViewer = ({
   }, []);
 
   const [menuPosition, setMenuPosition] = useState(null);
-  const [selectionText, setSelectionText] = useState("");
 
   const handleMouseUp = (e) => {
     const selection = window.getSelection();
@@ -198,7 +247,6 @@ const RichTextViewer = ({
 
     const left = Math.min(rect.left + window.scrollX, window.innerWidth - 150);
 
-    setSelectionText(text);
     setMenuPosition({ top, left });
   };
 
@@ -243,10 +291,14 @@ const RichTextViewer = ({
         return <SpanElement {...props} />;
       case "paragraph":
         return <ParagraphElement {...props} />;
-      case "multiple-choice":
-        return <ReadOnlyMultipleChoiceElement {...props} />;
       case "multiple-choice-multiple-answer":
         return <MultipleChoiceMultipleAnswerElement {...props} />;
+      case "multiple-choice":
+        return <ReadOnlyMultipleChoiceElement {...props} />;
+      case "option":
+        return <MultipleChoiceOptionElement {...props} />;
+      case "checkbox":
+        return <CheckboxViewElement {...props} />;
       default:
         return <DefaultElement {...props} />;
     }
@@ -257,7 +309,10 @@ const RichTextViewer = ({
   }, []);
 
   const preparedContent = useMemo(() => {
-    return injectHeadingOptions(content || initialValue, headings, type);
+    const converted = convertMultipleChoiceToSlateFriendly(
+      content || initialValue
+    );
+    return injectHeadingOptions(converted, headings, type);
   }, [content, headings]);
 
   const onDropAnswer = (key, value) => {

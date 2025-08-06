@@ -55,7 +55,9 @@ const InputElement = ({
   const getValue = () => {
     for (const anss of userAnswers.answers) {
       for (const ans of anss.answers) {
-        if (ans.key === element.placeholder) return ans.value;
+        if (ans.key === element.placeholder) {
+          return ans.value;
+        }
       }
     }
     return "";
@@ -190,7 +192,7 @@ const InputElement = ({
           type={element.inputType || "text"}
           id={"ques-" + (element.placeholder || "input")}
           placeholder={element.placeholder}
-          value={inpValue || inputValue || getValue()}
+          value={inpValue || getValue()}
           autoComplete="off"
           spellCheck={false}
           autoCorrect="off"
@@ -202,7 +204,7 @@ const InputElement = ({
             padding: "4px",
             borderRadius: "10px",
             textAlign: "center",
-            fontSize: `${size}px`
+            fontSize: `${size}px`,
           }}
         />
       )}

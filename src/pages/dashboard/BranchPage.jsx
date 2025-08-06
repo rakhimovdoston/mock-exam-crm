@@ -91,6 +91,15 @@ const BranchPage = () => {
           >
             Update
           </Button>
+          <Button
+            type="primary"
+            onClick={() => {
+              setShowUpdate(true);
+              setSelectBranch(record);
+            }}
+          >
+            View
+          </Button>
         </div>
       ),
     },
@@ -184,7 +193,7 @@ const BranchPage = () => {
   return (
     <>
       <div>
-        <Typography.Title level={3}>Branches</Typography.Title>
+        <Typography.Title level={3}>Venues</Typography.Title>
         <Table
           key={"branch"}
           loading={loading}

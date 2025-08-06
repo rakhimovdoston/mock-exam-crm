@@ -24,6 +24,7 @@ import AnswerReviewModal from "../modal/AnswerReviewModal";
 import { logo } from "../../assets";
 import store from "../../store";
 import { changeSize } from "../../store/appReducer";
+import { clearExamAnswers } from "../../store/examReducer";
 
 const { Header } = Layout;
 
@@ -32,7 +33,6 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const navigate = useNavigate();
-  // const { answers } = useSelector((state) => state.exam);
   const [loading, setLoading] = useState(false);
   const [isReviewVisible, setIsReviewVisible] = useState(false);
   const dispatch = useDispatch();
@@ -77,7 +77,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
             ? minutes.toString().padStart(2, "0")
             : secs.toString().padStart(2, "0")}
         </span>{" "}
-        {minutes > 0 ? "minutes" : "seconds"} remaining
+        {minutes > 0 ? "minutes" : "seconds"} remaining {secs > 0 ? `(${secs} seconds)` : ""}
       </span>
     );
   };
@@ -102,6 +102,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
         return;
       }
       toast.success("Answers submitted successfully!");
+      dispatch(clearExamAnswers());
       navigate(`/exam/${id}`);
     } catch (error) {
       console.error("Error submitting answers:", error);

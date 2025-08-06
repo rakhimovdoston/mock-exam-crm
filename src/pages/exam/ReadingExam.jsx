@@ -43,7 +43,7 @@ const ReadingExam = () => {
       // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
       if (
         (e.ctrlKey || e.metaKey) &&
-        ["x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
+        ["s", "p", "r", "t"].includes(e.key.toLowerCase())
       ) {
         e.preventDefault();
         toast.info(`This keyboard blocked:`);

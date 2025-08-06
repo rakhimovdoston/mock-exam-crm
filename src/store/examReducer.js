@@ -78,6 +78,9 @@ const examReducer = createSlice({
         });
       });
     },
+    clearExamAnswers: (state) => {
+      state.answers = [];
+    },
   },
 });
 
@@ -85,5 +88,6 @@ export const {
   initilalizeExam,
   updateForUserAnswers,
   updateForUserMultipleAnswers,
+  clearExamAnswers
 } = examReducer.actions;
 export default examReducer.reducer;

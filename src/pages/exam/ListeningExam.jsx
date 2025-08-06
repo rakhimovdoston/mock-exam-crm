@@ -39,7 +39,7 @@ const ListeningExam = () => {
       // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
       if (
         (e.ctrlKey || e.metaKey) &&
-        ["x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
+        ["s", "p", "r", "t"].includes(e.key.toLowerCase())
       ) {
         e.preventDefault();
         toast.info(`This keyboard blocked:`);
@@ -85,7 +85,7 @@ const ListeningExam = () => {
     const handleEnded = () => {
       setTimeout(() => {
         setCurrentAudioIndex((prev) => prev + 1);
-      }, 30000);
+      }, 3000);
     };
 
     audioEl.addEventListener("ended", handleEnded);
@@ -167,9 +167,9 @@ const ListeningExam = () => {
     >
       <ExamHeader
         type={"listening"}
-        totalExamTimeInSeconds={Math.ceil(
-          audioDurations.reduce((sum, dur) => sum + dur, 0)
-        )}
+        totalExamTimeInSeconds={
+          Math.ceil(audioDurations.reduce((sum, dur) => sum + dur, 0)) + 10
+        }
       />
       <Content style={{ padding: "40px", overflowY: "auto" }}>
         <div
@@ -186,7 +186,7 @@ const ListeningExam = () => {
               key={part.type}
               style={{
                 display: selectPart === part.type ? "block" : "none",
-                position: "relative"
+                position: "relative",
               }}
             >
               {part.questions.map((question) => (

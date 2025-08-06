@@ -62,7 +62,7 @@ const Navbar = () => {
           {
             key: "/dashboard/branches",
             icon: <BranchesOutlined />,
-            label: <Link to="/dashboard/branches">Branches</Link>,
+            label: <Link to="/dashboard/venues">Venues</Link>,
           },
           {
             key: "/dashboard/ielts",

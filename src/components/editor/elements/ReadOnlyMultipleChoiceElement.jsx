@@ -1,78 +1,33 @@
-import React, { useState } from "react";
-import { Radio, Card } from "antd";
-import { useDispatch, useSelector } from "react-redux";
-import { updateAnswer } from "../../../store/answerReducer";
-import { getValueFromAnswer } from "../../../utils";
-import { updateForUserAnswers } from "../../../store/examReducer";
+import React from "react";
+import { useSelector } from "react-redux";
 
-const ReadOnlyMultipleChoiceElement = ({ element }) => {
-  const [selected, setSelected] = useState(null);
-  const dispatch = useDispatch();
-  const { answers } = useSelector((state) => state.answer);
-  const userAnswer = useSelector((state) => state.exam);
-  const {size} = useSelector(state => state.app);
+const ReadOnlyMultipleChoiceElement = ({ element, attributes, children }) => {
+  const { size } = useSelector((state) => state.app);
 
-  const value = getValueFromAnswer(element.id, answers);
-
-  const checkedValue = () => {
-    for (const ans of userAnswer.answers) {
-      for (const a of ans.answers) {
-          if (a.key === element.id) {
-            return a.value;
-          }
-        }
-    }
-    return ""
-  }
+  const questionElement = React.Children.toArray(children).find(
+    (child) => child.props.children.props.element.type === "span"
+  );
+  const optionElements = React.Children.toArray(children).filter(
+    (child) => child.props.children.props.element.type === "option"
+  );
 
   return (
-    <Card
-      id={"ques-" + element.id}
-      size="small"
-      style={{
-        padding: "10px",
-        borderRadius: "8px",
-        backgroundColor: "#fffefc",
-      }}
-    >
+    <div {...attributes} style={{ marginBottom: "1rem" }}>
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: "10px",
+          gap: "5px",
           marginBottom: "10px",
-          fontSize: `${size}px`
+          fontSize: `${size}px`,
         }}
       >
-        <span style={{ fontWeight: 500, fontSize: `${size}px` }}>{element.id}.</span>
-        <span style={{ fontWeight: "bold", fontSize: `${size}px` }}>
-          {element.question}
-        </span>
+        <b>{element.id}.</b>
+        {questionElement}
       </div>
-      <Radio.Group
-        onChange={(e) => {
-          setSelected(e.target.value);
-          if (answers.length > 0) {
-            dispatch(updateAnswer({ key: element.id, value: e.target.value }));
-          } else {
-            dispatch(
-              updateForUserAnswers({ key: element.id, value: e.target.value })
-            );
-          }
-        }}
-        value={value || selected || checkedValue()}
-        style={{ display: "flex", flexDirection: "column", gap: "6px" }}
-      >
-        {element.options.map((opt, idx) => (
-          <Radio key={idx} value={opt} style={{fontSize: `${size}px`}}>
-            <span style={{ fontWeight: 500 }}>
-              {String.fromCharCode(65 + idx)}.
-            </span>{" "}
-            {opt}
-          </Radio>
-        ))}
-      </Radio.Group>
-    </Card>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        {optionElements}
+      </div>
+    </div>
   );
 };
 
