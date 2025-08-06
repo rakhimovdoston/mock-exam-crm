@@ -77,7 +77,7 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
             ? minutes.toString().padStart(2, "0")
             : secs.toString().padStart(2, "0")}
         </span>{" "}
-        {minutes > 0 ? "minutes" : "seconds"} remaining {secs > 0 ? `(${secs} seconds)` : ""}
+        {minutes > 0 ? "minutes" : "seconds"} remaining
       </span>
     );
   };
