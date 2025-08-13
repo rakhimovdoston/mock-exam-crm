@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -19,6 +19,7 @@ import {
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
+import { logo } from "../../assets";
 
 const { Header, Footer, Content } = Layout;
 
@@ -27,6 +28,7 @@ const WritingExam = () => {
   const [task, setTask] = useState(true);
   const [timeLeft, setTimeLeft] = useState(60 * 60);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const answersRef = useRef([]);
   const [answers, setAnswers] = useState([]);
   const navigate = useNavigate();
   const [saveLoading, setSaveLoading] = useState(false);
@@ -60,11 +62,15 @@ const WritingExam = () => {
   }, [data]);
 
   useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          setIsModalVisible(true);
+          setIsModalVisible(true); 
           return 0;
         }
         return prevTime - 1;
@@ -94,32 +100,21 @@ const WritingExam = () => {
       // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
       if (
         (e.ctrlKey || e.metaKey) &&
-        ["c", "v", "x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
+        ["x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
       ) {
         e.preventDefault();
         toast.info(`This keyboard blocked:`);
       }
 
-      // F12 (developer tools), PrintScreen, va boshqalarni ham bloklash mumkin
       if (e.key === "F12" || e.key === "PrintScreen") {
         e.preventDefault();
         toast.info(`This keyboard blocked:`);
       }
     };
 
-    const handlePaste = (e) => {
-      e.preventDefault();
-      toast.info(`Paste is blocked:`);
-    };
-
     const handleContextMenu = (e) => {
       e.preventDefault();
       toast.info("Context Menu bloklangan:");
-    };
-
-    const handleCopy = (e) => {
-      e.preventDefault();
-      toast.info(`Copy is Blocked:`);
     };
 
     const handleBeforeUnload = (event) => {
@@ -128,25 +123,23 @@ const WritingExam = () => {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("paste", handlePaste);
-    document.addEventListener("copy", handleCopy);
     document.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("paste", handlePaste);
-      document.removeEventListener("copy", handleCopy);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, []);
 
   const handleModalOk = async () => {
+    const latestAnswers = answersRef.current;
     setSaveLoading(true);
     const request = {
-      answers: answers,
+      answers: latestAnswers,
     };
+
     try {
       const response = await apiClient.post(
         `/api/v1/exam/writing/${id}`,
@@ -233,9 +226,16 @@ const WritingExam = () => {
               alignItems: "center",
             }}
           >
-            <span style={{ fontSize: "20px", fontWeight: 700 }}>
-              Writing Test
-            </span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              {/* {type === "reading" ? "Reading Test" : "Listening Test"} */}
+              <img src={logo} alt="Logo" width={100} />
+            </div>
             <span
               style={{
                 fontSize: "16px",
@@ -271,26 +271,34 @@ const WritingExam = () => {
         <Modal
           open={isModalVisible}
           closable={timeLeft > 0}
-          footer={[
-            <Button
-              key="submit"
-              type="primary"
-              onClick={handleModalOk}
-              loading={saveLoading}
-            >
-              Submit
-            </Button>,
-            <Button
-              key="cancel"
-              onClick={handleModalCancel}
-              disabled={timeLeft <= 0}
-            >
-              Cancel
-            </Button>,
-          ]}
+          footer={
+            timeLeft > 0 && [
+              <Button
+                key="submit"
+                type="primary"
+                onClick={handleModalOk}
+                loading={saveLoading}
+              >
+                Submit
+              </Button>,
+              <Button
+                key="cancel"
+                onClick={handleModalCancel}
+                disabled={timeLeft <= 0}
+              >
+                Cancel
+              </Button>,
+            ]
+          }
           centered
         >
-          <Result title="Are you sure you want to submit?" />
+          <Result
+            title={
+              timeLeft <= 0
+                ? "Time is up. sending your answers"
+                : "Are you sure you want to submit?"
+            }
+          />
         </Modal>
       </>
       <Content style={{ padding: "40px", overflowY: "auto" }}>

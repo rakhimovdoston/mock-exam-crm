@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo } from "react";
-import { createEditor, Element, Node } from "slate";
+import React, { useCallback, useMemo, useState } from "react";
+import ReactDOM from "react-dom";
+import { createEditor, Node } from "slate";
 import { withHistory } from "slate-history";
 import { Editable, Slate, withReact } from "slate-react";
-import TableElement from "./elements/TableElement";
 import TableRowElement from "./elements/TableRowElement";
 import TableCellElement from "./elements/TableCellElement";
 import ImageElement from "./elements/ImageElement";
@@ -17,6 +17,9 @@ import Leaf from "./elements/Leaf";
 import DefaultElement from "./elements/DefaultElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
 import TableElementViewer from "./elements/TableElementViewer";
+import MultipleChoiceOptionElement from "./elements/view/MultipleChoiceOptionElement";
+import CheckboxViewElement from "./elements/view/CheckboxViewElement";
+import { toggleFormat } from "./editorUtils";
 
 const initialValue = [
   {
@@ -26,6 +29,54 @@ const initialValue = [
     ],
   },
 ];
+
+const convertMultipleChoiceToSlateFriendly = (content) => {
+  return content.map((node) => {
+    if (
+      (node.type === "multiple-choice" ||
+        node.type === "multiple-choice-multiple-answer") &&
+      node.question &&
+      node.options
+    ) {
+      const id = node.id;
+      const questionParagraph = {
+        type: "span",
+        id: id,
+        questionNumber: node.questionNumber,
+        startInputId: node.startInputId,
+        children: [{ text: node.question }],
+      };
+
+      const optionNodes = node.options.map((opt) => ({
+        type:
+          node.type === "multiple-choice-multiple-answer"
+            ? "checkbox"
+            : "option",
+        id: id,
+        questionNumber: node.questionNumber,
+        startInputId: node.startInputId,
+        optionValue: opt,
+        children: [{ text: opt }],
+      }));
+
+      return {
+        ...node,
+        question: undefined,
+        options: undefined,
+        children: [questionParagraph, ...optionNodes],
+      };
+    }
+
+    if (Array.isArray(node.children)) {
+      return {
+        ...node,
+        children: convertMultipleChoiceToSlateFriendly(node.children),
+      };
+    }
+
+    return node;
+  });
+};
 
 function injectSelectoptions(nodes) {
   const extractOptionsFromList = (node) => {
@@ -69,7 +120,10 @@ function injectSelectoptions(nodes) {
 
 function injectHeadingOptions(content, headings, type) {
   const headOptions = [];
-  if (headings && type === "Matching Headings" || type === 'Matching Information') {
+  if (
+    (headings && type === "Matching Headings") ||
+    type === "Matching Information"
+  ) {
     for (let i = 0; i < headings; i++) {
       headOptions.push({
         key: String.fromCharCode(65 + i),
@@ -120,8 +174,7 @@ function injectHeadingOptions(content, headings, type) {
   return inject(content);
 }
 
-const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
-  
+const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
     const originalIsInline = baseEditor.isInline; // Save the original method
@@ -135,6 +188,43 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
 
     return baseEditor;
   }, []);
+
+  const [menuPosition, setMenuPosition] = useState(null);
+
+  const handleMouseUp = (e) => {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+      setMenuPosition(null);
+      return;
+    }
+
+    const text = selection.toString();
+    if (!text) {
+      setMenuPosition(null);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    // Agar rect noto‘g‘ri bo‘lsa (0,0 yoki -1), menyuni ko‘rsatmaymiz
+    if (rect.width === 0 && rect.height === 0) {
+      setMenuPosition(null);
+      return;
+    }
+
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const preferAbove = spaceAbove > 60;
+
+    const top = preferAbove
+      ? rect.top + window.scrollY - 50
+      : rect.bottom + window.scrollY + 10;
+
+    const left = Math.min(rect.left + window.scrollX, window.innerWidth - 150);
+
+    setMenuPosition({ top, left });
+  };
 
   const renderElement = useCallback((props) => {
     switch (props.element.type) {
@@ -162,6 +252,10 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
         return <ReadOnlyMultipleChoiceElement {...props} />;
       case "multiple-choice-multiple-answer":
         return <MultipleChoiceMultipleAnswerElement {...props} />;
+      case "option":
+        return <MultipleChoiceOptionElement {...props} />;
+      case "checkbox":
+        return <CheckboxViewElement {...props} />;
       default:
         return <DefaultElement {...props} />;
     }
@@ -172,7 +266,10 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
   }, []);
 
   const preparedContent = useMemo(() => {
-    return injectHeadingOptions(content || initialValue, headings, type);
+    const converted = convertMultipleChoiceToSlateFriendly(
+      content || initialValue
+    );
+    return injectHeadingOptions(converted, headings, type);
   }, [content, headings]);
 
   return (
@@ -183,8 +280,39 @@ const RichTextViewer = ({ content, headings, type, is_passage=false }) => {
         overflowY: "auto",
         boxSizing: "border-box",
       }}
+      onMouseUp={handleMouseUp}
     >
-      <Slate key={JSON.stringify(content)} editor={editor} initialValue={preparedContent}>
+      <Slate
+        key={JSON.stringify(content)}
+        editor={editor}
+        initialValue={preparedContent}
+      >
+        {menuPosition &&
+          ReactDOM.createPortal(
+            <div
+              style={{
+                position: "absolute",
+                top: `${menuPosition.top}px`,
+                left: menuPosition.left,
+                background: "#fff",
+                borderRadius: "5px",
+                zIndex: 1000,
+                boxShadow: "0 2px 8px rgba(2, 23, 255, 0.55)",
+              }}
+            >
+              <button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  toggleFormat(editor, "highlight", "#FFFF00");
+                  setMenuPosition();
+                }}
+                style={{ fontSize: "12px" }}
+              >
+                Highlight
+              </button>
+            </div>,
+            document.body
+          )}
         <Editable
           style={{
             padding: "0 10px",

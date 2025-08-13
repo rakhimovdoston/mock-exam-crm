@@ -7,11 +7,11 @@ import {
   ProfileOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
 import AnswerReviewModal from "../modal/AnswerReviewModal";
+import store from "../../store";
 
 const { Header } = Layout;
 
@@ -20,7 +20,6 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const navigate = useNavigate();
-  const { answers } = useSelector((state) => state.exam);
   const [loading, setLoading] = useState(false);
   const [isReviewVisible, setIsReviewVisible] = useState(false);
 
@@ -52,12 +51,14 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const formatTime = (seconds) => {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+
+    if (seconds == 0) return <span>--</span>;
     return (
-      <span>
+      <span style={{ color: minutes <= 1 ? "red" : "black" }}>
         <span style={{ fontWeight: "bold" }}>
           {minutes > 0
             ? minutes.toString().padStart(2, "0")
-            : seconds.toString().padStart(2, "0")}
+            : secs.toString().padStart(2, "0")}
         </span>{" "}
         {minutes > 0 ? "minutes" : "seconds"} remaining
       </span>
@@ -66,9 +67,10 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
 
   const handleModalOk = async () => {
     setLoading(true);
+    const latestAnswer = store.getState().exam.answers;
     const request = {
       type: type,
-      questionAnswers: answers,
+      questionAnswers: latestAnswer,
     };
     try {
       const response = await apiClient.post(

@@ -8,6 +8,8 @@ import {
   message,
   Tag,
   DatePicker,
+  TimePicker,
+  Flex,
 } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
@@ -32,6 +34,7 @@ const User = () => {
   const [isTestDateModalOpen, setIsTestDateModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [testDate, setTestDate] = useState(null);
+  const [testTime, setTestTime] = useState(null);
   const [form] = Form.useForm();
   const [refreshKey, setRefreshKey] = useState(0);
   const { data, loading } = useApiRequest(
@@ -80,7 +83,11 @@ const User = () => {
 
   const handleTestDateModalOpen = (record) => {
     setSelectedRecord(record);
-    if (record.testStartDate) setTestDate(moment(record.testStartDate));
+    if (record.testStartDate) {
+      const m = dayjs(record.testStartDate);
+      setTestDate(m);
+      setTestTime(m);
+    }
     setIsTestDateModalOpen(true);
   };
 
@@ -91,14 +98,18 @@ const User = () => {
   };
 
   const handleTestDateSave = () => {
-    if (!testDate) {
+    if (!testDate || !testTime) {
       toast.error("Please select a test start date and time.");
       return;
     }
+    const dateTime = testDate
+      .hour(testTime.hour())
+      .minute(testTime.minute())
+      .second(testTime.second());
 
     apiClient
       .put(`/api/v1/admin/user/test-date/${selectedRecord.id}`, {
-        date: testDate.toISOString(),
+        date: dateTime.toISOString(),
       })
       .then((response) => {
         if (response.code === 200) {
@@ -385,13 +396,32 @@ const User = () => {
         onCancel={handleTestDateModalClose}
         onOk={handleTestDateSave}
       >
-        <DatePicker
-          showTime={{ format: "HH:mm" }}
-          format="YYYY-MM-DD HH:mm"
-          value={testDate}
-          onChange={(value) => setTestDate(value)}
-          style={{ width: "100%" }}
-        />
+        <Flex gap={10}>
+          <DatePicker
+            allowClear
+            picker="date"
+            disabledDate={(current) => {
+              return current && current < moment().startOf("day");
+            }}
+            format="YYYY-MM-DD"
+            value={testDate}
+            onChange={(date) => {
+              console.log("Selected date:", date?.format("YYYY-MM-DD"));
+              setTestDate(date);
+            }}
+            style={{ width: "100%" }}
+          />
+          <TimePicker
+            value={testTime}
+            onChange={(time) => {
+              console.log("Selected time:", time?.format("HH:mm:ss"));
+              setTestTime(time);
+            }}
+            minuteStep={15}
+            secondStep={10}
+            hourStep={1}
+          />
+        </Flex>
       </Modal>
     </div>
   );

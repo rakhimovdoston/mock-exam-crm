@@ -8,17 +8,20 @@ import {
 } from "slate";
 import { ReactEditor } from "slate-react";
 
-export const isFormatActive = (editor, format) => {
+export const isFormatActive = (editor, format, value = "") => {
   const marks = Editor.marks(editor);
+  if (format === "highlight") {
+    return marks ? marks[format] === value : false;
+  }
   return marks ? marks[format] === true : false;
 };
 
-export const toggleFormat = (editor, format) => {
-  const isActive = isFormatActive(editor, format);
+export const toggleFormat = (editor, format, value = "") => {
+  const isActive = isFormatActive(editor, format, value);
   if (isActive) {
     Editor.removeMark(editor, format);
   } else {
-    Editor.addMark(editor, format, true);
+    Editor.addMark(editor, format, value === "" ? true : value);
   }
 };
 

@@ -1,4 +1,4 @@
-import { Divider, Radio, Select } from "antd";
+import { Radio, Select } from "antd";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Node, Transforms } from "slate";
@@ -116,11 +116,11 @@ const ListItemElement = ({ attributes, children, element, view = true }) => {
     <li {...attributes}>
       <div
         style={{
-          display: "flex",
+          // display: "flex",
           width: "100%",
-          alignItems: checkQuestionTypes ? undefined : "center",
-          flexDirection: checkQuestionTypes ? "column" : "row",
-          justifyContent: view ? "space-between" : undefined,
+          // alignItems: checkQuestionTypes ? undefined : "center",
+          // flexDirection: checkQuestionTypes ? "column" : "row",
+          // justifyContent: view ? "space-between" : undefined,
           marginBottom: "10px",
           gap: 10,
         }}

@@ -170,8 +170,7 @@ const UserPage = () => {
               icon={<LogoutOutlined />}
               danger
               onClick={() => {
-                localStorage.removeItem("exam_start");
-                navigate("/");
+                dispatch(logout())
               }}
             >
               Exit

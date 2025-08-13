@@ -23,9 +23,6 @@ const ReadingExam = () => {
   const dispatch = useDispatch();
   const [selectedPart, setSelectedPart] = useState(null);
 
-  const [selectionText, setSelectionText] = useState("");
-  const [menuPosition, setMenuPosition] = useState(null);
-
   const { data, loading, error } = useApiRequest(
     `api/v1/exam/module/${id}?moduleType=reading`
   );
@@ -39,47 +36,12 @@ const ReadingExam = () => {
     }
   }, [data]);
 
-  const handleMouseUp = (e) => {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) {
-      setMenuPosition(null);
-      return;
-    }
-
-    const text = selection.toString();
-    if (!text) {
-      setMenuPosition(null);
-      return;
-    }
-
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-
-    if (rect.width === 0 && rect.height === 0) {
-      setMenuPosition(null);
-      return;
-    }
-
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const preferAbove = spaceAbove > 60;
-
-    const top = preferAbove
-      ? rect.top + window.scrollY - 50
-      : rect.bottom + window.scrollY + 10;
-
-    const left = Math.min(rect.left + window.scrollX, window.innerWidth - 150);
-
-    setSelectionText(text);
-    setMenuPosition({ top, left });
-  };
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
       if (
         (e.ctrlKey || e.metaKey) &&
-        ["c", "v", "x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
+        ["s", "p", "r", "t"].includes(e.key.toLowerCase())
       ) {
         e.preventDefault();
         toast.info(`This keyboard blocked:`);
@@ -117,7 +79,6 @@ const ReadingExam = () => {
     document.addEventListener("copy", handleCopy);
     document.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -125,7 +86,6 @@ const ReadingExam = () => {
       document.removeEventListener("copy", handleCopy);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
 
@@ -157,48 +117,6 @@ const ReadingExam = () => {
     return count;
   };
 
-  const highlightSelection = () => {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-
-    const container =
-      range.commonAncestorContainer.nodeType === 3
-        ? range.commonAncestorContainer.parentElement
-        : range.commonAncestorContainer;
-
-    // 🔍 check if already highlighted somewhere inside selection
-    const highlightedAncestor = container.closest(".highlighted-text");
-
-    if (highlightedAncestor) {
-      // 🔄 Unhighlight (remove span, but keep inner HTML)
-      const unwrapped = document.createDocumentFragment();
-      while (highlightedAncestor.firstChild) {
-        unwrapped.appendChild(highlightedAncestor.firstChild);
-      }
-      highlightedAncestor.replaceWith(unwrapped);
-    } else {
-      // ✅ Add highlight
-      const span = document.createElement("span");
-      span.className = "highlighted-text";
-      span.style.backgroundColor = "yellow";
-
-      try {
-        const contents = range.cloneContents();
-        span.appendChild(contents);
-        range.deleteContents();
-        range.insertNode(span);
-      } catch (err) {
-        console.error("Highlight error:", err);
-        toast.info("Highlight failed — select fully formatted part.");
-      }
-    }
-
-    selection.removeAllRanges();
-    setMenuPosition(null);
-  };
-
   return (
     <Layout
       style={{
@@ -218,7 +136,6 @@ const ReadingExam = () => {
         }}
       >
         <div
-          onMouseUp={handleMouseUp}
           style={{
             position: "relative",
             flex: 1,
@@ -279,24 +196,6 @@ const ReadingExam = () => {
               </Splitter>
             );
           })}
-
-          {menuPosition && (
-            <div
-              style={{
-                position: "absolute",
-                top: menuPosition.top - 50,
-                left: menuPosition.left,
-                background: "#fff",
-                borderRadius: "5px",
-                zIndex: 1000,
-                boxShadow: "0 2px 8px rgba(2, 23, 255, 0.55)",
-              }}
-            >
-              <button onClick={highlightSelection} style={{ fontSize: "12px" }}>
-                Highlight
-              </button>
-            </div>
-          )}
         </div>
       </Content>
       <ExamFooter
