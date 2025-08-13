@@ -1,11 +1,17 @@
 import React, { useState } from "react";
-import { Table, Tag, Space, Input, Select, DatePicker } from "antd";
+import { Table, Tag, Space, Input, Select, DatePicker, Button } from "antd";
 import useApiRequest from "../../hooks/useApiRequest";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 
 const { Option } = Select;
 
 const columns = [
+  {
+    title: "Booking ID",
+    dataIndex: "id",
+    key: "id",
+  },
   {
     title: "Test Date",
     dataIndex: "testDate",
@@ -64,8 +70,18 @@ const columns = [
       if (status === "COMPELETED") color = "green";
       else if (status === "PROCESS") color = "orange";
       else if (status === "IN_COMPLED") color = "gray";
+      else if (status === "FAILED") color = "red";
       return <Tag color={color}>{status}</Tag>;
     },
+  },
+  {
+    title: "",
+    key: "actions",
+    render: (_, record) => (
+      <Button type="primary" style={{cursor: "pointer"}}>
+        <Link to={`${record.id}/${record.type}`} style={{cursor: "pointer", color: "white"}}>Details</Link>
+      </Button>
+    ),
   },
 ];
 
@@ -145,7 +161,10 @@ const ContestPage = () => {
           current: page + 1,
           pageSize: size,
           total: data?.data?.totalSizes,
-          onChange: (page) => setPage(page - 1),
+          onChange: (page, size) => {
+            setPage(page - 1);
+            setSize(size);
+          },
         }}
       />
     </div>

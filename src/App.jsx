@@ -49,6 +49,10 @@ const UserBookingPage = React.lazy(() =>
 );
 const Branches = React.lazy(() => import("./pages/dashboard/BranchPage"));
 
+const ContestDetails = React.lazy(() =>
+  import("./pages/details/ContestDetails")
+);
+
 const { Content: AntContent } = Layout;
 
 function App() {
@@ -128,6 +132,7 @@ function App() {
               <Route path="user/:id/booking" element={<UserBookingPage />} />
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="contest" element={<ContestPage />} />
+              <Route path="contest/:id/:type" element={<ContestDetails />} />
               <Route path="ielts/listening" element={<Listening />} />
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />

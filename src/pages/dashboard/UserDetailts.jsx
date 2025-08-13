@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   Spin,
   Typography,
@@ -158,7 +158,7 @@ const UserDetails = () => {
         "api/v1/history/refresh-answer",
         requestBody
       );
-      
+
       if (response.code != 200) {
         toast.error(
           response.message || "There was an some problem refresh the answer"
@@ -445,6 +445,13 @@ const UserDetails = () => {
                                   >
                                     {result.examStatus}
                                   </Text>
+                                  <Link
+                                    to={`/dashboard/contest/${result.id}/TEST`}
+                                  >
+                                    <Button type="primary">
+                                      View booking detail
+                                    </Button>
+                                  </Link>
                                 </Space>
                               </Col>
                               <Col>
@@ -535,6 +542,13 @@ const UserDetails = () => {
                                       ? "The student did not pass the exam"
                                       : "Exam is waiting"}
                                   </Text>
+                                  <Link
+                                    to={`/dashboard/contest/${result.id}/TEST`}
+                                  >
+                                    <Button type="primary">
+                                      View booking detail
+                                    </Button>
+                                  </Link>
                                 </Space>
                               </Col>
                               <Col>

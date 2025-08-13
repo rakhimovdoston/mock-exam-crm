@@ -28,7 +28,6 @@ export const getQuestionNumbersForHeadins = (count, difficultType) => {
 };
 
 export const getQuestionNumbers = (question) => {
-
   if (question.type === "Multiple Choice (Multiple answers)")
     return getMinMaxFromMultipleAnswer(question.content);
 
@@ -190,7 +189,10 @@ export const getLastQuestionId = (questions) => {
 
   let max = 0;
 
-  if (lastQuestion.type === "Multiple choice" || lastQuestion.type === "Multiple Choices") {
+  if (
+    lastQuestion.type === "Multiple choice" ||
+    lastQuestion.type === "Multiple Choices"
+  ) {
     const questionIds = getMinMaxQuestionIds(lastQuestion.content);
     if (questionIds !== "") {
       const parts = questionIds.split("-");
@@ -394,6 +396,18 @@ export const getPassageNumberByPassageType = (type) => {
     default:
       return "";
   }
+};
+
+export const countListHeader = (content) => {
+  let count = 0;
+  for (const node of content) {
+    if (node.type === "ordered-list" || node.type === "unordered-list") {
+      count +=
+        node.children?.filter((child) => child.type === "list-item").length ||
+        0;
+    }
+  }
+  return count;
 };
 
 export const countListHeaderOrDragDrop = (content) => {

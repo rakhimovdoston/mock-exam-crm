@@ -13,6 +13,7 @@ import {
   Typography,
   Flex,
   Tooltip,
+  Space,
 } from "antd";
 import { toast } from "react-toastify";
 import { OpenAIOutlined } from "@ant-design/icons";
@@ -32,9 +33,17 @@ const FeedbackBox = ({ title, feedback }) => {
         {title}: ({feedback.score})
       </Typography.Text>
 
-      <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+      {/* <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Strength</b>: {feedback.strength} {feedback.sticker}
-      </Typography.Text>
+      </Typography.Text> */}
+      {feedback.strength && <>
+        <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+          <b>Description</b> {feedback.strength.description}{" "}
+        </Typography.Text>
+        <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+          <b>Example:</b>{feedback.strength.example}{" "}
+        </Typography.Text>
+        </>}
 
       <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Reason</b>: {feedback.reason}
@@ -317,11 +326,33 @@ const WritingWriting = () => {
                     Overall: ({answer?.feedback.overall_band})
                   </Typography.Text>
 
-                  <Typography.Text
+                  {/* <Typography.Text
                     style={{ fontWeight: "normal", fontSize: 16 }}
                   >
                     {answer.feedback.summary}
-                  </Typography.Text>
+                  </Typography.Text> */}
+                  {answer?.feedback?.summary && <div >
+                    <div>
+                      <h3>Strengths:</h3>
+                      <ul>
+                        {answer.feedback.summary.strengths.map((item, index) => (
+                          <li key={index} style={{ fontSize: 16 }}>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3>Weaknesses:</h3>
+                      <ul>
+                        {answer.feedback.summary.weaknesses.map((item, index) => (
+                          <li key={index} style={{ fontSize: 16 }}>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    </div>}
                   <Typography.Text
                     style={{ fontWeight: "normal", fontSize: 16 }}
                   >
