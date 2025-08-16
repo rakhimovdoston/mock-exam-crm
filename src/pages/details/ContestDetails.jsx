@@ -326,7 +326,7 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Listening Section</Title>
-                    {(listening || listening.size === 0) && (
+                    {(!listening || listening.size === 0) && (
                       <Button onClick={() => resetSection("listening")}>
                         Reset listening
                       </Button>
@@ -390,7 +390,7 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Reading Section</Title>
-                    {(readings || readings.size === 0) && (
+                    {(!readings || readings.size === 0) && (
                       <Button onClick={() => resetSection("reading")}>
                         Reset reading
                       </Button>
@@ -485,7 +485,7 @@ const ContestDetails = () => {
               title={
                 <Flex justify="space-between" align="center" gap={20}>
                   <Title level={3}>Writing Section</Title>
-                  {(writings || writings.size === 0) && (
+                  {(!writings || writings.size === 0) && (
                     <Button onClick={() => resetSection("writing")}>
                       Reset Writing
                     </Button>

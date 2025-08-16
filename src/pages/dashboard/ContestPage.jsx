@@ -152,7 +152,7 @@ const ContestPage = () => {
       key: "actions",
       render: (_, record) => (
         <Flex justify="center" align="center" gap={12}>
-          <Button
+          {record.type === 'SPEAKING' && <Button
             type="primary"
             onClick={() => {
               {
@@ -162,7 +162,7 @@ const ContestPage = () => {
             }}
           >
             Set Score
-          </Button>
+          </Button>}
           <Button type="primary" style={{ cursor: "pointer" }}>
             <Link
               to={`${record.id}/${record.type}`}
