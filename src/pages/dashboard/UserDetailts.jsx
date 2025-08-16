@@ -14,6 +14,9 @@ import {
   Form,
   theme,
   Tooltip,
+  Flex,
+  Tag,
+  Modal,
 } from "antd";
 import {
   ReadOutlined,
@@ -25,6 +28,7 @@ import {
   ReloadOutlined,
   CloseCircleOutlined,
   CheckCircleOutlined,
+  BranchesOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
@@ -298,313 +302,551 @@ const UserDetails = () => {
           loading={historyLoading}
           grid={{ gutter: 24, column: 1 }}
           dataSource={history}
-          renderItem={(item) => (
-            <List.Item>
-              <Card
-                title={
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "20px",
-                    }}
-                  >
-                    <Title
-                      level={3}
+          renderItem={(item) => {
+            const [selectTab, setSelectTab] = useState("booking");
+            const [isSpeakingModalVisible, setIsSpeakingModalVisible] =
+              useState(false);
+            const [selectedSpeakingScore, setSelectedSpeakingScore] =
+              useState(null);
+            const [selectedSpeaking, setSelectedSpeaking] = useState();
+            const [errorMessage, setErrorMessage] = useState("");
+            const [speakingLoading, setSpeakingLoading] = useState(false);
+
+            const handleSpeakingModalOk = async () => {
+              if (errorMessage) {
+                toast.error("Score must be between 0.0 and 9.0");
+                return;
+              }
+              setSpeakingLoading(true);
+              try {
+                const response = await apiClient.post(
+                  `api/v1/booking/speaking-score?id=${selectedSpeaking?.id}&score=${selectedSpeakingScore}`
+                );
+                if (response.code !== 200) {
+                  toast.error(response.message || "Set Score some error");
+                  return;
+                }
+                setIsSpeakingModalVisible(false);
+                setQuestionRefresh((prev) => prev + 1);
+                setSelectedSpeaking();
+              } catch (err) {
+              } finally {
+                setSpeakingLoading(false);
+              }
+            };
+
+            const handleInputChange = (e) => {
+              const value = parseFloat(e.target.value);
+              setSelectedSpeakingScore(e.target.value);
+              if (value < 0 || value > 9) {
+                setErrorMessage("Score must be between 0.0 and 9.0");
+              } else {
+                setErrorMessage("");
+              }
+            };
+
+            const handleSpeakingModalCancel = () => {
+              setErrorMessage("");
+              setSelectedSpeakingScore(null);
+              setSelectedSpeaking();
+              setIsSpeakingModalVisible(false);
+            };
+
+            return (
+              <List.Item>
+                <Card
+                  title={
+                    <div
                       style={{
-                        fontWeight: "bold",
-                        margin: "0",
-                        color: token.colorPrimary,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "20px",
                       }}
                     >
-                      {item.mockPackages.name}
-                    </Title>
-                    <Text>
-                      <CalendarOutlined /> Registered Date:{" "}
-                      {formatDate(item.date)}
-                    </Text>
-                    <Text>
-                      Total Session: {item.mockPackages.totalSessions}
-                    </Text>
-                    <Text>
-                      Speaking Session: {item.mockPackages.speakingSessions}
-                    </Text>
-                  </div>
-                }
-                variant={"borderless"}
-                style={{
-                  borderRadius: "10px",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-              >
-                <List
-                  grid={{ gutter: 24, column: 1 }}
-                  dataSource={item.results}
-                  renderItem={(result) => {
-                    const isBeforeDate = new Date(result.testDate) > new Date();
-                    return (
-                      <List.Item>
-                        {result.type === "mock_exam" ? (
+                      <Title
+                        level={3}
+                        style={{
+                          fontWeight: "bold",
+                          margin: "0",
+                          color: token.colorPrimary,
+                        }}
+                      >
+                        {item.mockPackages.name}
+                      </Title>
+                      <Text>
+                        <CalendarOutlined /> Registered Date:{" "}
+                        {formatDate(item.date)}
+                      </Text>
+                      <Button
+                        type={selectTab === "booking" ? "primary" : "default"}
+                        onClick={() => setSelectTab("booking")}
+                      >
+                        Total Session: {item.mockPackages.totalSessions}
+                      </Button>
+                      <Button
+                        type={selectTab === "speaking" ? "primary" : "default"}
+                        onClick={() => setSelectTab("speaking")}
+                      >
+                        Speaking Session: {item.mockPackages.speakingSessions}
+                      </Button>
+                    </div>
+                  }
+                  variant={"borderless"}
+                  style={{
+                    borderRadius: "10px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  }}
+                >
+                  {selectTab === "speaking" && (
+                    <List
+                      grid={{ gutter: 24, column: 1 }}
+                      dataSource={item.speakings}
+                      renderItem={(speaking) => (
+                        <List.Item>
                           <Card
                             title={
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
+                              <Flex
+                                justify="space-between"
+                                align="center"
+                                gap={20}
+                              >
+                                <p>Speaking Details</p>
+                                <p>
+                                  Current Score: {speaking?.score || "0.0"}{" "}
+                                  score
+                                </p>
+                              </Flex>
+                            }
+                            variant="borderless"
+                          >
+                            <Space
+                              direction="horizontal"
+                              size="middle"
+                              style={{
+                                width: "100%",
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <Space
+                                direction="horizontal"
+                                size="middle"
+                                style={{ width: "100%" }}
+                              >
+                                <Space
+                                  direction="vertical"
+                                  style={{ width: "100%" }}
+                                >
+                                  <Flex gap={10} align="center">
+                                    <Text strong>Date:</Text>
+                                    <Tag color="blue">
+                                      {speaking?.date || "N/A"}
+                                    </Tag>
+                                  </Flex>
+                                  <Flex gap={10} align="center">
+                                    <Text strong>Time:</Text>
+                                    <Tag color="blue">
+                                      {speaking?.time || "N/A"}
+                                    </Tag>
+                                  </Flex>
+                                </Space>
+                                <Space
+                                  direction="vertical"
+                                  style={{ width: "100%" }}
+                                >
+                                  <Flex gap={10} align="center">
+                                    <Text strong>Branch:</Text>
+                                    <Text>{speaking?.branchName || "N/A"}</Text>
+                                  </Flex>
+                                  <Flex gap={10} align="center">
+                                    <Text strong>Speaker Name:</Text>
+                                    <Text>
+                                      {speaking?.speakerName || "N/A"}
+                                    </Text>
+                                  </Flex>
+                                </Space>
+                              </Space>
+                              <Button
+                                type="primary"
+                                onClick={() => {
+                                  setIsSpeakingModalVisible(true);
+                                  console.log("Selected Speaking: ", speaking);
+
+                                  setSelectedSpeakingScore(
+                                    speaking?.score || null
+                                  );
+                                  setSelectedSpeaking(speaking);
                                 }}
                               >
-                                <Text>
-                                  <CalendarOutlined /> Test Date:{" "}
-                                  {formatDate(result.startDate)}
-                                </Text>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 10,
-                                  }}
-                                >
-                                  {result.status &&
-                                    (result.status === "success" ? (
-                                      <CheckCircleOutlined
-                                        style={{
-                                          color: token.colorPrimary,
-                                          fontSize: 20,
-                                        }}
-                                      />
-                                    ) : (
-                                      <CloseCircleOutlined
-                                        style={{
-                                          color: token.colorError,
-                                          fontSize: 20,
-                                        }}
-                                      />
-                                    ))}
-                                  <Tooltip title="Recalculate the student's answer">
-                                    <Button
-                                      icon={<ReloadOutlined />}
-                                      loading={answerLoading}
-                                      onClick={() => refreshExamAnswer(result)}
-                                    />
-                                  </Tooltip>
-                                  <Tooltip title="Send to user his answer">
-                                    <Button
-                                      type="primary"
-                                      disabled={user?.email ? false : true}
-                                      onClick={() => sendAnswerToUser(result)}
-                                      loading={answerLoading}
-                                    >
-                                      Send answer
-                                    </Button>
-                                  </Tooltip>
-                                </div>
-                              </div>
-                            }
-                          >
-                            <Row justify="space-between" align="top">
-                              <Col>
-                                <Space
-                                  style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    justifyContent: "flex-start",
-                                    flexDirection: "column",
-                                    alignItems: "flex-start",
-                                  }}
-                                >
-                                  <Text>
-                                    <ClockCircleOutlined /> Duration:{" "}
-                                    <span
-                                      style={{
-                                        color: token.colorPrimary,
-                                      }}
-                                    >
-                                      {calculateDuration(
-                                        result.startDate,
-                                        result.endDate
-                                      )}
-                                    </span>
-                                  </Text>
-                                  <Text style={{ fontWeight: "bold" }}>
-                                    <ClockCircleOutlined /> Test Time:{" "}
-                                    <span
-                                      style={{
-                                        color: token.colorPrimary,
-                                      }}
-                                    >
-                                      {result.time}
-                                    </span>
-                                  </Text>
-                                  <Text
+                                Set speaking score
+                              </Button>
+                              <Modal
+                                title={
+                                  <p>
+                                    Set Speaking Score for{" "}
+                                    <b>{selectedSpeaking?.date}</b>
+                                  </p>
+                                }
+                                open={isSpeakingModalVisible}
+                                loading={speakingLoading}
+                                onOk={handleSpeakingModalOk}
+                                okButtonProps={{
+                                  disabled: loading,
+                                  loading: loading,
+                                }}
+                                onCancel={handleSpeakingModalCancel}
+                              >
+                                <p>
+                                  Current Speaking Score:{" "}
+                                  {selectedSpeakingScore ?? "0.0"} ball
+                                </p>
+                                <Input
+                                  min={0.0}
+                                  max={9.0}
+                                  value={selectedSpeakingScore}
+                                  placeholder="Enter new speaking score (5.5)"
+                                  type="number"
+                                  onChange={handleInputChange}
+                                />
+                                {errorMessage && (
+                                  <p
+                                    style={{ color: "red", marginTop: "10px" }}
+                                  >
+                                    {errorMessage}
+                                  </p>
+                                )}
+                              </Modal>
+                            </Space>
+                          </Card>
+                        </List.Item>
+                      )}
+                    />
+                  )}
+                  {selectTab === "booking" && (
+                    <List
+                      grid={{ gutter: 24, column: 1 }}
+                      dataSource={item.results}
+                      renderItem={(result) => {
+                        const today = new Date().toDateString();
+                        const testDate = new Date(
+                          result.testDate
+                        ).toDateString();
+
+                        const isBeforeDate =
+                          new Date(testDate) >= new Date(today);
+                        return (
+                          <List.Item>
+                            {result.type === "mock_exam" ? (
+                              <Card
+                                title={
+                                  <div
                                     style={{
-                                      textAlign: "start",
-                                      fontWeight: 600,
-                                      color: token.colorPrimary,
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
                                     }}
                                   >
-                                    {result.examStatus}
-                                  </Text>
-                                  <Link
-                                    to={`/dashboard/contest/${result.id}/TEST`}
-                                  >
-                                    <Button type="primary">
-                                      View booking detail
-                                    </Button>
-                                  </Link>
-                                </Space>
-                              </Col>
-                              <Col>
-                                <Space>
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<ReadOutlined />}
-                                    label="Reading"
-                                    score={result.reading}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                  />
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<SoundOutlined />}
-                                    label="Listening"
-                                    score={result.listening}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                  />
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<EditOutlined />}
-                                    label="Writing"
-                                    score={result.writing}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                  />
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<AudioOutlined />}
-                                    label="Speaking"
-                                    score={result.speaking}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                  />
-                                </Space>
-                              </Col>
-                            </Row>
-                          </Card>
-                        ) : (
-                          <Card>
-                            <Row justify="space-between" align="top">
-                              <Col>
-                                <Space
-                                  style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    justifyContent: "flex-start",
-                                    flexDirection: "column",
-                                    alignItems: "flex-start",
-                                  }}
-                                >
-                                  <Text style={{ fontWeight: "bold" }}>
-                                    <ClockCircleOutlined /> Test Date:{" "}
-                                    <span
-                                      style={{
-                                        color: !isBeforeDate
-                                          ? token.colorError
-                                          : token.colorPrimary,
-                                      }}
-                                    >
+                                    <Text>
+                                      <CalendarOutlined /> Test Date:{" "}
                                       {formatDate(result.testDate)}
-                                    </span>
-                                  </Text>
-                                  <Text style={{ fontWeight: "bold" }}>
-                                    <ClockCircleOutlined /> Test Time:{" "}
-                                    <span
+                                    </Text>
+                                    <div
                                       style={{
-                                        color: !isBeforeDate
-                                          ? token.colorError
-                                          : token.colorPrimary,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 10,
                                       }}
                                     >
-                                      {result.time}
-                                    </span>
-                                  </Text>
-                                  <Text
-                                    style={{
-                                      textAlign: "start",
-                                      fontWeight: 600,
-                                      color: !isBeforeDate
-                                        ? token.colorError
-                                        : token.colorPrimary,
-                                    }}
-                                  >
-                                    {!isBeforeDate
-                                      ? "The student did not pass the exam"
-                                      : "Exam is waiting"}
-                                  </Text>
-                                  <Link
-                                    to={`/dashboard/contest/${result.id}/TEST`}
-                                  >
-                                    <Button type="primary">
-                                      View booking detail
-                                    </Button>
-                                  </Link>
-                                </Space>
-                              </Col>
-                              <Col>
-                                <Space>
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<ReadOutlined />}
-                                    label="Reading"
-                                    score={result.reading}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                    booking
-                                    isBeforeDate={isBeforeDate}
-                                  />
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<SoundOutlined />}
-                                    label="Listening"
-                                    score={result.listening}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                    booking
-                                    isBeforeDate={isBeforeDate}
-                                  />
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<EditOutlined />}
-                                    label="Writing"
-                                    score={result.writing}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                    booking
-                                    isBeforeDate={isBeforeDate}
-                                  />
-                                  <ScoreBox
-                                    id={result.id}
-                                    icon={<AudioOutlined />}
-                                    label="Speaking"
-                                    score={result.speaking}
-                                    userId={id}
-                                    setRefresh={setQuestionRefresh}
-                                    booking
-                                    isBeforeDate={isBeforeDate}
-                                  />
-                                </Space>
-                              </Col>
-                            </Row>
-                          </Card>
-                        )}
-                      </List.Item>
-                    );
-                  }}
-                />
-              </Card>
-            </List.Item>
-          )}
+                                      {result.status && (
+                                        <Flex
+                                          justify="space-between"
+                                          align="center"
+                                          gap={10}
+                                        >
+                                          <p>Email sent: </p>
+                                          {result.status === "success" ? (
+                                            <CheckCircleOutlined
+                                              style={{
+                                                color: token.colorPrimary,
+                                                fontSize: 20,
+                                              }}
+                                            />
+                                          ) : (
+                                            <CloseCircleOutlined
+                                              style={{
+                                                color: token.colorError,
+                                                fontSize: 20,
+                                              }}
+                                            />
+                                          )}
+                                        </Flex>
+                                      )}
+                                      {result.smsStatus && (
+                                        <Flex
+                                          justify="space-between"
+                                          align="center"
+                                          gap={10}
+                                        >
+                                          <p>Sms sent: </p>
+                                          {result.smsStatus === "success" ? (
+                                            <CheckCircleOutlined
+                                              style={{
+                                                color: token.colorPrimary,
+                                                fontSize: 20,
+                                              }}
+                                            />
+                                          ) : (
+                                            <CloseCircleOutlined
+                                              style={{
+                                                color: token.colorError,
+                                                fontSize: 20,
+                                              }}
+                                            />
+                                          )}
+                                        </Flex>
+                                      )}
+                                      <Tooltip title="Recalculate the student's answer">
+                                        <Button
+                                          icon={<ReloadOutlined />}
+                                          loading={answerLoading}
+                                          onClick={() =>
+                                            refreshExamAnswer(result)
+                                          }
+                                        />
+                                      </Tooltip>
+                                      <Tooltip title="Send to user his answer">
+                                        <Button
+                                          type="primary"
+                                          disabled={user?.email ? false : true}
+                                          onClick={() =>
+                                            sendAnswerToUser(result)
+                                          }
+                                          loading={answerLoading}
+                                        >
+                                          Send answer
+                                        </Button>
+                                      </Tooltip>
+                                    </div>
+                                  </div>
+                                }
+                              >
+                                <Row justify="space-between" align="top">
+                                  <Col>
+                                    <Space
+                                      style={{
+                                        width: "100%",
+                                        display: "flex",
+                                        justifyContent: "flex-start",
+                                        flexDirection: "column",
+                                        alignItems: "flex-start",
+                                      }}
+                                    >
+                                      <Text>
+                                        <BranchesOutlined /> Branch:{" "}
+                                        <span style={{ fontWeight: "bold" }}>
+                                          {result.branchName}
+                                        </span>
+                                      </Text>
+                                      <Text>
+                                        <ClockCircleOutlined /> Duration:{" "}
+                                        <span
+                                          style={{
+                                            color: token.colorPrimary,
+                                          }}
+                                        >
+                                          {calculateDuration(
+                                            result.startDate,
+                                            result.endDate
+                                          )}
+                                        </span>
+                                      </Text>
+                                      <Text style={{ fontWeight: "bold" }}>
+                                        <ClockCircleOutlined /> Test Time:{" "}
+                                        <span
+                                          style={{
+                                            color: token.colorPrimary,
+                                          }}
+                                        >
+                                          {result.time}
+                                        </span>
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          textAlign: "start",
+                                          fontWeight: 600,
+                                          color: token.colorPrimary,
+                                        }}
+                                      >
+                                        {result.examStatus}
+                                      </Text>
+                                      <Link
+                                        to={`/dashboard/contest/${result.bookingId}/TEST`}
+                                      >
+                                        <Button type="primary">
+                                          View booking detail
+                                        </Button>
+                                      </Link>
+                                    </Space>
+                                  </Col>
+                                  <Col>
+                                    <Space>
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<SoundOutlined />}
+                                        label="Listening"
+                                        score={result.listening}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                      />
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<ReadOutlined />}
+                                        label="Reading"
+                                        score={result.reading}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                      />
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<EditOutlined />}
+                                        label="Writing"
+                                        score={result.writing}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                      />
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<AudioOutlined />}
+                                        label="Speaking"
+                                        score={result.speaking}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                      />
+                                    </Space>
+                                  </Col>
+                                </Row>
+                              </Card>
+                            ) : (
+                              <Card>
+                                <Row justify="space-between" align="top">
+                                  <Col>
+                                    <Space
+                                      style={{
+                                        width: "100%",
+                                        display: "flex",
+                                        justifyContent: "flex-start",
+                                        flexDirection: "column",
+                                        alignItems: "flex-start",
+                                      }}
+                                    >
+                                      <Text>
+                                        <BranchesOutlined /> Branch:{" "}
+                                        <span style={{ fontWeight: "bold" }}>
+                                          {result.branchName}
+                                        </span>
+                                      </Text>
+                                      <Text style={{ fontWeight: "bold" }}>
+                                        <ClockCircleOutlined /> Test Date:{" "}
+                                        <span
+                                          style={{
+                                            color: !isBeforeDate
+                                              ? token.colorError
+                                              : token.colorPrimary,
+                                          }}
+                                        >
+                                          {formatDate(result.testDate)}
+                                        </span>
+                                      </Text>
+                                      <Text style={{ fontWeight: "bold" }}>
+                                        <ClockCircleOutlined /> Test Time:{" "}
+                                        <span
+                                          style={{
+                                            color: !isBeforeDate
+                                              ? token.colorError
+                                              : token.colorPrimary,
+                                          }}
+                                        >
+                                          {result.time}
+                                        </span>
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          textAlign: "start",
+                                          fontWeight: 600,
+                                          color: !isBeforeDate
+                                            ? token.colorError
+                                            : token.colorPrimary,
+                                        }}
+                                      >
+                                        {!isBeforeDate
+                                          ? "The student did not pass the exam"
+                                          : "Exam is waiting"}
+                                      </Text>
+                                      <Link
+                                        to={`/dashboard/contest/${result.id}/TEST`}
+                                      >
+                                        <Button type="primary">
+                                          View booking detail
+                                        </Button>
+                                      </Link>
+                                    </Space>
+                                  </Col>
+                                  <Col>
+                                    <Space>
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<SoundOutlined />}
+                                        label="Listening"
+                                        score={result.listening}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                        booking
+                                        isBeforeDate={isBeforeDate}
+                                      />
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<ReadOutlined />}
+                                        label="Reading"
+                                        score={result.reading}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                        booking
+                                        isBeforeDate={isBeforeDate}
+                                      />
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<EditOutlined />}
+                                        label="Writing"
+                                        score={result.writing}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                        booking
+                                        isBeforeDate={isBeforeDate}
+                                      />
+                                      <ScoreBox
+                                        id={result.id}
+                                        icon={<AudioOutlined />}
+                                        label="Speaking"
+                                        score={result.speaking}
+                                        userId={id}
+                                        setRefresh={setQuestionRefresh}
+                                        booking
+                                        isBeforeDate={isBeforeDate}
+                                      />
+                                    </Space>
+                                  </Col>
+                                </Row>
+                              </Card>
+                            )}
+                          </List.Item>
+                        );
+                      }}
+                    />
+                  )}
+                </Card>
+              </List.Item>
+            );
+          }}
         />
       )}
     </div>

@@ -12,7 +12,6 @@ import {
   Typography,
   Spin,
   Alert,
-  Splitter,
   Flex,
   Button,
   Space,
@@ -70,6 +69,7 @@ const ContestDetails = () => {
     user = {},
     booking = {},
     readings = [],
+    exam_id,
     listening = [],
     writings = [],
     speaking = {},
@@ -90,34 +90,41 @@ const ContestDetails = () => {
     }
   };
 
-//   const resetSection = async (section) => {
-//     if (type !== "TEST") {
-//       toast.error("This action is only available for TEST type.");
-//       return;
-//     }
-//     setResetLoading(true);
-//     const request = {
-//       section: section,
-//       bookingId: booking.id,
-//     };
-//     try {
-//       const response = await apiClient.post(`api/v1/exam/reser-section`);
+  const resetSection = async (section) => {
+    if (type !== "TEST") {
+      toast.error("This action is only available for TEST type.");
+      return;
+    }
+    setResetLoading(true);
+    const request = {
+      section: section,
+      examId: exam_id ? exam_id : booking.id,
+      type: exam_id ? "exam" : "booking",
+      userId: user.id,
+    };
+    console.log("Resetting section:", request);
 
-//       if (response.code !== 200) {
-//         toast.error(
-//           response.message || "Failed to reset section. Please try again."
-//         );
-//         return;
-//       }
-//       toast.success("Section reset successfully!");
-//       setRefresh((prev) => prev + 1);
-//     } catch (error) {
-//       console.log("Error resetting section:", error);
-//       toast.error("Error resetting section:", error);
-//     } finally {
-//       setResetLoading(false);
-//     }
-//   };
+    try {
+      const response = await apiClient.post(
+        `api/v1/exam/reset-section`,
+        request
+      );
+
+      if (response.code !== 200) {
+        toast.error(
+          response.message || "Failed to reset section. Please try again."
+        );
+        return;
+      }
+      toast.success("Section reset successfully!");
+      setRefresh((prev) => prev + 1);
+    } catch (error) {
+      console.log("Error resetting section:", error);
+      toast.error("Error resetting section:", error);
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const value = parseFloat(e.target.value);
@@ -135,15 +142,9 @@ const ContestDetails = () => {
       return;
     }
     setSpeakingLoading(true);
-    const requestBody = {
-      examId: id,
-      type: "speaking",
-      score: selectedSpeakingScore,
-    };
     try {
       const response = await apiClient.post(
-        `api/v1/history/set-score/${userId}`,
-        requestBody
+        `api/v1/booking/speaking-score?id=${speaking?.id}&score=${selectedSpeakingScore}`
       );
       if (response.code !== 200) {
         toast.error(response.message || "Set Score some error");
@@ -233,7 +234,15 @@ const ContestDetails = () => {
 
         {/* Listening section */}
         {data.data.type === "SPEAKING" && (
-          <Card title="Speaking Details" style={{}} variant="borderless">
+          <Card
+            title={
+              <Flex justify="space-between" align="center" gap={20}>
+                <p>Speaking Details</p>
+                <p>Current Score: {speaking?.score || "0.0"}</p>
+              </Flex>
+            }
+            variant="borderless"
+          >
             <Space
               direction="horizontal"
               size="middle"
@@ -273,7 +282,7 @@ const ContestDetails = () => {
                 type="primary"
                 onClick={() => {
                   setIsSpeakingModalVisible(true);
-                  setSelectedSpeakingScore(score);
+                  setSelectedSpeakingScore(speaking?.score || null);
                 }}
               >
                 Set speaking score
@@ -281,6 +290,7 @@ const ContestDetails = () => {
               <Modal
                 title="Speaking Assessment"
                 open={isSpeakingModalVisible}
+                loading={speakingLoading}
                 onOk={handleSpeakingModalOk}
                 okButtonProps={{
                   disabled: loading,
@@ -316,9 +326,11 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Listening Section</Title>
-                    {/* <Button onClick={() => resetSection("listening")}>
-                      Reset listening
-                    </Button> */}
+                    {(listening || listening.size === 0) && (
+                      <Button onClick={() => resetSection("listening")}>
+                        Reset listening
+                      </Button>
+                    )}
                   </Flex>
                 }
                 variant={"borderless"}
@@ -378,9 +390,11 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Reading Section</Title>
-                    {/* <Button onClick={() => resetSection("reading")}>
-                      Reset reading
-                    </Button> */}
+                    {(readings || readings.size === 0) && (
+                      <Button onClick={() => resetSection("reading")}>
+                        Reset reading
+                      </Button>
+                    )}
                   </Flex>
                 }
                 variant={"borderless"}
@@ -471,9 +485,11 @@ const ContestDetails = () => {
               title={
                 <Flex justify="space-between" align="center" gap={20}>
                   <Title level={3}>Writing Section</Title>
-                  {/* <Button onClick={() => resetSection("writing")}>
-                    Reset Writing
-                  </Button> */}
+                  {(writings || writings.size === 0) && (
+                    <Button onClick={() => resetSection("writing")}>
+                      Reset Writing
+                    </Button>
+                  )}
                 </Flex>
               }
               variant={"borderless"}
