@@ -11,6 +11,7 @@ const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const LoginPage = React.lazy(() => import("./pages/auth/Login"));
 const UserPage = React.lazy(() => import("./pages/UserPage"));
 const User = React.lazy(() => import("./pages/dashboard/User"));
+const ReadingUpdate = React.lazy(() => import("./pages/update/ReadingUpdate"));
 const DashboardPage = React.lazy(() =>
   import("./pages/dashboard/DashboardPage")
 );
@@ -112,6 +113,10 @@ function App() {
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />
               <Route path="ielts/reading/create" element={<NewReading />} />
+              <Route
+                path="ielts/reading/:id/update"
+                element={<ReadingUpdate />}
+              />
               <Route
                 path="ielts/reading/:id/questions"
                 element={<ReadingAnswers />}

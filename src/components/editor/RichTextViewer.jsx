@@ -269,6 +269,8 @@ const RichTextViewer = ({ content, headings, type, is_passage = false }) => {
     const converted = convertMultipleChoiceToSlateFriendly(
       content || initialValue
     );
+    console.log("Converted content:", converted);
+    
     return injectHeadingOptions(converted, headings, type);
   }, [content, headings]);
 

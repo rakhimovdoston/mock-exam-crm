@@ -4,33 +4,21 @@ import useApiRequest from "../../hooks/useApiRequest"; // Adjust the import path
 import {
   Button,
   Divider,
+  Flex,
   Layout,
+  Progress,
   Select,
-  Skeleton,
   Spin,
   Typography,
+  Upload,
 } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
-import RichTextViewer from "../../components/editor/RichTextViewer";
-import QuestionModal from "../../components/modal/QuestionModal";
-import {
-  getInitValue,
-  getLastQuestionId,
-  getQuestionNumbers,
-  getStartByQuestionType,
-  getTitle,
-} from "../../utils";
-import { listening_inits } from "../../data/listening";
-import { setQuestionType } from "../../store/questionReducer";
+import { UploadOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  clearAnswers,
-  initializeAnswers,
-  setAnswers,
+  clearAnswers
 } from "../../store/answerReducer";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
-import DeleteModal from "../../components/modal/DeleteModal";
 import QuestionComponent from "../../components/questions/QuestionComponent";
 
 const { Option } = Select;
@@ -40,52 +28,53 @@ const NewListening = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [selectQuestionType, setSelectQuestionType] = useState("all");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [initKeys, setInitKeys] = useState([]);
   const [isRefresh, setRefresh] = useState(false);
-  const [isDelete, setDelete] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const { answers } = useSelector((state) => state.answer);
 
-  const { data, loading, error } = useApiRequest(`api/v1/listening/get/${id}`);
-  const questions = useApiRequest(`/api/v1/listening/${id}/get`, [
+  const { data, loading, error } = useApiRequest(`api/v1/listening/get/${id}`, [
     id,
     isRefresh,
   ]);
 
-  useEffect(() => {
-    if (questions.data && questions.data.data?.questions) {
-      const multiAnswerKeys = questions.data.data.questions
-        .filter((q) => q.type === "Multiple Choice (Multiple answers)")
-        .map(getQuestionNumbers);
-      setInitKeys([...new Set(multiAnswerKeys)]);
+  const handleFileChange = async (info) => {
+    const file = info.file;
+    if (!file) {
+      toast.error("Please select an audio file to upload.");
+      return;
     }
-  }, [questions.data]);
+    const formData = new FormData();
+    formData.append("audio", file);
+    formData.append("id", id);
 
-  useEffect(() => {
-    if (questions.data && questions.data.data) {
-      const questionsAnswers = questions.data.data.answers;
-      if (questionsAnswers && questionsAnswers.length > 0) {
-        dispatch(setAnswers(questionsAnswers));
-        return;
+    try {
+      const response = await apiClient.post("api/v1/file/audio", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      if (response.code !== 200) {
+        toast.error(response.message || "Failed to upload audio file.");
       }
 
-      const lastQuestionId = getLastQuestionId(questions.data?.data.questions);
-      if (lastQuestionId > 0) {
-        dispatch(
-          initializeAnswers({
-            numberOfAnswers: lastQuestionId,
-            startNumber:
-              getStartByQuestionType(data?.data?.type, "LISTENING") + 1,
-            initKeys: initKeys,
-          })
-        );
-      }
+      setRefresh(!isRefresh);
+    } catch (error) {
+      console.error("Error uploading audio file:", error);
+      toast.error("An error occurred while uploading the audio file.");
+    } finally {
+      setUploadProgress(0);
     }
-  }, [questions.data, data?.data?.type, initKeys]);
+  };
 
   if (loading)
     return (
@@ -104,23 +93,6 @@ const NewListening = () => {
     return (
       <Typography.Text type="danger">Error: {error?.message}</Typography.Text>
     );
-
-  const getStart = () => {
-    const lastQuestionNumber = getLastQuestionId(
-      questions.data?.data?.questions
-    );
-    const startByQuestionType = getStartByQuestionType(
-      data?.data?.type,
-      "LISTENING"
-    );
-    let start = 0;
-    if (lastQuestionNumber > 0) {
-      start = lastQuestionNumber;
-    } else {
-      start = startByQuestionType + lastQuestionNumber;
-    }
-    return start;
-  };
 
   const saveListening = async () => {
     for (const answer of answers) {
@@ -159,10 +131,6 @@ const NewListening = () => {
     }
   };
 
-  const questioNumber = (question) => {
-    return getQuestionNumbers(question);
-  };
-
   return (
     <Layout
       style={{
@@ -187,6 +155,7 @@ const NewListening = () => {
               <Select
                 defaultValue={data.data.type}
                 onChange={(e) => setType(e)}
+                disabled
                 style={{ width: 200 }}
               >
                 <Option value="all">All</Option>
@@ -197,14 +166,33 @@ const NewListening = () => {
               </Select>
             </div>
           </div>
-          <audio
-            controls
-            controlsList="nodownload noplaybackrate"
-            style={{ width: "100%" }}
-          >
-            <source src={data.data.audio} type="audio/mpeg" />
-            Your browser does not support the audio element.
-          </audio>
+          <Flex justify="space-between" align="center">
+            {uploadProgress > 0 ? (
+              <Progress
+                percent={uploadProgress}
+                style={{ marginTop: "16px" }}
+              />
+            ) : (
+              <audio
+                controls
+                controlsList="nodownload noplaybackrate"
+                style={{ width: "100%" }}
+              >
+                <source src={data.data.audio} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            )}
+            <Upload
+              name="audio"
+              accept="audio/*"
+              showUploadList={false}
+              beforeUpload={() => false} // Prevent automatic upload
+              onChange={handleFileChange}
+              style={{ display: "block" }}
+            >
+              <Button icon={<UploadOutlined />}>Upload Audio File</Button>
+            </Upload>
+          </Flex>
           <Divider />
         </div>
       )}

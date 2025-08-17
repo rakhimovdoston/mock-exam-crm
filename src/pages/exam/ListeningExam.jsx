@@ -107,7 +107,7 @@ const ListeningExam = () => {
     const handleEnded = () => {
       setTimeout(() => {
         setCurrentAudioIndex((prev) => prev + 1);
-      }, 3000);
+      }, 30000);
     };
 
     audioEl.addEventListener("ended", handleEnded);
@@ -185,7 +185,7 @@ const ListeningExam = () => {
         type={"listening"}
         totalExamTimeInSeconds={
           Math.ceil(audioDurations.reduce((sum, dur) => sum + dur, 0)) +
-          REVIEW_TIME
+          REVIEW_TIME + BUFFER_TIME
         }
       />
       <Content style={{ padding: "40px", overflowY: "auto" }}>

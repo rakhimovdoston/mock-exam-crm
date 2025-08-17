@@ -2,12 +2,19 @@ import React from "react";
 
 const ReadOnlyMultipleChoiceElement = ({ element, attributes, children }) => {
 
-  const questionElement = React.Children.toArray(children).find(
-    (child) => child.props.children.props.element.type === "span"
-  );
-  const optionElements = React.Children.toArray(children).filter(
-    (child) => child.props.children.props.element.type === "option"
-  );
+  const childArray = React.Children.toArray(children);
+
+  // Savol elementini topish
+  const questionElement = childArray.find((child) => {
+    const nested = React.Children.toArray(child.props.children)[0];
+    return nested?.props?.element?.type === "span";
+  });
+
+  // Variantlarni topish
+  const optionElements = childArray.filter((child) => {
+    const nested = React.Children.toArray(child.props.children)[0];
+    return nested?.props?.element?.type === "option";
+  });
 
   return (
     <div {...attributes} style={{ marginBottom: "1rem" }}>

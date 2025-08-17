@@ -24,7 +24,7 @@ const OrderedListElement = ({ attributes, children, element }) => {
   const checkMatchingInformation =
     itemElement &&
     (itemElement.questionsType === "Matching Information" ||
-      itemElement.questionsType === "Matching Features");
+      itemElement.questionsType === "Matching Features" || itemElement.questionsType === "Matching" || itemElement.questionsType === "Matching Sentence Endings");
 
   if (isDecimal(element) && checkMatchingInformation) {
     return (

@@ -70,7 +70,7 @@ const WritingExam = () => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          setIsModalVisible(true); 
+          setIsModalVisible(true);
           return 0;
         }
         return prevTime - 1;
@@ -83,12 +83,14 @@ const WritingExam = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+
+    if (seconds == 0) return <span>--</span>;
     return (
-      <span>
+      <span style={{ color: minutes <= 1 ? "red" : "black" }}>
         <span style={{ fontWeight: "bold" }}>
           {minutes > 0
             ? minutes.toString().padStart(2, "0")
-            : seconds.toString().padStart(2, "0")}
+            : secs.toString().padStart(2, "0")}
         </span>{" "}
         {minutes > 0 ? "minutes" : "seconds"} remaining
       </span>

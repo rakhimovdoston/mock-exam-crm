@@ -131,8 +131,7 @@ const ReadingAnswers = () => {
             <Button
               icon={<EditOutlined />}
               onClick={() => {
-                setSelectedQuestion(question);
-                setUpdate(true);
+                navigate(`/dashboard/ielts/reading/${id}/update`);
               }}
             />
           </Flex>

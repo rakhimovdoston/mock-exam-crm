@@ -22,6 +22,7 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   AudioOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
@@ -118,6 +119,8 @@ const ScoreBox = ({ id, icon, label, score, setRefresh, userId }) => {
             >
               Set score
             </Button>
+          ) : label === "Overall" ? (
+            <div></div>
           ) : (
             <Link
               to={
@@ -267,6 +270,7 @@ const UserDetails = () => {
       setAnswerLoading(false);
     }
   };
+
 
   return (
     <div style={{ padding: "40px" }}>
@@ -421,19 +425,27 @@ const UserDetails = () => {
                   </Col>
                   <Col>
                     <Space>
-                      <ScoreBox
+                      {/* <ScoreBox
                         id={item.id}
-                        icon={<ReadOutlined />}
-                        label="Reading"
-                        score={item.reading}
+                        icon={<CheckOutlined />}
+                        label="Overall"
+                        score={getOverallScore(item)}
                         userId={id}
                         setRefresh={setQuestionRefresh}
-                      />
+                      /> */}
                       <ScoreBox
                         id={item.id}
                         icon={<SoundOutlined />}
                         label="Listening"
                         score={item.listening}
+                        userId={id}
+                        setRefresh={setQuestionRefresh}
+                      />
+                      <ScoreBox
+                        id={item.id}
+                        icon={<ReadOutlined />}
+                        label="Reading"
+                        score={item.reading}
                         userId={id}
                         setRefresh={setQuestionRefresh}
                       />

@@ -60,7 +60,7 @@ const ListItemElement = ({ attributes, children, element, view = true }) => {
   const isModernMatching =
     questionType &&
     (questionType === "Matching Information" ||
-      questionType === "Matching Features");
+      questionType === "Matching Features" || questionType === "Matching" || questionType === "Matching Sentence Endings");
 
   const checkQuestionTypes =
     questionType &&
