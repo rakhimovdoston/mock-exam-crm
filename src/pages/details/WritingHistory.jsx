@@ -33,17 +33,17 @@ const FeedbackBox = ({ title, feedback }) => {
         {title}: ({feedback.score})
       </Typography.Text>
 
-      {/* <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+      <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Strength</b>: {feedback.strength} {feedback.sticker}
-      </Typography.Text> */}
-      {feedback.strength && <>
+      </Typography.Text>
+      {/* {feedback.strength && <>
         <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
           <b>Description</b> {feedback.strength.description}{" "}
         </Typography.Text>
         <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
           <b>Example:</b>{feedback.strength.example}{" "}
         </Typography.Text>
-        </>}
+        </>} */}
 
       <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Reason</b>: {feedback.reason}
@@ -326,12 +326,12 @@ const WritingWriting = () => {
                     Overall: ({answer?.feedback.overall_band})
                   </Typography.Text>
 
-                  {/* <Typography.Text
+                  <Typography.Text
                     style={{ fontWeight: "normal", fontSize: 16 }}
                   >
                     {answer.feedback.summary}
-                  </Typography.Text> */}
-                  {answer?.feedback?.summary && <div >
+                  </Typography.Text>
+                  {/* {answer?.feedback?.summary && <div >
                     <div>
                       <h3>Strengths:</h3>
                       <ul>
@@ -352,7 +352,7 @@ const WritingWriting = () => {
                         ))}
                       </ul>
                     </div>
-                    </div>}
+                    </div>} */}
                   <Typography.Text
                     style={{ fontWeight: "normal", fontSize: 16 }}
                   >
