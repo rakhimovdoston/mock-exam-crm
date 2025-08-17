@@ -470,7 +470,6 @@ const UserDetails = () => {
                                 type="primary"
                                 onClick={() => {
                                   setIsSpeakingModalVisible(true);
-                                  console.log("Selected Speaking: ", speaking);
 
                                   setSelectedSpeakingScore(
                                     speaking?.score || null
