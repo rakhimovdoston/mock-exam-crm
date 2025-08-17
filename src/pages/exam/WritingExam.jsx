@@ -273,31 +273,29 @@ const WritingExam = () => {
         <Modal
           open={isModalVisible}
           closable={timeLeft > 0}
-          footer={
-            timeLeft > 0 && [
-              <Button
-                key="submit"
-                type="primary"
-                onClick={handleModalOk}
-                loading={saveLoading}
-              >
-                Submit
-              </Button>,
-              <Button
-                key="cancel"
-                onClick={handleModalCancel}
-                disabled={timeLeft <= 0}
-              >
-                Cancel
-              </Button>,
-            ]
-          }
+          footer={[
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleModalOk}
+              loading={saveLoading}
+            >
+              Submit
+            </Button>,
+            <Button
+              key="cancel"
+              onClick={handleModalCancel}
+              disabled={timeLeft <= 0}
+            >
+              Cancel
+            </Button>,
+          ]}
           centered
         >
           <Result
             title={
               timeLeft <= 0
-                ? "Time is up. sending your answers"
+                ? "Time is up. please send your answers"
                 : "Are you sure you want to submit?"
             }
           />

@@ -80,6 +80,12 @@ const WritingWriting = () => {
     }
   };
 
+  const getCount = (text) => {
+    if (!text) return 0;
+    const words = text.trim().split(/\s+/);
+    return words.length;
+  };
+
   if (loading)
     return (
       <Layout
@@ -204,6 +210,9 @@ const WritingWriting = () => {
                     </Typography.Text>
                   )}
                 </div>
+                <Typography.Text level={5} style={{ marginTop: "12px" }}>
+                  Word count: {getCount(answer?.answer)}
+                </Typography.Text>
               </Col>
             </Row>
           </div>
