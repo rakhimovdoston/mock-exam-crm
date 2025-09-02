@@ -22,6 +22,9 @@ import dayjs from "dayjs";
 import BookingPlanCard from "./BookingPlanCard";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
+import { useSelector } from "react-redux";
+import { checkRole } from "../../utils/roleUtils";
+import { Role } from "../../data/role";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -32,6 +35,7 @@ const UserBookingPage = () => {
   const navigate = useNavigate();
   const [planSelected, setPlanSelected] = useState();
   const [selectedBranch, setSelectedBranch] = useState();
+  const [speakingType, setSpeakingType] = useState("all");
   const [selectedDate, setSelectedDate] = useState();
   const [selectedTime, setSelectedTime] = useState("all");
   const [availableSessions, setAvailableSessions] = useState([]);
@@ -40,17 +44,20 @@ const UserBookingPage = () => {
   const [selectedSpeaking, setSelectedSpeaking] = useState([]);
 
   const [activeSpeaking, setActiveSpeaking] = useState(false);
-  const [availableSpeakingSessions, setAvailableSpeakingSessions] = useState([]);
+  const [availableSpeakingSessions, setAvailableSpeakingSessions] = useState(
+    []
+  );
   const [bookingLoading, setBookingLoading] = useState(false);
+  const { user } = useSelector((state) => state.auth);
 
   const { data, loading } = useApiRequest(`api/v1/admin/user/by/${id}`, [id]);
   const branches = useApiRequest("api/v1/branch/all");
 
-  const fetchSession = useCallback(async () => {
+  const fetchSession = useCallback(async (branch) => {
     setSessionsLoading(true);
     try {
       const response = await apiClient.get(
-        `api/v1/test-session/available?date=${selectedDate}&time=${selectedTime}&branch=${selectedBranch}`
+        `api/v1/test-session/available?date=${selectedDate}&time=${selectedTime}&branch=${branch}`
       );
       if (response.code != 200) {
         setAvailableSessions([]);
@@ -68,13 +75,13 @@ const UserBookingPage = () => {
     } finally {
       setSessionsLoading(false);
     }
-  }, [selectedBranch, selectedDate, selectedTime]);
+  }, [selectedDate, selectedTime]);
 
   const fetchSpekingSession = useCallback(async () => {
     setSessionsLoading(true);
     try {
       const response = await apiClient.get(
-        `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${selectedBranch}`
+        `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${selectedBranch}&type=${speakingType}`
       );
       if (response.code != 200) {
         setAvailableSpeakingSessions([]);
@@ -92,7 +99,7 @@ const UserBookingPage = () => {
     } finally {
       setSessionsLoading(false);
     }
-  }, [selectedBranch, selectedDate]);
+  }, [selectedBranch, selectedDate, speakingType]);
 
   if (loading)
     return (
@@ -141,7 +148,6 @@ const UserBookingPage = () => {
   };
 
   const handleSpeakingSession = (session) => {
-    
     setSelectedSpeaking((prev) => {
       const exists = prev.some((item) => item.id === session.id);
       if (exists) {
@@ -160,12 +166,15 @@ const UserBookingPage = () => {
   };
 
   const bookingMethod = async () => {
-    
     if (
       selectSessions.length === 0 ||
       selectSessions.length < planSelected.totalSessions
     ) {
-      toast.warn(`Please select ${planSelected.totalSessions - selectSessions.length} test sessions date:`);
+      toast.warn(
+        `Please select ${
+          planSelected.totalSessions - selectSessions.length
+        } test sessions date:`
+      );
       return;
     }
     if (!activeSpeaking) {
@@ -173,29 +182,36 @@ const UserBookingPage = () => {
       return;
     }
 
-    if (selectedSpeaking.length === 0 || selectedSpeaking.length < planSelected.speakingSessions) {
-      toast.warn(`Please select ${planSelected.speakingSessions - selectedSpeaking.length} speaking sessions date:`);
+    if (
+      selectedSpeaking.length === 0 ||
+      selectedSpeaking.length < planSelected.speakingSessions
+    ) {
+      toast.warn(
+        `Please select ${
+          planSelected.speakingSessions - selectedSpeaking.length
+        } speaking sessions date:`
+      );
       return;
     }
     const requestBody = {
       packageId: planSelected.id,
       userId: id,
       branch: selectedBranch,
-      sessionIds: selectSessions.map(session => session.id),
-      speakingSessionIds: selectedSpeaking.map(session => session.id)
-    }
-    
+      sessionIds: selectSessions.map((session) => session.id),
+      speakingSessionIds: selectedSpeaking.map((session) => session.id),
+    };
+
     setBookingLoading(true);
     try {
       const response = await apiClient.post("api/v1/booking/set", requestBody);
       if (response.code != 200) {
-        toast.error(response.message || "")
+        toast.error(response.message || "");
         return;
       }
       navigate("/dashboard/contest");
-    } catch(e) {
-      toast.error(e?.response?.data.message || "Failed Booking service")
-    } finally{
+    } catch (e) {
+      toast.error(e?.response?.data.message || "Failed Booking service");
+    } finally {
       setBookingLoading(false);
     }
   };
@@ -322,18 +338,21 @@ const UserBookingPage = () => {
                     gap: "20px",
                   }}
                 >
-                  <Select
-                    placeholder="Select branch"
-                    style={{ width: 300 }}
-                    onChange={(value) => setSelectedBranch(value)}
-                  >
-                    {branches.data?.data?.branches?.map((branch) => (
-                      <Option key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </Option>
-                    ))}
-                  </Select>
+                  {checkRole(user.roles, Role.ROLE_ADMIN) && (
+                    <Select
+                      placeholder="Select branch"
+                      style={{ width: 300 }}
+                      onChange={(value) => setSelectedBranch(value)}
+                    >
+                      {branches.data?.data?.branches?.map((branch) => (
+                        <Option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  )}
                   <DatePicker
+                    disabledDate={disablePastDates}
                     style={{ width: "300px" }}
                     onChange={(date) =>
                       setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
@@ -354,11 +373,12 @@ const UserBookingPage = () => {
                   <Button
                     type="primary"
                     onClick={() => {
-                      if (!selectedBranch || !selectedDate) {
+                      if (!selectedDate) {
                         toast.warning("Please select branch, date");
                         return;
                       }
-                      fetchSession();
+                      // branch
+                      fetchSession(user.branchId);
                     }}
                   >
                     Show test session
@@ -497,17 +517,19 @@ const UserBookingPage = () => {
                 gap: "20px",
               }}
             >
-              <Select
-                placeholder="Select branch"
-                style={{ width: 300 }}
-                onChange={(value) => setSelectedBranch(value)}
-              >
-                {branches.data?.data?.branches?.map((branch) => (
-                  <Option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </Option>
-                ))}
-              </Select>
+              {checkRole(user.roles, Role.ROLE_ADMIN) && (
+                <Select
+                  placeholder="Select branch"
+                  style={{ width: 300 }}
+                  onChange={(value) => setSelectedBranch(value)}
+                >
+                  {branches.data?.data?.branches?.map((branch) => (
+                    <Option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </Option>
+                  ))}
+                </Select>
+              )}
               <DatePicker
                 disabledDate={disablePastDates}
                 style={{ width: "300px" }}
@@ -515,13 +537,26 @@ const UserBookingPage = () => {
                   setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
                 }
               />
+              <Select
+                value={speakingType}
+                placeholder="Select Speaking type"
+                style={{ width: 300 }}
+                onChange={(value) => setSpeakingType(value)}
+              >
+                <Option key={"all"}>All</Option>
+                <Option key={"FACE_TO_FACE"}>Face to Face</Option>
+                <Option key={"ONLINE"}>Online</Option>
+              </Select>
               <Button
                 type="primary"
                 onClick={() => {
-                  if (!selectedBranch || !selectedDate) {
+                  if (!selectedDate) {
                     toast.warning("Please select branch, date");
                     return;
                   }
+                  console.log("Speakiung type:", speakingType);
+
+                  setSelectedBranch(user.branchId);
                   fetchSpekingSession();
                 }}
               >
@@ -571,6 +606,10 @@ const UserBookingPage = () => {
                         <Text>
                           <Text strong>🧑‍🏫 Speaker:</Text> {session.speakerName}
                         </Text>
+                        <Text>
+                          <Text strong>Type:</Text>{" "}
+                          <Tag color="green">{session.type}</Tag>
+                        </Text>
                       </Space>
                     </Card>
                   </List.Item>
@@ -584,7 +623,11 @@ const UserBookingPage = () => {
         {((!activeSpeaking && planSelected && availableSessions.length > 0) ||
           activeSpeaking) && (
           <Flex justify="flex-end">
-            <Button type="primary" onClick={bookingMethod} loading={bookingLoading}>
+            <Button
+              type="primary"
+              onClick={bookingMethod}
+              loading={bookingLoading}
+            >
               {activeSpeaking ? "Booking" : "Next"}
             </Button>
           </Flex>

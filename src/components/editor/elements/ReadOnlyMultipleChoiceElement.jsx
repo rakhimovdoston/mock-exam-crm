@@ -5,10 +5,10 @@ const ReadOnlyMultipleChoiceElement = ({ element, attributes, children }) => {
   const { size } = useSelector((state) => state.app);
 
   const questionElement = React.Children.toArray(children).find(
-    (child) => child.props.children.props.element.type === "span"
+    (child) => child.props.children?.props.element.type === "span"
   );
   const optionElements = React.Children.toArray(children).filter(
-    (child) => child.props.children.props.element.type === "option"
+    (child) => child.props.children?.props.element.type === "option"
   );
 
   return (

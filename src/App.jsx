@@ -7,6 +7,7 @@ import ProtectedRoute from "./routes/ProtectedRouted";
 import { fetchProfile } from "./store/authReducer";
 import ReadingUpdate from "./pages/update/ReadingUpdate";
 import BranchPage from "./pages/dashboard/BranchPage";
+import { Role } from "./data/role";
 
 // Lazy load pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -52,6 +53,11 @@ const Branches = React.lazy(() => import("./pages/dashboard/BranchPage"));
 const ContestDetails = React.lazy(() =>
   import("./pages/details/ContestDetails")
 );
+
+const UpdateContest = React.lazy(() => import("./pages/details/UpdateContest"));
+const SpeakingPage = React.lazy(() => import("./pages/dashboard/SpeakingPage"));
+const EmployeePage = React.lazy(() => import("./pages/dashboard/EmployeePage"));
+const ResultPage = React.lazy(() => import("./pages/dashboard/ResultPage"));
 
 const { Content: AntContent } = Layout;
 
@@ -102,9 +108,11 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  {["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_ADMIN"].some(
-                    (role) => user?.roles.includes(role)
-                  ) ? (
+                  {[
+                    Role.ROLE_ADMIN,
+                    Role.ROLE_BRANCH_ADMIN,
+                    Role.ROLE_SPEAKER,
+                  ].some((role) => user?.roles.includes(role)) ? (
                     <Navigate to="/dashboard" />
                   ) : (
                     <HomePage />
@@ -117,9 +125,9 @@ function App() {
               element={
                 <ProtectedRoute
                   requiredRoles={[
-                    "ROLE_ADMIN",
-                    "ROLE_TEACHER",
-                    "ROLE_SUPER_ADMIN",
+                    Role.ROLE_ADMIN,
+                    Role.ROLE_BRANCH_ADMIN,
+                    Role.ROLE_SPEAKER,
                   ]}
                 >
                   <Dashboard />
@@ -132,7 +140,19 @@ function App() {
               <Route path="user/:id/booking" element={<UserBookingPage />} />
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="contest" element={<ContestPage />} />
+              <Route path="speaking" element={<SpeakingPage />} />
+              <Route path="results" element={<ResultPage />} />
+              <Route path="employees" element={<EmployeePage />} />
               <Route path="contest/:id/:type" element={<ContestDetails />} />
+              <Route path="speaking/:id/:type" element={<ContestDetails />} />
+              <Route
+                path="contest/:id/:type/edit"
+                element={<UpdateContest />}
+              />
+              <Route
+                path="speaking/:id/:type/edit"
+                element={<UpdateContest />}
+              />
               <Route path="ielts/listening" element={<Listening />} />
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />

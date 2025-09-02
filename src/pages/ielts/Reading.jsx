@@ -11,7 +11,7 @@ const { Option } = Select;
 const Reading = () => {
   const [type, setType] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // Number of items per page
+  const [pageSize, setPageSize] = useState(10); // Number of items per page
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedListening, setSelectedListening] = useState(null);
   const [isRefresh, setRefresh] = useState(false);
@@ -62,9 +62,11 @@ const Reading = () => {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
+      title: "№",
+      dataIndex: "index",
+      key: "index",
+      render: (text, record, index) =>
+        index + 1 + (currentPage - 1) * pageSize,
     },
     {
       title: "Title",

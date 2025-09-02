@@ -1,11 +1,11 @@
-import { Button, Form, Input, Modal } from "antd";
+import { Button, Form, Input, Modal, Radio } from "antd";
 import React from "react";
 import apiClient from "../../services/api";
 import { MaskedInput } from "antd-mask-input";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-const UserRegisterModal = ({isModalOpen, setIsModalOpen}) => {
+const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
@@ -43,7 +43,7 @@ const UserRegisterModal = ({isModalOpen, setIsModalOpen}) => {
     form.resetFields();
   };
 
-  const handleCreateUser = (values) => {
+  const handleCreateUser = (values) => {    
     apiClient
       .post("/api/v1/admin/user/save", values)
       .then((response) => {
@@ -65,7 +65,7 @@ const UserRegisterModal = ({isModalOpen, setIsModalOpen}) => {
 
   return (
     <Modal
-      title="Create New User"
+      title="Create New Candidates"
       open={isModalOpen}
       onCancel={handleModalClose}
       footer={null}
@@ -142,6 +142,16 @@ const UserRegisterModal = ({isModalOpen, setIsModalOpen}) => {
           ]}
         >
           <Input.Password placeholder="Enter password" />
+        </Form.Item>
+        <Form.Item
+          name={"everester"}
+          label="Is Everest students?"
+          rules={[{ required: true, message: "Please select" }]}
+        >
+          <Radio.Group>
+            <Radio value={true}>Yes</Radio>
+            <Radio value={false}>No</Radio>
+          </Radio.Group>
         </Form.Item>
         <Form.Item style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button type="primary" htmlType="submit">

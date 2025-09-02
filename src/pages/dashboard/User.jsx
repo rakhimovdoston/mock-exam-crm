@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Input, Modal, DatePicker } from "antd";
+import { Table, Button, Input, Select, Tag } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
-import apiClient from "../../services/api";
-import { toast } from "react-toastify";
 import UserRegisterModal from "../../components/modal/UserRegisterModal";
+import { checkRole } from "../../utils/roleUtils";
+import { useSelector } from "react-redux";
+import { Role } from "../../data/role";
+
+const { Option } = Select;
 
 const User = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,29 +15,20 @@ const User = () => {
     current: parseInt(searchParams.get("page")) || 1,
     pageSize: parseInt(searchParams.get("size")) || 10,
   });
+  const { user } = useSelector((state) => state.auth);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || ""
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isTestDateModalOpen, setIsTestDateModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [testDate, setTestDate] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { data, loading } = useApiRequest(
     `api/v1/admin/user/all?page=${pagination.current - 1}&size=${
       pagination.pageSize
     }&search=${searchTerm}&fromDate=${fromDate}&toDate=${toDate}`,
-    [
-      pagination.current,
-      pagination.pageSize,
-      searchTerm,
-      refreshKey,
-      fromDate,
-      toDate,
-    ]
+    [pagination.current, pagination.pageSize, searchTerm, fromDate, toDate]
   );
+  const branches = useApiRequest(`api/v1/branch/all`);
 
   const navigate = useNavigate();
 
@@ -53,10 +47,17 @@ const User = () => {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
+      title: "№",
+      dataIndex: "index",
+      key: "index",
+      render: (text, record, index) =>
+        index + 1 + (pagination.current - 1) * pagination.pageSize,
     },
+    // {
+    //   title: "ID",
+    //   dataIndex: "id",
+    //   key: "id",
+    // },
     {
       title: "First Name",
       dataIndex: "firstname",
@@ -88,6 +89,16 @@ const User = () => {
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
+      title: "Everest students",
+      dataIndex: "everester",
+      key: "everester",
+      render: (everester) => (
+        <Tag color={everester ? "green" : "red"}>
+          {everester ? "Yes" : "No"}
+        </Tag>
+      ),
+    },
+    {
       title: "",
       width: 150,
       key: "actions",
@@ -100,8 +111,11 @@ const User = () => {
             justifyContent: "flex-end",
           }}
         >
-          <Button type="primary" onClick={() => navigate(`/dashboard/user/${record.id}/booking`)}>
-            Booking
+          <Button
+            type="primary"
+            onClick={() => navigate(`/dashboard/user/${record.id}/booking`)}
+          >
+            Book Test
           </Button>
           <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>
             View
@@ -135,6 +149,19 @@ const User = () => {
         <div
           style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
         >
+          {checkRole(user.roles, Role.ROLE_ADMIN) && (
+            <Select
+              placeholder="Select branch"
+              style={{ width: 300 }}
+              onChange={(value) => setSelectBranch(value)}
+            >
+              {branches.data?.data?.branches?.map((branch) => (
+                <Option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </Option>
+              ))}
+            </Select>
+          )}
           <Input
             value={searchTerm}
             placeholder="Search"
@@ -143,7 +170,7 @@ const User = () => {
           />
         </div>
         <Button type="primary" onClick={handleModalOpen}>
-          Create New User
+          New Candidates
         </Button>
       </div>
       <Table

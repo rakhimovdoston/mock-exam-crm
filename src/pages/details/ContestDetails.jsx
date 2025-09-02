@@ -33,6 +33,9 @@ import {
 import RichTextViewer from "../../components/editor/RichTextViewer";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
+import { useSelector } from "react-redux";
+import { Role } from "../../data/role";
+import { checkRole } from "../../utils/roleUtils";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -46,6 +49,7 @@ const ContestDetails = () => {
   const [selectedSpeakingScore, setSelectedSpeakingScore] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [speakingLoading, setSpeakingLoading] = useState(false);
+  const auth = useSelector((state) => state.auth);
 
   const { data, loading, error } = useApiRequest(
     `api/v1/booking/session/${id}/${type}`,
@@ -70,6 +74,10 @@ const ContestDetails = () => {
     booking = {},
     readings = [],
     exam_id,
+    status,
+    listeningStatus,
+    readingStatus,
+    writingStatus,
     listening = [],
     writings = [],
     speaking = {},
@@ -81,12 +89,12 @@ const ContestDetails = () => {
         return "orange";
       case "COMPLETED":
         return "green";
-      case "IN_COMPLED":
+      case "IN_COMPLETED":
         return "gray";
       case "FAILED":
         return "red";
       default:
-        return "gray";
+        return "blue";
     }
   };
 
@@ -179,7 +187,7 @@ const ContestDetails = () => {
                   </Flex>
                   <Flex gap={10} align="center">
                     <Text strong>Status:</Text>
-                    <Tag color={getColor(booking.status)}>
+                    <Tag color={getColor(booking?.status)}>
                       {booking?.status || "N/A"}
                     </Tag>
                   </Flex>
@@ -189,12 +197,18 @@ const ContestDetails = () => {
                   </Flex>
                   <Flex gap={10} align="center">
                     <Text strong>Test Date:</Text>
-                    <Tag color="blue">{booking?.testDate || "N/A"}</Tag>
+                    <Tag color="red">{booking?.testDate || "N/A"}</Tag>
                   </Flex>
                   <Flex gap={10} align="center">
                     <Text strong>Test Time:</Text>
-                    <Tag color="blue">{booking?.time || "N/A"}</Tag>
+                    <Tag color="green">{booking?.time || "N/A"}</Tag>
                   </Flex>
+                  {booking.status != "COMPLETED" &&
+                    booking.status != "PROCESS" && (
+                      <Link to={`edit`}>
+                        <Button type="primary">Edit booking</Button>
+                      </Link>
+                    )}
                 </Space>
               </Card>
             </Col>
@@ -237,7 +251,15 @@ const ContestDetails = () => {
           <Card
             title={
               <Flex justify="space-between" align="center" gap={20}>
-                <p>Speaking Details</p>
+                <Flex align="center" gap={10}>
+                  <p>Speaking Details</p>
+                  {(checkRole(auth.user.roles, Role.ROLE_ADMIN) ||
+                    checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN)) && (
+                    <Link to={"edit"}>
+                      <Button type="link">Edit speaking session</Button>
+                    </Link>
+                  )}
+                </Flex>
                 <p>Current Score: {speaking?.score || "0.0"}</p>
               </Flex>
             }
@@ -326,11 +348,22 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Listening Section</Title>
-                    {(!listening || listening.size === 0) && (
-                      <Button onClick={() => resetSection("listening")}>
-                        Reset listening
-                      </Button>
-                    )}
+                    <Flex align="center" gap={10}>
+                      {status &&
+                        (status === "LISTENING_PROCESS" ? (
+                          <Tag color="orange">Listening processing</Tag>
+                        ) : status !== "LISTENING_PROCESS" &&
+                          listeningStatus === "completed" ? (
+                          <Tag color="green">Listening Completed</Tag>
+                        ) : (
+                          <Tag>Waiting Listening</Tag>
+                        ))}
+                      {listening.length === 0 && (
+                        <Button onClick={() => resetSection("listening")}>
+                          Reset listening
+                        </Button>
+                      )}
+                    </Flex>
                   </Flex>
                 }
                 variant={"borderless"}
@@ -390,7 +423,16 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Reading Section</Title>
-                    {(!readings || readings.size === 0) && (
+                    {status &&
+                      (status === "READING_PROCESS" ? (
+                        <Tag color="orange">Reading processing</Tag>
+                      ) : status !== "READING_PROCESS" &&
+                        readingStatus === "completed" ? (
+                        <Tag color="green">Reading Completed</Tag>
+                      ) : (
+                        <Tag> Waiting Reading</Tag>
+                      ))}
+                    {readings.length === 0 && (
                       <Button onClick={() => resetSection("reading")}>
                         Reset reading
                       </Button>
@@ -485,7 +527,16 @@ const ContestDetails = () => {
               title={
                 <Flex justify="space-between" align="center" gap={20}>
                   <Title level={3}>Writing Section</Title>
-                  {(!writings || writings.size === 0) && (
+                  {status &&
+                    (status === "WRITING_PROCESS" ? (
+                      <Tag color="orange">Writing processing</Tag>
+                    ) : status !== "WRITING_PROCESS" &&
+                      writingStatus === "completed" ? (
+                      <Tag color="green">Writing Completed</Tag>
+                    ) : (
+                      <Tag>Waiting Writing</Tag>
+                    ))}
+                  {writings.length === 0 && (
                     <Button onClick={() => resetSection("writing")}>
                       Reset Writing
                     </Button>
