@@ -54,6 +54,12 @@ const UserBookingPage = () => {
   const branches = useApiRequest("api/v1/branch/all");
 
   const fetchSession = useCallback(async (branch) => {
+    if (!branch)
+      branch = selectedBranch;
+    if (!branch) {
+      toast.warn("Please select branch")
+      return;
+    }
     setSessionsLoading(true);
     try {
       const response = await apiClient.get(
@@ -75,13 +81,19 @@ const UserBookingPage = () => {
     } finally {
       setSessionsLoading(false);
     }
-  }, [selectedDate, selectedTime]);
+  }, [selectedBranch, selectedDate, selectedTime]);
 
-  const fetchSpekingSession = useCallback(async () => {
+  const fetchSpekingSession = useCallback(async (branch) => {
+    if (!branch)
+      branch = selectedBranch;
+    if (!branch) {
+      toast.warn("Please select branch")
+      return;
+    }
     setSessionsLoading(true);
     try {
       const response = await apiClient.get(
-        `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${selectedBranch}&type=${speakingType}`
+        `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}`
       );
       if (response.code != 200) {
         setAvailableSpeakingSessions([]);
@@ -554,10 +566,8 @@ const UserBookingPage = () => {
                     toast.warning("Please select branch, date");
                     return;
                   }
-                  console.log("Speakiung type:", speakingType);
 
-                  setSelectedBranch(user.branchId);
-                  fetchSpekingSession();
+                  fetchSpekingSession(user.branchId);
                 }}
               >
                 Show speaking session

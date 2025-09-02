@@ -53,6 +53,7 @@ const UpdateContest = () => {
       if (!branch) branch = selectedBranch;
       if (!branch) {
         toast.warn("Please select Branch");
+        return;
       }
       setSessionsLoading(true);
       try {
@@ -84,6 +85,7 @@ const UpdateContest = () => {
       if (!branch) branch = selectedBranch;
       if (!branch) {
         toast.warn("Please select Branch");
+        return;
       }
       setSessionsLoading(true);
       try {
