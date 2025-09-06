@@ -58,6 +58,7 @@ const UpdateContest = React.lazy(() => import("./pages/details/UpdateContest"));
 const SpeakingPage = React.lazy(() => import("./pages/dashboard/SpeakingPage"));
 const EmployeePage = React.lazy(() => import("./pages/dashboard/EmployeePage"));
 const ResultPage = React.lazy(() => import("./pages/dashboard/ResultPage"));
+const Settings = React.lazy(() => import("./pages/Settings"));
 
 const { Content: AntContent } = Layout;
 
@@ -176,6 +177,14 @@ function App() {
               <Route
                 path="history/:id/listening"
                 element={<ListeningHistory />}
+              />
+              <Route
+                path="settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
               />
             </Route>
             <Route

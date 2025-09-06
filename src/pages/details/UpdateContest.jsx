@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
@@ -40,7 +40,48 @@ const UpdateContest = () => {
   const [selectedTime, setSelectedTime] = useState("all");
   const [selectSession, setSelectSession] = useState();
   const [sessionLoading, setSessionLoading] = useState();
+  const [speakers, setSpeakers] = useState([]);
+  const [speakersLoading, setSpeakersLoading] = useState(false);
+  const [speakerId, setSpeakerId] = useState();
   const navigate = useNavigate();
+
+  const fetchSpeakerSession = useCallback(
+    async (branch) => {
+      if (!branch) {
+        branch = selectedBranch;
+      }
+      if (!branch) {
+        toast.warn("Please select Branch");
+        return;
+      }
+      setSpeakersLoading(true);
+      try {
+        const response = await apiClient.get(
+          `api/v1/branch/speakers/${branch}`
+        );
+        if (response.code === 200) {
+          setSpeakers(response.data);
+          return;
+        } else {
+          toast.warn(
+            "This branch has not Speaker. Please add speakers this branch"
+          );
+          setSpeakers([]);
+        }
+      } catch (err) {
+        setSpeakers({});
+      } finally {
+        setSpeakersLoading(false);
+      }
+    },
+    [selectedBranch]
+  );
+
+  useEffect(() => {
+    if (user.branchId || selectedBranch) {
+      fetchSpeakerSession(user.branchId || selectedBranch);
+    }
+  }, [user.branchId, selectedBranch]);
 
   const { data, loading, error } = useApiRequest(
     `api/v1/booking/session/${id}/${type}?update=true`,
@@ -90,7 +131,7 @@ const UpdateContest = () => {
       setSessionsLoading(true);
       try {
         const response = await apiClient.get(
-          `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}`
+          `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}&speakerId=${speakerId}`
         );
         if (response.code != 200) {
           setAvailableSpeakingSessions([]);
@@ -109,7 +150,7 @@ const UpdateContest = () => {
         setSessionsLoading(false);
       }
     },
-    [selectedDate, speakingType]
+    [selectedBranch, selectedDate, speakingType, speakerId]
   );
 
   const disablePastDates = (current) => {
@@ -389,11 +430,27 @@ const UpdateContest = () => {
                   <Option key={"FACE_TO_FACE"}>Face to Face</Option>
                   <Option key={"ONLINE"}>Online</Option>
                 </Select>
+                <Select
+                  placeholder="Please select speaker"
+                  style={{ width: 300 }}
+                  onChange={(value) => setSpeakerId(value)}
+                  disabled={speakersLoading || !speakers.length}
+                >
+                  {speakers.map((speaker) => (
+                    <Option key={speaker.id} value={speaker.id}>
+                      {speaker.firstname} {speaker.lastname}
+                    </Option>
+                  ))}
+                </Select>
                 <Button
                   type="primary"
                   onClick={() => {
                     if (!selectedDate) {
                       toast.warning("Please select branch, date");
+                      return;
+                    }
+                    if (!speakerId) {
+                      toast.warning("Please select or add Speaker");
                       return;
                     }
                     fetchSpekingSession(user.branchId);

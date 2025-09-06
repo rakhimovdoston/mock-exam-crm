@@ -1,7 +1,11 @@
 import React from "react";
 import { Layout, Avatar, Dropdown, Button } from "antd";
 import { Outlet, useNavigate } from "react-router-dom";
-import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  LogoutOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import Navbar from "../components/Navbar";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
@@ -19,6 +23,12 @@ const Dashboard = () => {
   };
 
   const userMenuItems = [
+    {
+      key: "settings",
+      label: "Settings",
+      icon: <SettingOutlined />,
+      onClick: () => navigate("/dashboard/settings"),
+    },
     {
       key: "logout",
       label: "Logout",
@@ -59,7 +69,7 @@ const Dashboard = () => {
               }}
             >
               <span className="header-title" style={{ color: "black" }}>
-                {user&& (user.firstname  + " " + user.lastname)}
+                {user && user.firstname + " " + user.lastname}
               </span>
               <Avatar icon={<UserOutlined />} />
             </div>

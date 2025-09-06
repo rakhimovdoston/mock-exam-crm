@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -48,70 +48,115 @@ const UserBookingPage = () => {
     []
   );
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [speakers, setSpeakers] = useState([]);
+  const [speakersLoading, setSpeakersLoading] = useState(false);
+  const [speakerId, setSpeakerId] = useState();
   const { user } = useSelector((state) => state.auth);
 
   const { data, loading } = useApiRequest(`api/v1/admin/user/by/${id}`, [id]);
   const branches = useApiRequest("api/v1/branch/all");
 
-  const fetchSession = useCallback(async (branch) => {
-    if (!branch)
-      branch = selectedBranch;
-    if (!branch) {
-      toast.warn("Please select branch")
-      return;
+  const fetchSpeakerSession = useCallback(
+    async (branch) => {
+      if (!branch) {
+        branch = selectedBranch;
+      }
+      if (!branch) {
+        toast.warn("Please select Branch");
+        return;
+      }
+      setSpeakersLoading(true);
+      try {
+        const response = await apiClient.get(
+          `api/v1/branch/speakers/${branch}`
+        );
+        if (response.code === 200) {
+          setSpeakers(response.data);
+          return;
+        } else {
+          toast.warn(
+            "This branch has not Speaker. Please add speakers this branch"
+          );
+          setSpeakers([]);
+        }
+      } catch (err) {
+        setSpeakers([]);
+      } finally {
+        setSpeakersLoading(false);
+      }
+    },
+    [selectedBranch]
+  );
+
+  useEffect(() => {
+    if (user.branchId || selectedBranch) {
+      fetchSpeakerSession(user.branchId || selectedBranch);
     }
-    setSessionsLoading(true);
-    try {
-      const response = await apiClient.get(
-        `api/v1/test-session/available?date=${selectedDate}&time=${selectedTime}&branch=${branch}`
-      );
-      if (response.code != 200) {
+  }, [user.branchId, selectedBranch]);
+
+  const fetchSession = useCallback(
+    async (branch) => {
+      if (!branch) branch = selectedBranch;
+      if (!branch) {
+        toast.warn("Please select branch");
+        return;
+      }
+      setSessionsLoading(true);
+      try {
+        const response = await apiClient.get(
+          `api/v1/test-session/available?date=${selectedDate}&time=${selectedTime}&branch=${branch}`
+        );
+        if (response.code != 200) {
+          setAvailableSessions([]);
+          toast.error(
+            response.message || `Error data for this date ${selectedDate}`
+          );
+          return;
+        }
+        setAvailableSessions(response.data);
+      } catch (e) {
         setAvailableSessions([]);
         toast.error(
-          response.message || `Error data for this date ${selectedDate}`
+          e.response.data.message || `Error data for this date ${selectedDate}`
         );
+      } finally {
+        setSessionsLoading(false);
+      }
+    },
+    [selectedBranch, selectedDate, selectedTime]
+  );
+
+  const fetchSpekingSession = useCallback(
+    async (branch) => {
+      if (!branch) branch = selectedBranch;
+      if (!branch) {
+        toast.warn("Please select branch");
         return;
       }
-      setAvailableSessions(response.data);
-    } catch (e) {
-      setAvailableSessions([]);
-      toast.error(
-        e.response.data.message || `Error data for this date ${selectedDate}`
-      );
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, [selectedBranch, selectedDate, selectedTime]);
-
-  const fetchSpekingSession = useCallback(async (branch) => {
-    if (!branch)
-      branch = selectedBranch;
-    if (!branch) {
-      toast.warn("Please select branch")
-      return;
-    }
-    setSessionsLoading(true);
-    try {
-      const response = await apiClient.get(
-        `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}`
-      );
-      if (response.code != 200) {
+      setSessionsLoading(true);
+      try {
+        const response = await apiClient.get(
+          `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}&speakerId=${speakerId}`
+        );
+        if (response.code != 200) {
+          setAvailableSpeakingSessions([]);
+          toast.error(
+            response.message || `Error data for this date ${selectedDate}`
+          );
+          return;
+        }
+        setAvailableSpeakingSessions(response.data);
+      } catch (e) {
         setAvailableSpeakingSessions([]);
         toast.error(
-          response.message || `Error data for this date ${selectedDate}`
+          e.response.data.message || `Error data for this date ${selectedDate}`
         );
-        return;
+      } finally {
+        setSessionsLoading(false);
       }
-      setAvailableSpeakingSessions(response.data);
-    } catch (e) {
-      setAvailableSpeakingSessions([]);
-      toast.error(
-        e.response.data.message || `Error data for this date ${selectedDate}`
-      );
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, [selectedBranch, selectedDate, speakingType]);
+    },
+    [selectedBranch, selectedDate, speakingType, speakerId]
+  );
 
   if (loading)
     return (
@@ -558,6 +603,18 @@ const UserBookingPage = () => {
                 <Option key={"all"}>All</Option>
                 <Option key={"FACE_TO_FACE"}>Face to Face</Option>
                 <Option key={"ONLINE"}>Online</Option>
+              </Select>
+              <Select
+                placeholder="Please select speaker"
+                style={{ width: 300 }}
+                onChange={(value) => setSpeakerId(value)}
+                disabled={speakersLoading || !speakers.length}
+              >
+                {speakers.map((speaker) => (
+                  <Option key={speaker.id} value={speaker.id}>
+                    {speaker.firstname} {speaker.lastname}
+                  </Option>
+                ))}
               </Select>
               <Button
                 type="primary"

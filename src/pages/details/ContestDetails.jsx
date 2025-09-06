@@ -254,11 +254,12 @@ const ContestDetails = () => {
                 <Flex align="center" gap={10}>
                   <p>Speaking Details</p>
                   {(checkRole(auth.user.roles, Role.ROLE_ADMIN) ||
-                    checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN)) && (
-                    <Link to={"edit"}>
-                      <Button type="link">Edit speaking session</Button>
-                    </Link>
-                  )}
+                    checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN)) &&
+                    speaking?.status !== "COMPLETED" && (
+                      <Link to={"edit"}>
+                        <Button type="link">Edit speaking session</Button>
+                      </Link>
+                    )}
                 </Flex>
                 <p>Current Score: {speaking?.score || "0.0"}</p>
               </Flex>

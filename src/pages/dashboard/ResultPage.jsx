@@ -16,6 +16,10 @@ import { toast } from "react-toastify";
 
 const ResultPage = () => {
   const [date, setDate] = useState(dayjs());
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
   const { data, loading } = useApiRequest(
     `api/v1/admin/user/history?date=${date.format("YYYY-MM-DD")}`,
     [date]
@@ -178,6 +182,9 @@ const ResultPage = () => {
       setExportLoading(false);
     }
   };
+  const handleTableChange = (page, pageSize) => {
+    setPagination({ current: page, pageSize });
+  };
 
   const menuItems = [
     {
@@ -238,6 +245,15 @@ const ResultPage = () => {
         bordered
         dataSource={data?.data?.data || []}
         loading={loading}
+        pagination={{
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: data?.data?.totalSizes || 0,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "20", "50", "100"],
+          showQuickJumper: true,
+          onChange: handleTableChange,
+        }}
         rowKey="id"
         columns={columns}
       />

@@ -29,6 +29,7 @@ import {
   CloseCircleOutlined,
   CheckCircleOutlined,
   BranchesOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
@@ -71,7 +72,6 @@ const UserDetails = () => {
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
-  const [answerLoading, setAnswerLoading] = useState(false);
 
   if (loading) return <LoadingSpinner />;
 
@@ -107,73 +107,6 @@ const UserDetails = () => {
       toast.error(error.message || "Failed to update user details:");
     } finally {
       setUpdateLoading(false);
-    }
-  };
-
-  const sendAnswerToUser = async (item) => {
-    if (!item.speaking) {
-      toast.error("Please set speaking score!");
-      return;
-    }
-
-    if (!item.writing) {
-      toast.error("Please set writing score!");
-      return;
-    }
-
-    setAnswerLoading(true);
-    const requestBody = {
-      userId: id,
-      examId: item.id,
-    };
-    try {
-      const response = await apiClient.post(
-        `api/v1/history/send-answer`,
-        requestBody
-      );
-      if (response.code !== 200) {
-        toast.error(
-          response.message || "There was an error sending the answer"
-        );
-        return;
-      }
-
-      setQuestionRefresh((prev) => prev + 1);
-    } catch (err) {
-      toast.error(err.message || "There was an error sending the answer");
-      console.log("Answer Error: ", err);
-    } finally {
-      setAnswerLoading(false);
-    }
-  };
-
-  const refreshExamAnswer = async (item) => {
-    if (item.type === "booking") {
-      toast.error("This session not pass exam");
-      return;
-    }
-    setAnswerLoading(true);
-    const requestBody = {
-      userId: id,
-      examId: item.id,
-    };
-    try {
-      const response = await apiClient.post(
-        "api/v1/history/refresh-answer",
-        requestBody
-      );
-
-      if (response.code != 200) {
-        toast.error(
-          response.message || "There was an some problem refresh the answer"
-        );
-        return;
-      }
-      setQuestionRefresh((prev) => prev + 1);
-    } catch (err) {
-      toast.error(err.message || "There was an error refresh the answer");
-    } finally {
-      setAnswerLoading(false);
     }
   };
 
@@ -311,6 +244,78 @@ const UserDetails = () => {
             const [selectedSpeaking, setSelectedSpeaking] = useState();
             const [errorMessage, setErrorMessage] = useState("");
             const [speakingLoading, setSpeakingLoading] = useState(false);
+            const [answerLoading, setAnswerLoading] = useState(false);
+            const sendAnswerToUser = async (item) => {
+              if (!item.speaking) {
+                toast.error("Please set speaking score!");
+                return;
+              }
+
+              if (!item.writing) {
+                toast.error("Please set writing score!");
+                return;
+              }
+
+              setAnswerLoading(true);
+              const requestBody = {
+                userId: id,
+                examId: item.id,
+              };
+              try {
+                const response = await apiClient.post(
+                  `api/v1/history/send-answer`,
+                  requestBody
+                );
+                if (response.code !== 200) {
+                  toast.error(
+                    response.message || "There was an error sending the answer"
+                  );
+                  return;
+                }
+
+                setQuestionRefresh((prev) => prev + 1);
+              } catch (err) {
+                toast.error(
+                  err.message || "There was an error sending the answer"
+                );
+                console.log("Answer Error: ", err);
+              } finally {
+                setAnswerLoading(false);
+              }
+            };
+
+            const refreshExamAnswer = async (item) => {
+              if (item.type === "booking") {
+                toast.error("This session not pass exam");
+                return;
+              }
+              setAnswerLoading(true);
+              const requestBody = {
+                userId: id,
+                examId: item.id,
+              };
+              try {
+                const response = await apiClient.post(
+                  "api/v1/history/refresh-answer",
+                  requestBody
+                );
+
+                if (response.code != 200) {
+                  toast.error(
+                    response.message ||
+                      "There was an some problem refresh the answer"
+                  );
+                  return;
+                }
+                setQuestionRefresh((prev) => prev + 1);
+              } catch (err) {
+                toast.error(
+                  err.message || "There was an error refresh the answer"
+                );
+              } finally {
+                setAnswerLoading(false);
+              }
+            };
 
             const handleSpeakingModalOk = async () => {
               if (errorMessage) {
@@ -524,319 +529,439 @@ const UserDetails = () => {
                   {selectTab === "booking" && (
                     <List
                       grid={{ gutter: 24, column: 1 }}
-                      dataSource={item.results}
-                      renderItem={(result) => {
-                        const today = new Date().toDateString();
-                        const testDate = new Date(
-                          result.testDate
-                        ).toDateString();
+                      dataSource={item.groups}
+                      renderItem={(group) => {
+                        // Get exam responses from group instead of results
+                        const examResponses = group.examResponses || [];
 
-                        const isBeforeDate =
-                          new Date(testDate) >= new Date(today);
                         return (
                           <List.Item>
-                            {result.type === "mock_exam" ? (
-                              <Card
-                                title={
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <Text>
-                                      <CalendarOutlined /> Test Date:{" "}
-                                      {formatDate(result.testDate)}
-                                    </Text>
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 10,
-                                      }}
-                                    >
-                                      {result.status && (
-                                        <Flex
-                                          justify="space-between"
-                                          align="center"
-                                          gap={10}
-                                        >
-                                          <p>Email sent: </p>
-                                          {result.status === "success" ? (
-                                            <CheckCircleOutlined
+                            <Card
+                              title={
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <Text>
+                                    <CalendarOutlined /> Group Date:{" "}
+                                    {formatDate(group.date)}
+                                  </Text>
+                                  <Text>
+                                    <BranchesOutlined /> Branch:{" "}
+                                    {group.branchName}
+                                  </Text>
+                                  <Text>Speaker: {group.speakerName}</Text>
+                                </div>
+                              }
+                            >
+                              <List
+                                grid={{ gutter: 24, column: 1 }}
+                                dataSource={examResponses}
+                                renderItem={(result) => {
+                                  const today = new Date().toDateString();
+                                  const testDate = new Date(
+                                    result.testDate
+                                  ).toDateString();
+
+                                  const isBeforeDate =
+                                    new Date(testDate) >= new Date(today);
+
+                                  return (
+                                    <List.Item>
+                                      {result.type === "mock_exam" ? (
+                                        <Card
+                                          title={
+                                            <div
                                               style={{
-                                                color: token.colorPrimary,
-                                                fontSize: 20,
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
                                               }}
-                                            />
-                                          ) : (
-                                            <CloseCircleOutlined
-                                              style={{
-                                                color: token.colorError,
-                                                fontSize: 20,
-                                              }}
-                                            />
-                                          )}
-                                        </Flex>
-                                      )}
-                                      {result.smsStatus && (
-                                        <Flex
-                                          justify="space-between"
-                                          align="center"
-                                          gap={10}
-                                        >
-                                          <p>Sms sent: </p>
-                                          {result.smsStatus === "success" ? (
-                                            <CheckCircleOutlined
-                                              style={{
-                                                color: token.colorPrimary,
-                                                fontSize: 20,
-                                              }}
-                                            />
-                                          ) : (
-                                            <CloseCircleOutlined
-                                              style={{
-                                                color: token.colorError,
-                                                fontSize: 20,
-                                              }}
-                                            />
-                                          )}
-                                        </Flex>
-                                      )}
-                                      <Tooltip title="Recalculate the student's answer">
-                                        <Button
-                                          icon={<ReloadOutlined />}
-                                          loading={answerLoading}
-                                          onClick={() =>
-                                            refreshExamAnswer(result)
+                                            >
+                                              <Text>
+                                                <CalendarOutlined /> Test Date:{" "}
+                                                {formatDate(result.testDate)}
+                                              </Text>
+                                              <div
+                                                style={{
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  gap: 10,
+                                                }}
+                                              >
+                                                {result.status && (
+                                                  <Flex
+                                                    justify="space-between"
+                                                    align="center"
+                                                    gap={10}
+                                                  >
+                                                    {result.status ===
+                                                    "success" ? (
+                                                      <>
+                                                        <p>Email sent: </p>
+                                                        <CheckCircleOutlined
+                                                          style={{
+                                                            color:
+                                                              token.colorPrimary,
+                                                            fontSize: 20,
+                                                          }}
+                                                        />
+                                                      </>
+                                                    ) : result.status ===
+                                                      "waiting" ? (
+                                                      <>
+                                                        <p>Email waiting:</p>
+                                                        <LoadingOutlined
+                                                          style={{
+                                                            color:
+                                                              token.colorError,
+                                                            fontSize: 20,
+                                                          }}
+                                                        />
+                                                      </>
+                                                    ) : (
+                                                      <>
+                                                        <p>Email sent:</p>
+                                                        <CloseCircleOutlined
+                                                          style={{
+                                                            color:
+                                                              token.colorError,
+                                                            fontSize: 20,
+                                                          }}
+                                                        />
+                                                      </>
+                                                    )}
+                                                  </Flex>
+                                                )}
+                                                {result.smsStatus && (
+                                                  <Flex
+                                                    justify="space-between"
+                                                    align="center"
+                                                    gap={10}
+                                                  >
+                                                    {result.smsStatus ===
+                                                    "success" ? (
+                                                      <>
+                                                        <p>Sms sent: </p>
+                                                        <CheckCircleOutlined
+                                                          style={{
+                                                            color:
+                                                              token.colorPrimary,
+                                                            fontSize: 20,
+                                                          }}
+                                                        />
+                                                      </>
+                                                    ) : result.smsStatus ===
+                                                      "waiting" ? (
+                                                      <>
+                                                        <p>Sms waiting:</p>
+                                                        <LoadingOutlined
+                                                          style={{
+                                                            color:
+                                                              token.colorError,
+                                                            fontSize: 20,
+                                                          }}
+                                                        />
+                                                      </>
+                                                    ) : (
+                                                      <>
+                                                        <p>Sms sent: </p>
+                                                        <CloseCircleOutlined
+                                                          style={{
+                                                            color:
+                                                              token.colorError,
+                                                            fontSize: 20,
+                                                          }}
+                                                        />
+                                                      </>
+                                                    )}
+                                                  </Flex>
+                                                )}
+                                                <Tooltip title="Recalculate the student's answer">
+                                                  <Button
+                                                    icon={<ReloadOutlined />}
+                                                    loading={answerLoading}
+                                                    onClick={() =>
+                                                      refreshExamAnswer(result)
+                                                    }
+                                                  />
+                                                </Tooltip>
+                                                <Tooltip title="Send to user his answer">
+                                                  <Button
+                                                    type="primary"
+                                                    disabled={
+                                                      user?.email ? false : true
+                                                    }
+                                                    onClick={() =>
+                                                      sendAnswerToUser(result)
+                                                    }
+                                                    loading={answerLoading}
+                                                  >
+                                                    Send answer
+                                                  </Button>
+                                                </Tooltip>
+                                              </div>
+                                            </div>
                                           }
-                                        />
-                                      </Tooltip>
-                                      <Tooltip title="Send to user his answer">
-                                        <Button
-                                          type="primary"
-                                          disabled={user?.email ? false : true}
-                                          onClick={() =>
-                                            sendAnswerToUser(result)
-                                          }
-                                          loading={answerLoading}
                                         >
-                                          Send answer
-                                        </Button>
-                                      </Tooltip>
-                                    </div>
-                                  </div>
-                                }
-                              >
-                                <Row justify="space-between" align="top">
-                                  <Col>
-                                    <Space
-                                      style={{
-                                        width: "100%",
-                                        display: "flex",
-                                        justifyContent: "flex-start",
-                                        flexDirection: "column",
-                                        alignItems: "flex-start",
-                                      }}
-                                    >
-                                      <Text>
-                                        <BranchesOutlined /> Branch:{" "}
-                                        <span style={{ fontWeight: "bold" }}>
-                                          {result.branchName}
-                                        </span>
-                                      </Text>
-                                      <Text>
-                                        <ClockCircleOutlined /> Duration:{" "}
-                                        <span
-                                          style={{
-                                            color: token.colorPrimary,
-                                          }}
-                                        >
-                                          {calculateDuration(
-                                            result.startDate,
-                                            result.endDate
-                                          )}
-                                        </span>
-                                      </Text>
-                                      <Text style={{ fontWeight: "bold" }}>
-                                        <ClockCircleOutlined /> Test Time:{" "}
-                                        <span
-                                          style={{
-                                            color: token.colorPrimary,
-                                          }}
-                                        >
-                                          {result.time}
-                                        </span>
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          textAlign: "start",
-                                          fontWeight: 600,
-                                          color: token.colorPrimary,
-                                        }}
-                                      >
-                                        {result.examStatus}
-                                      </Text>
-                                      <Link
-                                        to={`/dashboard/contest/${result.bookingId}/TEST`}
-                                      >
-                                        <Button type="primary">
-                                          View booking detail
-                                        </Button>
-                                      </Link>
-                                    </Space>
-                                  </Col>
-                                  <Col>
-                                    <Space>
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<SoundOutlined />}
-                                        label="Listening"
-                                        score={result.listening}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                      />
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<ReadOutlined />}
-                                        label="Reading"
-                                        score={result.reading}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                      />
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<EditOutlined />}
-                                        label="Writing"
-                                        score={result.writing}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                      />
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<AudioOutlined />}
-                                        label="Speaking"
-                                        score={result.speaking}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                      />
-                                    </Space>
-                                  </Col>
-                                </Row>
-                              </Card>
-                            ) : (
-                              <Card>
-                                <Row justify="space-between" align="top">
-                                  <Col>
-                                    <Space
-                                      style={{
-                                        width: "100%",
-                                        display: "flex",
-                                        justifyContent: "flex-start",
-                                        flexDirection: "column",
-                                        alignItems: "flex-start",
-                                      }}
-                                    >
-                                      <Text>
-                                        <BranchesOutlined /> Branch:{" "}
-                                        <span style={{ fontWeight: "bold" }}>
-                                          {result.branchName}
-                                        </span>
-                                      </Text>
-                                      <Text style={{ fontWeight: "bold" }}>
-                                        <ClockCircleOutlined /> Test Date:{" "}
-                                        <span
-                                          style={{
-                                            color: !isBeforeDate
-                                              ? token.colorError
-                                              : token.colorPrimary,
-                                          }}
-                                        >
-                                          {formatDate(result.testDate)}
-                                        </span>
-                                      </Text>
-                                      <Text style={{ fontWeight: "bold" }}>
-                                        <ClockCircleOutlined /> Test Time:{" "}
-                                        <span
-                                          style={{
-                                            color: !isBeforeDate
-                                              ? token.colorError
-                                              : token.colorPrimary,
-                                          }}
-                                        >
-                                          {result.time}
-                                        </span>
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          textAlign: "start",
-                                          fontWeight: 600,
-                                          color: !isBeforeDate
-                                            ? token.colorError
-                                            : token.colorPrimary,
-                                        }}
-                                      >
-                                        {!isBeforeDate
-                                          ? "The student did not pass the exam"
-                                          : "Exam is waiting"}
-                                      </Text>
-                                      <Link
-                                        to={`/dashboard/contest/${result.id}/TEST`}
-                                      >
-                                        <Button type="primary">
-                                          View booking detail
-                                        </Button>
-                                      </Link>
-                                    </Space>
-                                  </Col>
-                                  <Col>
-                                    <Space>
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<SoundOutlined />}
-                                        label="Listening"
-                                        score={result.listening}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                        booking
-                                        isBeforeDate={isBeforeDate}
-                                      />
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<ReadOutlined />}
-                                        label="Reading"
-                                        score={result.reading}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                        booking
-                                        isBeforeDate={isBeforeDate}
-                                      />
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<EditOutlined />}
-                                        label="Writing"
-                                        score={result.writing}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                        booking
-                                        isBeforeDate={isBeforeDate}
-                                      />
-                                      <ScoreBox
-                                        id={result.id}
-                                        icon={<AudioOutlined />}
-                                        label="Speaking"
-                                        score={result.speaking}
-                                        userId={id}
-                                        setRefresh={setQuestionRefresh}
-                                        booking
-                                        isBeforeDate={isBeforeDate}
-                                      />
-                                    </Space>
-                                  </Col>
-                                </Row>
-                              </Card>
-                            )}
+                                          <Row
+                                            justify="space-between"
+                                            align="top"
+                                          >
+                                            <Col>
+                                              <Space
+                                                style={{
+                                                  width: "100%",
+                                                  display: "flex",
+                                                  justifyContent: "flex-start",
+                                                  flexDirection: "column",
+                                                  alignItems: "flex-start",
+                                                }}
+                                              >
+                                                <Text>
+                                                  <BranchesOutlined /> Branch:{" "}
+                                                  <span
+                                                    style={{
+                                                      fontWeight: "bold",
+                                                    }}
+                                                  >
+                                                    {result.branchName}
+                                                  </span>
+                                                </Text>
+                                                <Text>
+                                                  <ClockCircleOutlined />{" "}
+                                                  Duration:{" "}
+                                                  <span
+                                                    style={{
+                                                      color: token.colorPrimary,
+                                                    }}
+                                                  >
+                                                    {calculateDuration(
+                                                      result.startDate,
+                                                      result.endDate
+                                                    )}
+                                                  </span>
+                                                </Text>
+                                                <Text
+                                                  style={{ fontWeight: "bold" }}
+                                                >
+                                                  <ClockCircleOutlined /> Test
+                                                  Time:{" "}
+                                                  <span
+                                                    style={{
+                                                      color: token.colorPrimary,
+                                                    }}
+                                                  >
+                                                    {result.time}
+                                                  </span>
+                                                </Text>
+                                                <Text
+                                                  style={{
+                                                    textAlign: "start",
+                                                    fontWeight: 600,
+                                                    color: token.colorPrimary,
+                                                  }}
+                                                >
+                                                  {result.examStatus}
+                                                </Text>
+                                                <Link
+                                                  to={`/dashboard/contest/${result.bookingId}/TEST`}
+                                                >
+                                                  <Button type="primary">
+                                                    View booking detail
+                                                  </Button>
+                                                </Link>
+                                              </Space>
+                                            </Col>
+                                            <Col>
+                                              <Space>
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<SoundOutlined />}
+                                                  label="Listening"
+                                                  score={result.listening}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                />
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<ReadOutlined />}
+                                                  label="Reading"
+                                                  score={result.reading}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                />
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<EditOutlined />}
+                                                  label="Writing"
+                                                  score={result.writing}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                />
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<AudioOutlined />}
+                                                  label="Speaking"
+                                                  score={result.speaking}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                />
+                                              </Space>
+                                            </Col>
+                                          </Row>
+                                        </Card>
+                                      ) : (
+                                        <Card>
+                                          <Row
+                                            justify="space-between"
+                                            align="top"
+                                          >
+                                            <Col>
+                                              <Space
+                                                style={{
+                                                  width: "100%",
+                                                  display: "flex",
+                                                  justifyContent: "flex-start",
+                                                  flexDirection: "column",
+                                                  alignItems: "flex-start",
+                                                }}
+                                              >
+                                                <Text>
+                                                  <BranchesOutlined /> Branch:{" "}
+                                                  <span
+                                                    style={{
+                                                      fontWeight: "bold",
+                                                    }}
+                                                  >
+                                                    {result.branchName}
+                                                  </span>
+                                                </Text>
+                                                <Text
+                                                  style={{ fontWeight: "bold" }}
+                                                >
+                                                  <ClockCircleOutlined /> Test
+                                                  Date:{" "}
+                                                  <span
+                                                    style={{
+                                                      color: !isBeforeDate
+                                                        ? token.colorError
+                                                        : token.colorPrimary,
+                                                    }}
+                                                  >
+                                                    {formatDate(
+                                                      result.testDate
+                                                    )}
+                                                  </span>
+                                                </Text>
+                                                <Text
+                                                  style={{ fontWeight: "bold" }}
+                                                >
+                                                  <ClockCircleOutlined /> Test
+                                                  Time:{" "}
+                                                  <span
+                                                    style={{
+                                                      color: !isBeforeDate
+                                                        ? token.colorError
+                                                        : token.colorPrimary,
+                                                    }}
+                                                  >
+                                                    {result.time}
+                                                  </span>
+                                                </Text>
+                                                <Text
+                                                  style={{
+                                                    textAlign: "start",
+                                                    fontWeight: 600,
+                                                    color: !isBeforeDate
+                                                      ? token.colorError
+                                                      : token.colorPrimary,
+                                                  }}
+                                                >
+                                                  {!isBeforeDate
+                                                    ? "The student did not pass the exam"
+                                                    : "Exam is waiting"}
+                                                </Text>
+                                                <Link
+                                                  to={`/dashboard/contest/${result.id}/TEST`}
+                                                >
+                                                  <Button type="primary">
+                                                    View booking detail
+                                                  </Button>
+                                                </Link>
+                                              </Space>
+                                            </Col>
+                                            <Col>
+                                              <Space>
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<SoundOutlined />}
+                                                  label="Listening"
+                                                  score={result.listening}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                  booking
+                                                  isBeforeDate={isBeforeDate}
+                                                />
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<ReadOutlined />}
+                                                  label="Reading"
+                                                  score={result.reading}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                  booking
+                                                  isBeforeDate={isBeforeDate}
+                                                />
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<EditOutlined />}
+                                                  label="Writing"
+                                                  score={result.writing}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                  booking
+                                                  isBeforeDate={isBeforeDate}
+                                                />
+                                                <ScoreBox
+                                                  id={result.id}
+                                                  icon={<AudioOutlined />}
+                                                  label="Speaking"
+                                                  score={result.speaking}
+                                                  userId={id}
+                                                  setRefresh={
+                                                    setQuestionRefresh
+                                                  }
+                                                  booking
+                                                  isBeforeDate={isBeforeDate}
+                                                />
+                                              </Space>
+                                            </Col>
+                                          </Row>
+                                        </Card>
+                                      )}
+                                    </List.Item>
+                                  );
+                                }}
+                              />
+                            </Card>
                           </List.Item>
                         );
                       }}
