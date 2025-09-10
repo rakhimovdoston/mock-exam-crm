@@ -57,6 +57,7 @@ const ContestDetails = React.lazy(() =>
 const UpdateContest = React.lazy(() => import("./pages/details/UpdateContest"));
 const SpeakingPage = React.lazy(() => import("./pages/dashboard/SpeakingPage"));
 const EmployeePage = React.lazy(() => import("./pages/dashboard/EmployeePage"));
+const EmployeeDetails = React.lazy(() => import("./pages/dashboard/EmployeeDetails"));
 const ResultPage = React.lazy(() => import("./pages/dashboard/ResultPage"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 
@@ -144,6 +145,7 @@ function App() {
               <Route path="speaking" element={<SpeakingPage />} />
               <Route path="results" element={<ResultPage />} />
               <Route path="employees" element={<EmployeePage />} />
+              <Route path="employee/:id" element={<EmployeeDetails />} />
               <Route path="contest/:id/:type" element={<ContestDetails />} />
               <Route path="speaking/:id/:type" element={<ContestDetails />} />
               <Route

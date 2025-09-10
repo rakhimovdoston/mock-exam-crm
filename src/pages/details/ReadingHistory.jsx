@@ -1,48 +1,27 @@
 import React, { useMemo } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
-import { Layout, Spin, Typography, Row, Col, Card } from "antd";
+import { Layout, Spin, Typography, Table, Tag } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import { checkKey, checkKeys, countCorrectAnswers } from "../../utils";
 
 const { Title, Text } = Typography;
-
-const pulse = keyframes`
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-`;
-
-const IconWrapper = styled.div`
-  animation: ${pulse} 1s ease-in-out;
-  color: ${({ correct }) => (correct ? "#52c41a" : "#f5222d")};
-  font-size: 20px;
-`;
-
-const StyledCard = styled(Card)`
-  border-radius: 12px !important;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-  background-color: ${({ correct }) =>
-    correct ? "#f6ffed" : "#fff1f0"} !important;
-  border-color: ${({ correct }) =>
-    correct ? "#b7eb8f" : "#ffa39e"} !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-  &:hover {
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-    transform: translateY(-4px);
-  }
-`;
 
 const Container = styled(Layout)`
   background: #fafafa;
   padding: 32px;
   border-radius: 16px;
   min-height: 100vh;
+`;
+
+const StyledTableWrapper = styled.div`
+  .ant-table-tbody > tr.correct-row > td {
+    background: #f6ffed;
+  }
+  .ant-table-tbody > tr.wrong-row > td {
+    background: #fff1f0;
+  }
 `;
 
 const ReadingHistory = () => {
@@ -53,22 +32,146 @@ const ReadingHistory = () => {
     [id]
   );
 
+  // --- helpers (NOT hooks) ---
   const isCorrect = (answer, userAnswers) => {
     if (answer.key) return checkKey(answer, userAnswers);
-
-    if (answer.keys) {
-      const count = checkKeys(answer, userAnswers);
-      return count > 0;
-    }
-
+    if (answer.keys) return checkKeys(answer, userAnswers) > 0;
     return false;
+  };
+
+  const questionMinKey = (answer) => {
+    if (answer.key) return Number(answer.key);
+    if (answer.keys) {
+      const [minKey] = String(answer.keys).split("-").map(Number);
+      return minKey;
+    }
+    return Number.MAX_SAFE_INTEGER;
+  };
+
+  const partLabel = (minKey) => {
+    if (minKey >= 1 && minKey <= 13) return "Part 1 (Q1-13)";
+    if (minKey >= 14 && minKey <= 26) return "Part 2 (Q14-26)";
+    return "Part 3 (Q27-40)";
+  };
+
+  const questionKeyText = (answer) =>
+    answer.key ? String(answer.key) : String(answer.keys);
+
+  const correctValueOf = (answer) => {
+    if (answer.value) return answer.value;
+    if (Array.isArray(answer.values)) return answer.values.join(", ");
+    return answer.values ?? "-";
+  };
+
+  const getUserValue = (answer, userAnswers) => {
+    if (!Array.isArray(userAnswers)) return "-";
+    for (const ans of userAnswers) {
+      if (answer.key && ans.key === answer.key) return ans.value ?? "-";
+      if (answer.keys && ans.keys === answer.keys) {
+        if (Array.isArray(ans.values)) return ans.values.join(", ");
+        return ans.values ?? "-";
+      }
+    }
+    return "-";
   };
 
   const correctCount = useMemo(() => {
     if (!data?.data?.answers || !data?.data?.userAnswers) return 0;
-    return countCorrectAnswers(data.data.answers, data?.data?.userAnswers);
+    return countCorrectAnswers(data.data.answers, data.data.userAnswers);
   }, [data]);
 
+  const tableData = useMemo(() => {
+    const answers = data?.data?.answers ?? [];
+    const userAnswers = data?.data?.userAnswers ?? [];
+
+    return answers
+      .map((answer) => {
+        const minKey = questionMinKey(answer);
+        const correct = isCorrect(answer, userAnswers);
+        const userValue = getUserValue(answer, userAnswers);
+
+        return {
+          key: answer.key ?? answer.keys,
+          part: partLabel(minKey),
+          qNumber: questionKeyText(answer),
+          correctAnswer: correctValueOf(answer),
+          userAnswer: userValue,
+          correct,
+          sortKey: minKey,
+        };
+      })
+      .sort((a, b) => a.sortKey - b.sortKey);
+  }, [data]);
+
+  // columns are static (not hooks)
+  const columns = [
+    {
+      title: "Part",
+      dataIndex: "part",
+      key: "part",
+      filters: [
+        { text: "Part 1 (Q1-13)", value: "Part 1 (Q1-13)" },
+        { text: "Part 2 (Q14-26)", value: "Part 2 (Q14-26)" },
+        { text: "Part 3 (Q27-40)", value: "Part 3 (Q27-40)" },
+      ],
+      onFilter: (value, record) => record.part === value,
+      width: 150,
+    },
+    {
+      title: "Question",
+      dataIndex: "qNumber",
+      key: "qNumber",
+      width: 95,
+    },
+    {
+      title: "Correct Answer",
+      dataIndex: "correctAnswer",
+      key: "correctAnswer",
+      ellipsis: true,
+    },
+    {
+      title: "Your Answer",
+      dataIndex: "userAnswer",
+      key: "userAnswer",
+      ellipsis: true,
+      render: (text, record) =>
+        record.correct ? (
+          <span style={{ color: "#52c41a", fontWeight: 500 }}>
+            {record.userAnswer}
+          </span>
+        ) : (
+          <span style={{ color: "#f5222d", fontWeight: 500 }}>
+            {record.userAnswer}
+          </span>
+        ),
+    },
+    {
+      title: "Result",
+      dataIndex: "correct",
+      key: "result",
+      align: "center",
+      width: 120,
+      render: (correct) =>
+        correct ? (
+          <Tag icon={<CheckCircleOutlined />} color="success">
+            Correct
+          </Tag>
+        ) : (
+          <Tag icon={<CloseCircleOutlined />} color="error">
+            Wrong
+          </Tag>
+        ),
+      filters: [
+        { text: "Correct", value: true },
+        { text: "Wrong", value: false },
+      ],
+      onFilter: (value, record) => record.correct === value,
+    },
+  ];
+
+  const totalCount = 40;
+
+  // --- early returns AFTER all hooks ---
   if (loading)
     return (
       <Layout
@@ -93,103 +196,27 @@ const ReadingHistory = () => {
       </Text>
     );
 
-  // Helper functions for answers
-  const getValue = (answer, userAnswers) => {
-    for (const ans of userAnswers) {
-      if (answer.key && ans.key === answer.key) return ans.value;
-      if (answer.keys && ans.keys === answer.keys) return ans.values;
-    }
-    return "-";
-  };
-
-  const part = (min, max) => {
-    return data.data.answers.filter((ans) => {
-      if (ans.key) return ans.key >= min && ans.key <= max;
-      if (ans.keys) {
-        const [minKey, maxKey] = ans.keys.split("-").map(Number);
-        return minKey >= min && maxKey <= max;
-      }
-      return false;
-    });
-  };
-
-  const totalCount = 40;
-
-  const renderPart = (title, questions) => (
-    <section style={{ marginBottom: 32 }}>
-      <Title level={4}>{title}</Title>
-      <Row gutter={[24, 24]}>
-        {questions.map((answer) => {
-          const correct = isCorrect(answer, data.data.userAnswers);
-          const userValue = getValue(answer, data.data.userAnswers);
-          const correctValue = answer.value
-            ? answer.value
-            : Array.isArray(answer.values)
-            ? answer.values.join(", ")
-            : answer.values;
-
-          return (
-            <Col xs={24} sm={12} md={8} lg={6} key={answer.key || answer.keys}>
-              <StyledCard correct={correct} hoverable>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 12,
-                    alignItems: "center",
-                  }}
-                >
-                  <Text strong style={{ fontSize: 16 }}>
-                    {answer.key || answer.keys}
-                  </Text>
-                  <IconWrapper correct={correct}>
-                    {correct ? (
-                      <CheckCircleOutlined />
-                    ) : (
-                      <CloseCircleOutlined />
-                    )}
-                  </IconWrapper>
-                </div>
-                <Text
-                  style={{
-                    display: "block",
-                    color: "#1890ff",
-                    marginBottom: 6,
-                  }}
-                >
-                  <strong>Correct:</strong> {correctValue}
-                </Text>
-                <Text
-                  style={{
-                    display: "block",
-                    color: correct ? "#52c41a" : "#f5222d",
-                    fontWeight: "500",
-                  }}
-                >
-                  <strong>Your:</strong>{" "}
-                  {Array.isArray(userValue) ? userValue.join(", ") : userValue}
-                </Text>
-              </StyledCard>
-            </Col>
-          );
-        })}
-      </Row>
-    </section>
-  );
-
   return (
     <Container>
-      <Title level={3} style={{ marginBottom: 24 }}>
+      <Title level={3} style={{ marginBottom: 8 }}>
         📘 Reading History
       </Title>
 
-      <Text style={{ fontSize: 18, marginBottom: 32, display: "block" }}>
+      <Text style={{ fontSize: 18, marginBottom: 16, display: "block" }}>
         <strong>Correct Answers:</strong> {correctCount} / {totalCount}
       </Text>
 
-      {renderPart("Questions 1–13", part(1, 13))}
-      {renderPart("Questions 14–26", part(14, 26))}
-      {renderPart("Questions 27–40", part(27, 40))}
+      <StyledTableWrapper>
+        <Table
+          columns={columns}
+          dataSource={tableData}
+          pagination={{ pageSize: 40, showSizeChanger: false, }}
+          rowClassName={(record) =>
+            record.correct ? "correct-row" : "wrong-row"
+          }
+          bordered
+        />
+      </StyledTableWrapper>
     </Container>
   );
 };

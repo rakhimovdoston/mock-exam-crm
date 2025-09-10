@@ -1,13 +1,5 @@
-import React, { useState } from "react";
-import {
-  Table,
-  Tag,
-  Space,
-  Select,
-  DatePicker,
-  Button,
-  Flex,
-} from "antd";
+import React, { useMemo, useState } from "react";
+import { Table, Tag, Space, Select, DatePicker, Button, Flex } from "antd";
 import useApiRequest from "../../hooks/useApiRequest";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
@@ -20,10 +12,11 @@ const { Option } = Select;
 const ContestPage = () => {
   const [selectBranch, setSelectBranch] = useState();
   const [testTime, setTestTime] = useState("all");
-  const [startDate, setStartDate] = useState();
+  const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const { user } = useSelector((state) => state.auth);
+  const [statuses, setStatuses] = useState();
 
   const columns = [
     {
@@ -80,6 +73,23 @@ const ContestPage = () => {
         else if (status === "FAILED") color = "red";
         return <Tag color={color}>{status}</Tag>;
       },
+      filters: [
+        { text: "Waiting", value: "WAITING" },
+        { text: "Process", value: "PROCESS" },
+        { text: "Completed", value: "COMPLETED" },
+        { text: "Failed", value: "FAILED" },
+      ],
+      filterMultiple: true,
+      filteredValue:
+        Array.isArray(statuses) && statuses.length ? statuses : null, // controlled UI state
+      render: (status) => {
+        let color = "blue";
+        if (status === "COMPLETED") color = "green";
+        else if (status === "PROCESS") color = "orange";
+        else if (status === "WAITING") color = "geekblue";
+        else if (status === "FAILED") color = "red";
+        return <Tag color={color}>{status}</Tag>;
+      },
     },
     {
       title: "",
@@ -99,14 +109,27 @@ const ContestPage = () => {
     },
   ];
 
-  const { data, loading } = useApiRequest(
-    `api/v1/booking/all?page=${page}&size=${size}${
-      selectBranch ? "&branch=" + selectBranch : ""
-    }${testTime === "all" ? "" : "&time=" + testTime}${
-      startDate ? "&date=" + startDate : ""
-    }`,
-    [page, size, selectBranch, testTime, startDate]
-  );
+  const handleTableChange = (pagination, filters /*, sorter*/) => {
+    setPage((pagination.current || 1) - 1);
+    setSize(pagination.pageSize || 10);
+
+    // filters.status is an array of selected values (we'll use the first)
+    const nextStatus = Array.isArray(filters?.status) ? filters.status : [];
+    setStatuses(nextStatus); // triggers URL rebuild -> refetch
+  };
+
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", page);
+    params.set("size", size);
+    if (selectBranch) params.set("branch", selectBranch);
+    if (testTime !== "all") params.set("time", testTime);
+    if (startDate) params.set("date", startDate);
+    if (statuses) params.set("status", statuses.join(","));
+    return `api/v1/booking/all?${params.toString()}`;
+  }, [page, size, selectBranch, testTime, startDate, statuses]);
+
+  const { data, loading } = useApiRequest(apiUrl, [apiUrl]);
 
   const branches = useApiRequest(`api/v1/branch/all`);
 
@@ -129,9 +152,10 @@ const ContestPage = () => {
         )}
         <DatePicker
           style={{ width: "150px" }}
+          value={dayjs(startDate, "YYYY-MM-DD")}
           onChange={(date) => {
             if (date) setStartDate(dayjs(date).format("YYYY-MM-DD"));
-            else setStartDate();
+            else setStartDate(dayjs().format("YYYY-MM-DD"));
           }}
         />
         <Select
@@ -166,6 +190,7 @@ const ContestPage = () => {
             setSize(size);
           },
         }}
+        onChange={handleTableChange}
       />
     </div>
   );

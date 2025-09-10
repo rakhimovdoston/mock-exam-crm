@@ -43,6 +43,16 @@ const ResultPage = () => {
       key: "date",
     },
     {
+      title:"Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status === "COMPLETED" ? "green" : "orange"}>
+          {status}
+        </Tag>
+      ),
+    },
+    {
       title: "Branch",
       dataIndex: "branchName",
       key: "branchName",

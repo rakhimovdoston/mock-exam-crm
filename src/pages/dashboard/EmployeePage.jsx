@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import { MaskedInput } from "antd-mask-input";
 import apiClient from "../../services/api";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const { Option } = Select;
@@ -90,25 +90,25 @@ const EmployeePage = () => {
         </>
       ),
     },
-    // {
-    //   title: "",
-    //   width: 150,
-    //   key: "actions",
-    //   render: (_, record) => (
-    //     <div
-    //       style={{
-    //         display: "flex",
-    //         gap: "8px",
-    //         alignItems: "center",
-    //         justifyContent: "flex-end",
-    //       }}
-    //     >
-    //       <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>
-    //         View
-    //       </Button>
-    //     </div>
-    //   ),
-    // },
+    {
+      title: "",
+      width: 150,
+      key: "actions",
+      render: (_, record) => (
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            alignItems: "center",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Link to={`/dashboard/employee/${record.id}`}>
+            <Button>View HR</Button>
+          </Link>
+        </div>
+      ),
+    },
   ];
 
   const handleModalClose = () => {

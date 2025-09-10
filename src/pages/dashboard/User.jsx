@@ -15,9 +15,8 @@ const User = () => {
     current: parseInt(searchParams.get("page")) || 1,
     pageSize: parseInt(searchParams.get("size")) || 10,
   });
+  const [selectBranch, setSelectBranch] = useState();
   const { user } = useSelector((state) => state.auth);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || ""
   );
@@ -25,8 +24,8 @@ const User = () => {
   const { data, loading } = useApiRequest(
     `api/v1/admin/user/all?page=${pagination.current - 1}&size=${
       pagination.pageSize
-    }&search=${searchTerm}&fromDate=${fromDate}&toDate=${toDate}`,
-    [pagination.current, pagination.pageSize, searchTerm, fromDate, toDate]
+    }&search=${searchTerm}${selectBranch ? `&branch=${selectBranch}` : ""}`,
+    [pagination.current, pagination.pageSize, searchTerm, selectBranch]
   );
   const branches = useApiRequest(`api/v1/branch/all`);
 
@@ -136,7 +135,7 @@ const User = () => {
 
   return (
     <div>
-      <h1>Users</h1>
+      <h1>Candidates</h1>
       <div
         style={{
           marginBottom: 16,
@@ -149,7 +148,7 @@ const User = () => {
         <div
           style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
         >
-          {checkRole(user.roles, Role.ROLE_ADMIN) && (
+          {/* {checkRole(user.roles, Role.ROLE_ADMIN) && (
             <Select
               placeholder="Select branch"
               style={{ width: 300 }}
@@ -161,7 +160,7 @@ const User = () => {
                 </Option>
               ))}
             </Select>
-          )}
+          )} */}
           <Input
             value={searchTerm}
             placeholder="Search"
