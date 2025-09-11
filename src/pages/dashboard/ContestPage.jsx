@@ -125,7 +125,9 @@ const ContestPage = () => {
     if (selectBranch) params.set("branch", selectBranch);
     if (testTime !== "all") params.set("time", testTime);
     if (startDate) params.set("date", startDate);
-    if (statuses) params.set("status", statuses.join(","));
+    console.log("Status: ", statuses);
+    if (statuses && statuses.length > 0)
+      params.set("status", statuses.join(","));
     return `api/v1/booking/all?${params.toString()}`;
   }, [page, size, selectBranch, testTime, startDate, statuses]);
 

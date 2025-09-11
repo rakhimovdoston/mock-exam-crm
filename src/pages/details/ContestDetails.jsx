@@ -110,7 +110,6 @@ const ContestDetails = () => {
       type: exam_id ? "exam" : "booking",
       userId: user.id,
     };
-    console.log("Resetting section:", request);
 
     try {
       const response = await apiClient.post(

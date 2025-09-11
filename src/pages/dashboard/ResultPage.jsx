@@ -21,8 +21,10 @@ const ResultPage = () => {
     pageSize: 10,
   });
   const { data, loading } = useApiRequest(
-    `api/v1/admin/user/history?date=${date.format("YYYY-MM-DD")}`,
-    [date]
+    `api/v1/admin/user/history?date=${date.format("YYYY-MM-DD")}&page=${
+      pagination.current - 1
+    }&size=${pagination.pageSize}`,
+    [date, pagination.current, pagination.pageSize]
   );
   const [exportLoading, setExportLoading] = useState(false);
   const columns = [
@@ -30,7 +32,8 @@ const ResultPage = () => {
       title: "№",
       dataIndex: "index",
       key: "index",
-      render: (text, record, index) => index + 1,
+      render: (text, record, index) =>
+        index + 1 + (pagination.current - 1) * pagination.pageSize,
     },
     {
       title: "Candidate Name",
@@ -43,13 +46,11 @@ const ResultPage = () => {
       key: "date",
     },
     {
-      title:"Status",
+      title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status) => (
-        <Tag color={status === "COMPLETED" ? "green" : "orange"}>
-          {status}
-        </Tag>
+        <Tag color={status === "COMPLETED" ? "green" : "orange"}>{status}</Tag>
       ),
     },
     {
@@ -193,7 +194,10 @@ const ResultPage = () => {
     }
   };
   const handleTableChange = (page, pageSize) => {
-    setPagination({ current: page, pageSize });
+    setPagination({
+      current: page,
+      pageSize: pageSize,
+    });
   };
 
   const menuItems = [
@@ -234,7 +238,7 @@ const ResultPage = () => {
             items: menuItems,
           }}
         >
-          <Button type="primary" icon={"📤"}>
+          <Button type="primary" icon={"📤"} loading={exportLoading}>
             Export
           </Button>
         </Dropdown>

@@ -13,6 +13,7 @@ const EmployeePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [size, setSize] = useState(10);
   const [selectPostion, setSelectPosition] = useState("all");
+  const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [employeeLoading, setEmployeeLoading] = useState(false);
@@ -20,8 +21,8 @@ const EmployeePage = () => {
   const [form] = Form.useForm();
 
   const { data, loading } = useApiRequest(
-    `api/v1/super-admin/all?page=${page}&size=${size}&role=${selectPostion}`,
-    [refreshKey, page, size, selectPostion]
+    `api/v1/super-admin/all?page=${page}&size=${size}&role=${selectPostion}&search=${search}`,
+    [refreshKey, page, size, selectPostion, search]
   );
   const branch = useApiRequest(`api/v1/branch/all?active=false`);
 
@@ -191,7 +192,12 @@ const EmployeePage = () => {
         <div
           style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
         >
-          <Input placeholder="Search" style={{ width: "200px" }} />
+          <Input
+            value={search}
+            placeholder="Search members"
+            style={{ width: "200px" }}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <Select
             defaultValue={selectPostion}
             onChange={(value) => setSelectPosition(value)}

@@ -23,12 +23,10 @@ const { Option } = Select;
 
 const SpeakingPage = () => {
   const [selectBranch, setSelectBranch] = useState();
-  const [testTime, setTestTime] = useState("all");
   const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [status, setStatus] = useState(); // <-- server filter: status
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
-  const [testType, setTestType] = useState("all");
   const [isSpeakingModalVisible, setIsSpeakingModalVisible] = useState(false);
   const [selectedSpeakingScore, setSelectedSpeakingScore] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -43,13 +41,11 @@ const SpeakingPage = () => {
     const params = new URLSearchParams();
     params.set("page", page);
     params.set("size", size);
-    params.set("type", "speaking");
     if (selectBranch) params.set("branch", selectBranch);
-    if (testTime !== "all") params.set("time", testTime);
     if (startDate) params.set("date", startDate);
-    if (status) params.set("status", status.join(",")); // <-- include status
+    if (status && status.length > 0) params.set("status", status.join(","));
     return `api/v1/speaking/all?${params.toString()}`;
-  }, [page, size, selectBranch, testTime, startDate, status, refresh]);
+  }, [page, size, selectBranch, startDate, status, refresh]);
 
   const { data, loading } = useApiRequest(apiUrl, [apiUrl]);
 
