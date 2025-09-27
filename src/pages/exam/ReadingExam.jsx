@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Layout, Spin, Splitter, theme } from "antd";
+import { Layout, Spin, Splitter } from "antd";
 
 import ExamHeader from "../../components/layouts/ExamHeader";
 import ExamFooter from "../../components/layouts/ExamFooter";
 import RichTextViewer from "../../components/editor/RichTextViewer";
 
 import useApiRequest from "../../hooks/useApiRequest";
+import useExamSecurity from "../../hooks/useExamSecurity";
 import { initilalizeExam } from "../../store/examReducer";
 import {
   getNumberByPassageType,
@@ -15,7 +16,6 @@ import {
   getQuestionNumbers,
   getQuestionNumbersForHeadins,
 } from "../../utils";
-import { toast } from "react-toastify";
 
 const { Content } = Layout;
 
@@ -31,51 +31,14 @@ const ReadingExam = () => {
 
   const examParts = data?.data || [];
 
+  useExamSecurity();
+
   useEffect(() => {
     if (data && data.data) {
       setSelectedPart(data.data[0].type);
       dispatch(initilalizeExam(data.data));
     }
   }, [data]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        ["s", "p", "r", "t"].includes(e.key.toLowerCase())
-      ) {
-        e.preventDefault();
-        toast.info(`This keyboard blocked:`);
-      }
-
-      // F12 (developer tools), PrintScreen, va boshqalarni ham bloklash mumkin
-      if (e.key === "F12" || e.key === "PrintScreen") {
-        e.preventDefault();
-        toast.info(`This keyboard blocked:`);
-      }
-    };
-
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-      toast.info("Context Menu bloklangan:");
-    };
-
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("contextmenu", handleContextMenu);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, []);
 
   if (loading) {
     return (

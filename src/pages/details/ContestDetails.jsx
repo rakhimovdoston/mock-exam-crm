@@ -98,6 +98,39 @@ const ContestDetails = () => {
     }
   };
 
+  const retryListening = async (section) => {
+    if (type !== "TEST") {
+      toast.error("This action is only available for TEST type.");
+      return;
+    }
+    setResetLoading(true);
+    const request = {
+      type: section,
+      examId: exam_id ? exam_id : booking.id,
+      userId: user.id,
+    };
+    try {
+      const response = await apiClient.post(
+        `api/v1/history/retry-listening`,
+        request
+      );
+
+      if (response.code !== 200) {
+        toast.error(
+          response.message || "Failed to reset section. Please try again."
+        );
+        return;
+      }
+      toast.success("Retry this exam for this " + section + " successfully!");
+      setRefresh((prev) => prev + 1);
+    } catch (error) {
+      console.log("Error resetting section:", error);
+      toast.error(error?.response?.data?.message || "Error resetting section");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const resetSection = async (section) => {
     if (type !== "TEST") {
       toast.error("This action is only available for TEST type.");
@@ -113,7 +146,7 @@ const ContestDetails = () => {
 
     try {
       const response = await apiClient.post(
-        `api/v1/exam/reset-section`,
+        `api/v1/history/reset-section`,
         request
       );
 
@@ -127,7 +160,7 @@ const ContestDetails = () => {
       setRefresh((prev) => prev + 1);
     } catch (error) {
       console.log("Error resetting section:", error);
-      toast.error("Error resetting section:", error);
+      toast.error(error?.response?.data?.message || "Error resetting section");
     } finally {
       setResetLoading(false);
     }
@@ -358,8 +391,19 @@ const ContestDetails = () => {
                         ) : (
                           <Tag>Waiting Listening</Tag>
                         ))}
+                      {exam_id && (
+                        <Button
+                          type="primary"
+                          onClick={() => retryListening("listening")}
+                        >
+                          Retry Listening
+                        </Button>
+                      )}
                       {listening.length === 0 && (
-                        <Button onClick={() => resetSection("listening")}>
+                        <Button
+                          htmlType="button"
+                          onClick={() => resetSection("listening")}
+                        >
                           Reset listening
                         </Button>
                       )}
@@ -423,20 +467,33 @@ const ContestDetails = () => {
                 title={
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Reading Section</Title>
-                    {status &&
-                      (status === "READING_PROCESS" ? (
-                        <Tag color="orange">Reading processing</Tag>
-                      ) : status !== "READING_PROCESS" &&
-                        readingStatus === "completed" ? (
-                        <Tag color="green">Reading Completed</Tag>
-                      ) : (
-                        <Tag> Waiting Reading</Tag>
-                      ))}
-                    {readings.length === 0 && (
-                      <Button onClick={() => resetSection("reading")}>
-                        Reset reading
-                      </Button>
-                    )}
+                    <Flex align="center" gap={10}>
+                      {status &&
+                        (status === "READING_PROCESS" ? (
+                          <Tag color="orange">Reading processing</Tag>
+                        ) : status !== "READING_PROCESS" &&
+                          readingStatus === "completed" ? (
+                          <Tag color="green">Reading Completed</Tag>
+                        ) : (
+                          <Tag> Waiting Reading</Tag>
+                        ))}
+                      {exam_id && (
+                        <Button
+                          type="primary"
+                          onClick={() => retryListening("reading")}
+                        >
+                          Retry Listening
+                        </Button>
+                      )}
+                      {readings.length === 0 && (
+                        <Button
+                          htmlType="button"
+                          onClick={() => resetSection("reading")}
+                        >
+                          Reset reading
+                        </Button>
+                      )}
+                    </Flex>
                   </Flex>
                 }
                 variant={"borderless"}
@@ -527,20 +584,33 @@ const ContestDetails = () => {
               title={
                 <Flex justify="space-between" align="center" gap={20}>
                   <Title level={3}>Writing Section</Title>
-                  {status &&
-                    (status === "WRITING_PROCESS" ? (
-                      <Tag color="orange">Writing processing</Tag>
-                    ) : status !== "WRITING_PROCESS" &&
-                      writingStatus === "completed" ? (
-                      <Tag color="green">Writing Completed</Tag>
-                    ) : (
-                      <Tag>Waiting Writing</Tag>
-                    ))}
-                  {writings.length === 0 && (
-                    <Button onClick={() => resetSection("writing")}>
-                      Reset Writing
-                    </Button>
-                  )}
+                  <Flex align="center" gap={10}>
+                    {status &&
+                      (status === "WRITING_PROCESS" ? (
+                        <Tag color="orange">Writing processing</Tag>
+                      ) : status !== "WRITING_PROCESS" &&
+                        writingStatus === "completed" ? (
+                        <Tag color="green">Writing Completed</Tag>
+                      ) : (
+                        <Tag>Waiting Writing</Tag>
+                      ))}
+                    {exam_id && (
+                      <Button
+                        type="primary"
+                        onClick={() => retryListening("writing")}
+                      >
+                        Retry Listening
+                      </Button>
+                    )}
+                    {writings.length === 0 && (
+                      <Button
+                        htmlType="button"
+                        onClick={() => resetSection("writing")}
+                      >
+                        Reset Writing
+                      </Button>
+                    )}
+                  </Flex>
                 </Flex>
               }
               variant={"borderless"}

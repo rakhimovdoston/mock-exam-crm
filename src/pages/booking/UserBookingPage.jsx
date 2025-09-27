@@ -358,6 +358,10 @@ const UserBookingPage = () => {
                         >
                           <Space direction="vertical" size="small">
                             <Text>
+                              <Text strong>Day of Week:</Text>{" "}
+                              {session.dayOfWeek}
+                            </Text>
+                            <Text>
                               <Text strong>Test Time:</Text> {session.time}
                             </Text>
                             <Text>
@@ -483,6 +487,9 @@ const UserBookingPage = () => {
                       }
                     >
                       <Space direction="vertical" size="small">
+                        <Text>
+                          <Text strong>Day of Week:</Text> {session.dayOfWeek}
+                        </Text>
                         <Text>
                           <Text strong>Test Time:</Text> {session.time}
                         </Text>

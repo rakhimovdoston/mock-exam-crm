@@ -1,13 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {
-  Layout,
-  Button,
-  Modal,
-  Result,
-  Dropdown,
-  Flex,
-  Select,
-} from "antd";
+import React, { useEffect, useRef, useState } from "react";
+import { Layout, Button, Modal, Result, Dropdown, Flex, Select } from "antd";
 import {
   ClockCircleOutlined,
   FullscreenExitOutlined,
@@ -28,7 +20,11 @@ import { clearExamAnswers } from "../../store/examReducer";
 
 const { Header } = Layout;
 
-const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
+const ExamHeader = ({
+  type,
+  totalExamTimeInSeconds = 0,
+  isTimerReady = false,
+}) => {
   const { id } = useParams();
   const [timeLeft, setTimeLeft] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -36,34 +32,53 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
   const [loading, setLoading] = useState(false);
   const [isReviewVisible, setIsReviewVisible] = useState(false);
   const dispatch = useDispatch();
+  const previousTotalRef = useRef(null);
 
   useEffect(() => {
     if (type === "reading") {
       setTimeLeft(60 * 60);
-    } else if (totalExamTimeInSeconds) {
-      setTimeLeft(totalExamTimeInSeconds);
+      previousTotalRef.current = 60 * 60;
+      return;
+    }
+
+    if (totalExamTimeInSeconds) {
+      const previousTotal = previousTotalRef.current;
+
+      if (!previousTotal || previousTotal <= 0) {
+        setTimeLeft(totalExamTimeInSeconds);
+      } else if (totalExamTimeInSeconds > previousTotal) {
+        const additionalTime = totalExamTimeInSeconds - previousTotal;
+        setTimeLeft((prev) => prev + additionalTime);
+      } else {
+        setTimeLeft(totalExamTimeInSeconds);
+      }
+
+      previousTotalRef.current = totalExamTimeInSeconds;
     } else {
       setTimeLeft(30 * 60);
+      previousTotalRef.current = 30 * 60;
     }
   }, [type, totalExamTimeInSeconds]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer);
-          setIsModalVisible(true);
-          setTimeout(() => {
-            handleModalOk();
-          }, 2000);
-          return 0;
-        }
-        return prevTime - 1;
-      });
+      if ((type === "listening" && isTimerReady) || type === "reading") {
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timer);
+            setIsModalVisible(true);
+            setTimeout(() => {
+              handleModalOk();
+            }, 2000);
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [type, isTimerReady]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -158,7 +173,9 @@ const ExamHeader = ({ type, totalExamTimeInSeconds = 0 }) => {
                 color: timeLeft <= 60 ? "red" : "black",
               }}
             />
-            {formatTime(timeLeft)}
+            {type === "reading" || (type === "listening" && isTimerReady)
+              ? formatTime(timeLeft)
+              : "--"}
           </span>
           <div style={{ display: "flex", gap: 15 }}>
             <Button

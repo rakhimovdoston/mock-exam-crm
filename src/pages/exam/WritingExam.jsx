@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
+import useExamSecurity from "../../hooks/useExamSecurity";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Layout,
@@ -36,6 +37,8 @@ const WritingExam = () => {
   const { data, error, loading } = useApiRequest(
     `api/v1/exam/module/${id}?moduleType=writing`
   );
+
+  useExamSecurity({ allowTypingShortcuts: true });
 
   useEffect(() => {
     if (data && data?.data) {
@@ -97,44 +100,6 @@ const WritingExam = () => {
       </span>
     );
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl yoki Meta (Mac uchun ⌘) bilan bosilgan tugmalarni bloklash
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        ["x", "a", "s", "p", "r", "t"].includes(e.key.toLowerCase())
-      ) {
-        e.preventDefault();
-        toast.info(`This keyboard blocked:`);
-      }
-
-      if (e.key === "F12" || e.key === "PrintScreen") {
-        e.preventDefault();
-        toast.info(`This keyboard blocked:`);
-      }
-    };
-
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-      toast.info("Context Menu bloklangan:");
-    };
-
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("contextmenu", handleContextMenu);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, []);
 
   const handleModalOk = async () => {
     const latestAnswers = answersRef.current;

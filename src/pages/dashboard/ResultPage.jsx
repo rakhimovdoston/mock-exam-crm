@@ -29,11 +29,9 @@ const ResultPage = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const columns = [
     {
-      title: "№",
-      dataIndex: "index",
-      key: "index",
-      render: (text, record, index) =>
-        index + 1 + (pagination.current - 1) * pagination.pageSize,
+      title: "Rank",
+      dataIndex: "rank",
+      key: "rank"
     },
     {
       title: "Candidate Name",
@@ -41,17 +39,14 @@ const ResultPage = () => {
       key: "fullName",
     },
     {
-      title: "Date",
+      title: "Main Exam",
       dataIndex: "date",
       key: "date",
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "COMPLETED" ? "green" : "orange"}>{status}</Tag>
-      ),
+      title: "Speaking Date",
+      dataIndex: "speakingDate",
+      key: "speakingDate",
     },
     {
       title: "Branch",
@@ -144,10 +139,43 @@ const ResultPage = () => {
       title: "Overall",
       dataIndex: "overall",
       key: "overall",
+      render: (text) => {
+        const value = parseFloat(text);
+        let backgroundColor = "transparent";
+        let color = "#000"; // default qora matn
+
+        if (value >= 7.0) {
+          backgroundColor = "lightgreen";
+          color = "#006400"; // dark green matn
+        } else if (value >= 5.5 && value < 7.0) {
+          backgroundColor = "lightcoral";
+          color = "#8B0000"; // dark red matn
+        } else if (value < 5.0) {
+          backgroundColor = "lightyellow";
+          color = "#8B8000"; // dark gold matn
+        }
+
+        return (
+          <div
+            style={{
+              backgroundColor,
+              color,
+              fontWeight: "bold",
+              padding: "4px 8px",
+              borderRadius: "6px",
+              textAlign: "center",
+              minWidth: "70px",
+            }}
+          >
+            {text}
+          </div>
+        );
+      },
     },
     {
       title: "",
       dataIndex: "note",
+      key: "actions",
       render: (_, record) => (
         <Link to={`/dashboard/contest/${record.bookingId}/TEST`}>
           <Button>View</Button>
@@ -268,7 +296,12 @@ const ResultPage = () => {
           showQuickJumper: true,
           onChange: handleTableChange,
         }}
-        rowKey="id"
+        rowKey={(record, index) => {
+          if (record?.id) return record.id;
+          if (record?.bookingId) return record.bookingId;
+          if (record?.userId) return record.userId;
+          return `${record?.fullName ?? "result"}-${record?.date ?? "unknown"}-${index}`;
+        }}
         columns={columns}
       />
     </div>
