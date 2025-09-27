@@ -178,7 +178,7 @@ const ListeningExam = () => {
             overflowY: "auto",
           }}
         >
-          <audio ref={audioRef} autoPlay />
+          <audio ref={audioRef} autoPlay preload="auto" />
 
           {/* ALL PARTS */}
           {data?.data?.map((part) => (
