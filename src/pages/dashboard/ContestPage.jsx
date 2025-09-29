@@ -46,7 +46,7 @@ const ContestPage = () => {
       key: "testDate",
     },
     {
-      title: "Time Slot",
+      title: "Test Shift",
       dataIndex: "time",
       key: "time",
       render: (time) => {
@@ -71,11 +71,11 @@ const ContestPage = () => {
         else if (status === "PROCESS") color = "orange";
         else if (status === "IN_COMPLED") color = "gray";
         else if (status === "FAILED") color = "red";
-        return <Tag color={color}>{status}</Tag>;
+        return <Tag color={color}>{status === 'PROCESS' ? "In Progress" : status}</Tag>;
       },
       filters: [
         { text: "Waiting", value: "WAITING" },
-        { text: "Process", value: "PROCESS" },
+        { text: "In Progress", value: "PROCESS" },
         { text: "Completed", value: "COMPLETED" },
         { text: "Failed", value: "FAILED" },
       ],
@@ -88,7 +88,7 @@ const ContestPage = () => {
         else if (status === "PROCESS") color = "orange";
         else if (status === "WAITING") color = "geekblue";
         else if (status === "FAILED") color = "red";
-        return <Tag color={color}>{status}</Tag>;
+        return <Tag color={color}>{status === 'PROCESS' ? "In Progress" : status}</Tag>;
       },
     },
     {

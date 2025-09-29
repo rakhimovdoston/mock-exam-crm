@@ -295,7 +295,7 @@ const WritingWriting = () => {
                 )}
               </Col>
               <Col xs={24} md={12}>
-                <Typography.Title level={5}>User's Answer</Typography.Title>
+                <Typography.Title level={5}>Candidate's Answer</Typography.Title>
                 <div
                   style={{
                     border: "1px solid #e0e0e0",

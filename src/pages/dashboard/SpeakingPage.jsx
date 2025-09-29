@@ -138,7 +138,7 @@ const SpeakingPage = () => {
       key: "testDate",
     },
     {
-      title: "Time Slot",
+      title: "Test Shift",
       dataIndex: "time",
       key: "time",
       render: (time) => `🕒 ${time}`,

@@ -289,7 +289,7 @@ const ContestDetails = () => {
                     checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN)) &&
                     speaking?.status !== "COMPLETED" && (
                       <Link to={"edit"}>
-                        <Button type="link">Edit speaking session</Button>
+                        <Button type="primary">Edit</Button>
                       </Link>
                     )}
                 </Flex>

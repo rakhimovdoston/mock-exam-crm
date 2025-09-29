@@ -464,7 +464,7 @@ const UserDetails = () => {
                                     <Text>{speaking?.branchName || "N/A"}</Text>
                                   </Flex>
                                   <Flex gap={10} align="center">
-                                    <Text strong>Speaker Name:</Text>
+                                    <Text strong>Speaking Examiner Name:</Text>
                                     <Text>
                                       {speaking?.speakerName || "N/A"}
                                     </Text>
@@ -502,7 +502,7 @@ const UserDetails = () => {
                               >
                                 <p>
                                   Current Speaking Score:{" "}
-                                  {selectedSpeakingScore ?? "0.0"} ball
+                                  {selectedSpeakingScore ?? "0.0"}
                                 </p>
                                 <Input
                                   min={0.0}
@@ -546,14 +546,14 @@ const UserDetails = () => {
                                   }}
                                 >
                                   <Text>
-                                    <CalendarOutlined /> Group Date:{" "}
+                                    <CalendarOutlined /> Speaking Date for Sessions Booked:{" "}
                                     {formatDate(group.date)}
                                   </Text>
                                   <Text>
                                     <BranchesOutlined /> Branch:{" "}
                                     {group.branchName}
                                   </Text>
-                                  <Text>Speaker: {group.speakerName}</Text>
+                                  <Text>Speaking Examiner: {group.speakerName}</Text>
                                 </div>
                               }
                             >

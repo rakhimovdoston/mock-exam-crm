@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
-import { Button, Form, Input, Modal, Table, Tag, Typography } from "antd";
+import { Button, Flex, Form, Input, Modal, Table, Tag, Typography } from "antd";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const BranchPage = () => {
   const [refresh, setRefresh] = useState(0);
@@ -12,6 +13,8 @@ const BranchPage = () => {
   const { data, loading } = useApiRequest("api/v1/branch/all?active=false", [
     refresh,
   ]);
+
+  const navigate = useNavigate();
 
   const activedBranch = async (id, active, type) => {
     try {
@@ -45,22 +48,22 @@ const BranchPage = () => {
       key: "id",
     },
     {
-      title: "Activation",
+      title: "Status",
       dataIndex: "active",
       key: "active",
       render: (active) => (
         <Tag color={active ? "blue" : "red"}>
-          {active ? "ACTIVE" : "IN_ACTIVE"}
+          {active ? "ACTIVE" : "INACTIVE"}
         </Tag>
       ),
     },
     {
-      title: "Name",
+      title: "Branch",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Max Students",
+      title: "Maximum Capacity",
       dataIndex: "maxStudents",
       key: "maxStudents",
     },
@@ -81,7 +84,7 @@ const BranchPage = () => {
             danger={record.active}
             onClick={() => activedBranch(record.id, record.active, "branch")}
           >
-            {record.active ? "Deactivated" : "Activation"}
+            {record.active ? "Deactivate" : "Activation"}
           </Button>
           <Button
             onClick={() => {
@@ -94,8 +97,7 @@ const BranchPage = () => {
           <Button
             type="primary"
             onClick={() => {
-              setShowUpdate(true);
-              setSelectBranch(record);
+              navigate(`/dashboard/venue/${record.id}`);
             }}
           >
             View
@@ -111,7 +113,7 @@ const BranchPage = () => {
       key: "id",
     },
     {
-      title: "Activation",
+      title: "Status",
       dataIndex: "active",
       key: "active",
       render: (active) => (
@@ -137,17 +139,17 @@ const BranchPage = () => {
       ),
     },
     {
-      title: "Total test sessions",
+      title: "Total Test Sessions",
       dataIndex: "totalSessions",
       key: "totalSessions",
     },
     {
-      title: "Speaking Session",
+      title: "Total Speaking Sessions",
       dataIndex: "speakingSessions",
       key: "speakingSessions",
     },
     {
-      title: "Active",
+      title: "Actions",
       width: 150,
       key: "actions",
       render: (_, record) => (
@@ -165,6 +167,7 @@ const BranchPage = () => {
           >
             {record.active ? "Deactivated" : "Activation"}
           </Button>
+          <Button>Update</Button>
         </div>
       ),
     },
@@ -193,7 +196,10 @@ const BranchPage = () => {
   return (
     <>
       <div>
-        <Typography.Title level={3}>Venues</Typography.Title>
+        <Flex justify="space-between" align="center">
+          <Typography.Title level={3}>Venues</Typography.Title>
+          <Button type="primary">Add New Venue</Button>
+        </Flex>
         <Table
           key={"branch"}
           loading={loading}
@@ -251,7 +257,10 @@ const BranchPage = () => {
         </Modal>
       )}
       <div>
-        <Typography.Title level={3}>Packages</Typography.Title>
+        <Flex justify="space-between" align="center">
+          <Typography.Title level={3}>Packages</Typography.Title>
+          <Button type="primary">Add New Package</Button>
+        </Flex>
         <Table
           key={"package"}
           loading={loading}

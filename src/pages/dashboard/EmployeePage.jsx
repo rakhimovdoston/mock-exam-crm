@@ -60,7 +60,7 @@ const EmployeePage = () => {
       key: "username",
     },
     {
-      title: "Department",
+      title: "Branch",
       dataIndex: "department",
       key: "department",
     },
@@ -82,9 +82,9 @@ const EmployeePage = () => {
               key={idx}
             >
               {role === "ROLE_BRANCH_ADMIN"
-                ? "ADMIN"
+                ? "Mock Organiser"
                 : role === "ROLE_SPEAKER"
-                ? "SPEAKER"
+                ? "Speaking Examiner"
                 : role}
             </Tag>
           ))}
@@ -105,7 +105,7 @@ const EmployeePage = () => {
           }}
         >
           <Link to={`/dashboard/employee/${record.id}`}>
-            <Button>View HR</Button>
+            <Button>View</Button>
           </Link>
         </div>
       ),

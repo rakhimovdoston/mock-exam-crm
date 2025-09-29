@@ -17,47 +17,47 @@ const isEditableElement = (element) => {
 
 const useExamSecurity = ({ allowTypingShortcuts = false } = {}) => {
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      const target = event.target;
-      const isTypingContext = isEditableElement(target);
-      const key = typeof event.key === "string" ? event.key.toLowerCase() : "";
-      const shouldBlockCombo =
-        event.ctrlKey &&
-        BLOCKED_COMBO_KEYS.includes(key) &&
-        (!allowTypingShortcuts || !isTypingContext);
+    // const handleKeyDown = (event) => {
+    //   const target = event.target;
+    //   const isTypingContext = isEditableElement(target);
+    //   const key = typeof event.key === "string" ? event.key.toLowerCase() : "";
+    //   const shouldBlockCombo =
+    //     event.ctrlKey &&
+    //     BLOCKED_COMBO_KEYS.includes(key) &&
+    //     (!allowTypingShortcuts || !isTypingContext);
 
-      if (shouldBlockCombo) {
-        const previouslyFocused = document.activeElement;
-        const canRestoreSelection =
-          previouslyFocused &&
-          typeof previouslyFocused.selectionStart === "number" &&
-          typeof previouslyFocused.selectionEnd === "number" &&
-          typeof previouslyFocused.setSelectionRange === "function";
-        const selection = canRestoreSelection
-          ? [previouslyFocused.selectionStart, previouslyFocused.selectionEnd]
-          : null;
+    //   if (shouldBlockCombo) {
+    //     const previouslyFocused = document.activeElement;
+    //     const canRestoreSelection =
+    //       previouslyFocused &&
+    //       typeof previouslyFocused.selectionStart === "number" &&
+    //       typeof previouslyFocused.selectionEnd === "number" &&
+    //       typeof previouslyFocused.setSelectionRange === "function";
+    //     const selection = canRestoreSelection
+    //       ? [previouslyFocused.selectionStart, previouslyFocused.selectionEnd]
+    //       : null;
 
-        event.preventDefault();
+    //     event.preventDefault();
 
-        toast.dismiss(BLOCKED_TOAST_ID);
-        toast.info("Keyboard shortcut disabled:", {
-          toastId: BLOCKED_TOAST_ID,
-          autoClose: 2000,
-        });
+    //     toast.dismiss(BLOCKED_TOAST_ID);
+    //     toast.info("Keyboard shortcut disabled:", {
+    //       toastId: BLOCKED_TOAST_ID,
+    //       autoClose: 2000,
+    //     });
 
-        if (
-          previouslyFocused &&
-          typeof previouslyFocused.focus === "function"
-        ) {
-          requestAnimationFrame(() => {
-            previouslyFocused.focus();
-            if (selection) {
-              previouslyFocused.setSelectionRange(selection[0], selection[1]);
-            }
-          });
-        }
-      }
-    };
+    //     if (
+    //       previouslyFocused &&
+    //       typeof previouslyFocused.focus === "function"
+    //     ) {
+    //       requestAnimationFrame(() => {
+    //         previouslyFocused.focus();
+    //         if (selection) {
+    //           previouslyFocused.setSelectionRange(selection[0], selection[1]);
+    //         }
+    //       });
+    //     }
+    //   }
+    // };
 
     const handleContextMenu = (event) => {
       event.preventDefault();
@@ -73,13 +73,13 @@ const useExamSecurity = ({ allowTypingShortcuts = false } = {}) => {
       event.returnValue = "";
     };
 
-    window.addEventListener("keydown", handleKeyDown, true);
-    document.addEventListener("contextmenu", handleContextMenu);
+    // window.addEventListener("keydown", handleKeyDown, true);
+    // document.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown, true);
-      document.removeEventListener("contextmenu", handleContextMenu);
+      // window.removeEventListener("keydown", handleKeyDown, true);
+      // document.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [allowTypingShortcuts]);

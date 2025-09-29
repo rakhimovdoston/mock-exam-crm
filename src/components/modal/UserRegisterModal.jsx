@@ -145,7 +145,7 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
         </Form.Item>
         <Form.Item
           name={"everester"}
-          label="Is Everest students?"
+          label="Everester?"
           rules={[{ required: true, message: "Please select" }]}
         >
           <Radio.Group>

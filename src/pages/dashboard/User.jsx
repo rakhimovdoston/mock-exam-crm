@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Input, Select, Tag } from "antd";
+import { Table, Button, Input, Tag } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import UserRegisterModal from "../../components/modal/UserRegisterModal";
-import { checkRole } from "../../utils/roleUtils";
-import { useSelector } from "react-redux";
-import { Role } from "../../data/role";
-
-const { Option } = Select;
 
 const User = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,8 +10,6 @@ const User = () => {
     current: parseInt(searchParams.get("page")) || 1,
     pageSize: parseInt(searchParams.get("size")) || 10,
   });
-  const [selectBranch, setSelectBranch] = useState();
-  const { user } = useSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || ""
   );
@@ -24,10 +17,9 @@ const User = () => {
   const { data, loading } = useApiRequest(
     `api/v1/admin/user/all?page=${pagination.current - 1}&size=${
       pagination.pageSize
-    }&search=${searchTerm}${selectBranch ? `&branch=${selectBranch}` : ""}`,
-    [pagination.current, pagination.pageSize, searchTerm, selectBranch]
+    }&search=${searchTerm}`,
+    [pagination.current, pagination.pageSize, searchTerm]
   );
-  const branches = useApiRequest(`api/v1/branch/all`);
 
   const navigate = useNavigate();
 
@@ -42,6 +34,30 @@ const User = () => {
 
   const handleModalOpen = () => {
     setIsModalOpen(true);
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    const pageSize = pagination.pageSize;
+
+    setSearchTerm(value);
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+
+      if (value) {
+        params.set("search", value);
+      } else {
+        params.delete("search");
+      }
+
+      params.set("page", "1");
+      if (!params.get("size")) {
+        params.set("size", String(pageSize));
+      }
+
+      return params;
+    });
   };
 
   const columns = [
@@ -88,7 +104,7 @@ const User = () => {
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
-      title: "Everest students",
+      title: "Everester",
       dataIndex: "everester",
       key: "everester",
       render: (everester) => (
@@ -148,24 +164,11 @@ const User = () => {
         <div
           style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
         >
-          {/* {checkRole(user.roles, Role.ROLE_ADMIN) && (
-            <Select
-              placeholder="Select branch"
-              style={{ width: 300 }}
-              onChange={(value) => setSelectBranch(value)}
-            >
-              {branches.data?.data?.branches?.map((branch) => (
-                <Option key={branch.id} value={branch.id}>
-                  {branch.name}
-                </Option>
-              ))}
-            </Select>
-          )} */}
           <Input
             value={searchTerm}
             placeholder="Search"
             style={{ width: "200px" }}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
         <Button type="primary" onClick={handleModalOpen}>

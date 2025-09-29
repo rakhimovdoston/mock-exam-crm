@@ -50,6 +50,7 @@ const UserBookingPage = React.lazy(() =>
 );
 const Branches = React.lazy(() => import("./pages/dashboard/BranchPage"));
 
+const BranchDetails = React.lazy(() => import("./pages/details/BranchDetails"))
 const ContestDetails = React.lazy(() =>
   import("./pages/details/ContestDetails")
 );
@@ -139,6 +140,7 @@ function App() {
               <Route path="" element={<DashboardPage />} />
               <Route path="users" element={<User />} />
               <Route path="venues" element={<BranchPage />} />
+              <Route path="venue/:id" element={<BranchDetails />} />
               <Route path="user/:id/booking" element={<UserBookingPage />} />
               <Route path="user/:id" element={<UserDetails />} />
               <Route path="contest" element={<ContestPage />} />

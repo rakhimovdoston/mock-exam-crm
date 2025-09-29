@@ -1,7 +1,9 @@
-import { Card, Col, Row, Spin, Statistic } from "antd";
+import { Card, Col, Row, Spin, Statistic, Typography } from "antd";
 import React from "react";
 import CountUp from "react-countup";
 import useApiRequest from "../../hooks/useApiRequest";
+import UserSignupStats from "./UserSignupStats";
+import BookingStatMonth from "./BookingStatMonth";
 
 const formatter = (value) => <CountUp end={value} separator="," />;
 
@@ -24,21 +26,11 @@ const DashboardPage = () => {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <Row gutter={[16, 16]}>
-        <Col span={12}>
-          <Card variant="borderless">
-            <Statistic
-              title="Active Users"
-              value={data?.data?.totalUsers}
-              formatter={formatter}
-              valueStyle={{ color: "#3f8600" }}
-              precision={2}
-            />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card variant="borderless">
+    <div>
+      <Typography.Title level={2}>Materials</Typography.Title>
+      <Row gutter={[8, 8]}>
+        <Col span={8}>
+          <Card>
             <Statistic
               title="All Reading"
               value={data?.data?.totalReading}
@@ -48,8 +40,8 @@ const DashboardPage = () => {
             />
           </Card>
         </Col>
-        <Col span={12}>
-          <Card variant="borderless">
+        <Col span={8}>
+          <Card>
             <Statistic
               title="All Writing"
               value={data?.data?.totalWriting}
@@ -59,8 +51,8 @@ const DashboardPage = () => {
             />
           </Card>
         </Col>
-        <Col span={12}>
-          <Card variant="borderless">
+        <Col span={8}>
+          <Card>
             <Statistic
               title="All Listening"
               value={data?.data?.totalListening}
@@ -71,6 +63,44 @@ const DashboardPage = () => {
           </Card>
         </Col>
       </Row>
+      <Typography.Title level={2}>
+        All Users{" "}
+        <span
+          style={{
+            color: "#3f8600",
+          }}
+        >
+          (<CountUp end={data?.data?.totalUsers} separator="," />)
+        </span>
+      </Typography.Title>
+      <Row gutter={[16, 16]}>
+        <Col span={12}>
+          <Card variant="outlined">
+            <Statistic
+              title="Everester"
+              value={data?.data?.everester}
+              formatter={formatter}
+              valueStyle={{ color: "#3f8600" }}
+              precision={2}
+            />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card variant="outlined">
+            <Statistic
+              title="Non Everester"
+              value={data?.data?.nonEverester}
+              formatter={formatter}
+              valueStyle={{ color: "#3f8600" }}
+              precision={2}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <UserSignupStats />
+
+      <BookingStatMonth />
     </div>
   );
 };

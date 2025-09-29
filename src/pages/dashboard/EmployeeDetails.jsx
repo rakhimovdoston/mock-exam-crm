@@ -149,14 +149,14 @@ const EmployeeDetails = () => {
 
           <Descriptions.Item label="Roles">
             <Checkbox.Group value={roles} onChange={handleRoleChange}>
-              <Checkbox value="ROLE_BRANCH_ADMIN">Branch Admin</Checkbox>
-              <Checkbox value="ROLE_SPEAKER">Speaker</Checkbox>
+              <Checkbox value="ROLE_BRANCH_ADMIN">Mock Organiser</Checkbox>
+              <Checkbox value="ROLE_SPEAKER">Speaking Examiner</Checkbox>
             </Checkbox.Group>
           </Descriptions.Item>
 
-          <Descriptions.Item label="Everester">
+          {/* <Descriptions.Item label="Everester">
             {data?.data.everester ? "Yes" : "No"}
-          </Descriptions.Item>
+          </Descriptions.Item> */}
 
           <Descriptions.Item label="Status">
             <Switch
@@ -171,85 +171,83 @@ const EmployeeDetails = () => {
           </Descriptions.Item>
         </Descriptions>
       </Card>
-      {checkRole(roles, Role.ROLE_SPEAKER) && (
-        <Card
-          title="Work Times"
-          style={{ marginTop: 20 }}
-          extra={
-            <>
-              <TimePicker
-                value={startTime}
-                onChange={setStartTime}
-                format="HH:mm"
-                placeholder="Start Time"
-              />
-              <TimePicker
-                value={endTime}
-                onChange={setEndTime}
-                format="HH:mm"
-                placeholder="End Time"
-                style={{ marginLeft: 8 }}
-              />
-              <Button
-                type="primary"
-                onClick={workHoursAdd}
-                loading={adding}
-                style={{ marginLeft: 8 }}
+      <Card
+        title="Work Shifts"
+        style={{ marginTop: 20 }}
+        extra={
+          <>
+            <TimePicker
+              value={startTime}
+              onChange={setStartTime}
+              format="HH:mm"
+              placeholder="Start Time"
+            />
+            <TimePicker
+              value={endTime}
+              onChange={setEndTime}
+              format="HH:mm"
+              placeholder="End Time"
+              style={{ marginLeft: 8 }}
+            />
+            <Button
+              type="primary"
+              onClick={workHoursAdd}
+              loading={adding}
+              style={{ marginLeft: 8 }}
+            >
+              Add
+            </Button>
+          </>
+        }
+      >
+        {workTimesLoading ? (
+          <Spin />
+        ) : workTimesData?.data?.length > 0 ? (
+          workTimesData.data.map((wt) => {
+            const startFormatted = dayjs(wt.start, "HH:mm").format("HH:mm");
+            const endFormatted = dayjs(wt.end, "HH:mm").format("HH:mm");
+
+            const workedHours = (() => {
+              const start = dayjs(wt.start, "HH:mm");
+              const end = dayjs(wt.end, "HH:mm");
+              const diff = end.diff(start, "minute");
+              const hours = Math.floor(diff / 60);
+              const minutes = diff % 60;
+              return `${hours}h ${minutes}m`;
+            })();
+
+            return (
+              <div
+                key={wt.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: "1px solid #f0f0f0",
+                  padding: "8px 0",
+                }}
               >
-                Add
-              </Button>
-            </>
-          }
-        >
-          {workTimesLoading ? (
-            <Spin />
-          ) : workTimesData?.data?.length > 0 ? (
-            workTimesData.data.map((wt) => {
-              const startFormatted = dayjs(wt.start, "HH:mm").format("HH:mm");
-              const endFormatted = dayjs(wt.end, "HH:mm").format("HH:mm");
-
-              const workedHours = (() => {
-                const start = dayjs(wt.start, "HH:mm");
-                const end = dayjs(wt.end, "HH:mm");
-                const diff = end.diff(start, "minute");
-                const hours = Math.floor(diff / 60);
-                const minutes = diff % 60;
-                return `${hours}h ${minutes}m`;
-              })();
-
-              return (
-                <div
-                  key={wt.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderBottom: "1px solid #f0f0f0",
-                    padding: "8px 0",
-                  }}
+                <span style={{ fontSize: "15px" }}>
+                  🕒 {startFormatted} → {endFormatted}{" "}
+                  <span style={{ color: "#888" }}>({workedHours})</span>
+                </span>
+                <Popconfirm
+                  title="Do you want to delete work hours?"
+                  onConfirm={() => handleDeleteWorkTime(wt.id)}
+                  okText="Yes"
+                  cancelText="No"
                 >
-                  <span style={{ fontSize: "15px" }}>
-                    🕒 {startFormatted} → {endFormatted}{" "}
-                    <span style={{ color: "#888" }}>({workedHours})</span>
-                  </span>
-                  <Popconfirm
-                    title="Do you want to delete work hours?"
-                    onConfirm={() => handleDeleteWorkTime(wt.id)}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <Button type="link" danger>
-                      Delete
-                    </Button>
-                  </Popconfirm>
-                </div>
-              );
-            })
-          ) : (
-            <div>No working hours included</div>
-          )}
-        </Card>
-      )}
+                  <Button type="link" danger>
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </div>
+            );
+          })
+        ) : (
+          <div>No working hours included</div>
+        )}
+      </Card>
     </>
   );
 };

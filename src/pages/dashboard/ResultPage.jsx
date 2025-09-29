@@ -31,7 +31,7 @@ const ResultPage = () => {
     {
       title: "Rank",
       dataIndex: "rank",
-      key: "rank"
+      key: "rank",
     },
     {
       title: "Candidate Name",
@@ -148,11 +148,11 @@ const ResultPage = () => {
           backgroundColor = "lightgreen";
           color = "#006400"; // dark green matn
         } else if (value >= 5.5 && value < 7.0) {
-          backgroundColor = "lightcoral";
-          color = "#8B0000"; // dark red matn
-        } else if (value < 5.0) {
           backgroundColor = "lightyellow";
           color = "#8B8000"; // dark gold matn
+        } else if (value <= 5.0) {
+          backgroundColor = "lightcoral";
+          color = "#8B0000"; // dark red matn
         }
 
         return (
@@ -300,7 +300,9 @@ const ResultPage = () => {
           if (record?.id) return record.id;
           if (record?.bookingId) return record.bookingId;
           if (record?.userId) return record.userId;
-          return `${record?.fullName ?? "result"}-${record?.date ?? "unknown"}-${index}`;
+          return `${record?.fullName ?? "result"}-${
+            record?.date ?? "unknown"
+          }-${index}`;
         }}
         columns={columns}
       />

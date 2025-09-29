@@ -34,7 +34,7 @@ const Navbar = () => {
     {
       key: "/dashboard/employees",
       icon: <TeamOutlined />,
-      label: <Link to="/dashboard/employees">HR</Link>,
+      label: <Link to="/dashboard/employees">Team</Link>,
       roles: ["ROLE_ADMIN"],
     },
     {
@@ -46,13 +46,13 @@ const Navbar = () => {
     {
       key: "/dashboard/contest",
       icon: <TrophyOutlined />,
-      label: <Link to="/dashboard/contest">Test sessions</Link>,
+      label: <Link to="/dashboard/contest">Test Sessions</Link>,
       roles: ["ROLE_BRANCH_ADMIN", "ROLE_ADMIN"],
     },
     {
       key: "/dashboard/speaking",
       icon: <CustomerServiceOutlined />,
-      label: <Link to="/dashboard/speaking">Speaking session</Link>,
+      label: <Link to="/dashboard/speaking">Speaking Sessions</Link>,
       roles: ["ROLE_SPEAKER", "ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
@@ -64,7 +64,7 @@ const Navbar = () => {
     {
       key: "/dashboard/ielts",
       icon: <BookOutlined />,
-      label: "IELTS materials",
+      label: "IELTS Materials",
       roles: ["ROLE_ADMIN"],
       children: [
         {
