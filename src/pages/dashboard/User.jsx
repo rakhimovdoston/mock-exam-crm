@@ -25,10 +25,19 @@ const User = () => {
 
   const handleTableChange = (page, pageSize) => {
     setPagination({ current: page, pageSize });
-    setSearchParams({
-      page,
-      size: pageSize,
-      search: searchTerm,
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+
+      params.set("page", String(page));
+      params.set("size", String(pageSize));
+
+      if (searchTerm) {
+        params.set("search", searchTerm);
+      } else {
+        params.delete("search");
+      }
+
+      return params;
     });
   };
 

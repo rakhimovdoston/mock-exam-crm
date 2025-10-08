@@ -65,14 +65,6 @@ const ContestPage = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => {
-        let color = "blue";
-        if (status === "COMPELETED") color = "green";
-        else if (status === "PROCESS") color = "orange";
-        else if (status === "IN_COMPLED") color = "gray";
-        else if (status === "FAILED") color = "red";
-        return <Tag color={color}>{status === 'PROCESS' ? "In Progress" : status}</Tag>;
-      },
       filters: [
         { text: "Waiting", value: "WAITING" },
         { text: "In Progress", value: "PROCESS" },

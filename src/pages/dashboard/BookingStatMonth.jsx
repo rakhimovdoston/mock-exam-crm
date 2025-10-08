@@ -98,7 +98,7 @@ const BookingStatMonth = () => {
         title={
           <Flex justify="flex-start" align="center" gap="16px">
             <Text strong style={{ fontSize: 16 }}>
-              Packages Booking Stats by Month
+              Session based
             </Text>
             <DatePicker
               picker="year"

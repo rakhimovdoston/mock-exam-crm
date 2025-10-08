@@ -30,7 +30,6 @@ import {
   CheckCircleOutlined,
   BranchesOutlined,
   LoadingOutlined,
-  DownCircleFilled,
   DownloadOutlined,
 } from "@ant-design/icons";
 
@@ -330,21 +329,12 @@ const UserDetails = () => {
                   `api/v1/history/download/${item.id}`,
                   { responseType: "blob" }
                 );
-
-                if (response.code !== 200) {
-                  toast.error(
-                    response.message ||
-                      "There was an some problem to download the answer"
-                  );
-                  return;
-                }
-
                 const url = window.URL.createObjectURL(
-                  new Blob([response.data])
+                  new Blob([response])
                 );
                 const link = document.createElement("a");
                 link.href = url;
-                link.setAttribute("download", `answers-${item.id}.zip`); //or any other extension
+                link.setAttribute("download", `Mock-exam-${formatDate(item.testDate)}.pdf`); //or any other extension
                 document.body.appendChild(link);
                 link.click();
                 link.parentNode.removeChild(link);

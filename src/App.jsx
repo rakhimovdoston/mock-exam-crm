@@ -5,8 +5,6 @@ import { Layout, Spin } from "antd";
 import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./routes/ProtectedRouted";
 import { fetchProfile } from "./store/authReducer";
-import ReadingUpdate from "./pages/update/ReadingUpdate";
-import BranchPage from "./pages/dashboard/BranchPage";
 import { Role } from "./data/role";
 
 // Lazy load pages
@@ -32,6 +30,8 @@ const WritingExam = React.lazy(() => import("./pages/exam/WritingExam"));
 const ReadingExam = React.lazy(() => import("./pages/exam/ReadingExam"));
 const UserDetails = React.lazy(() => import("./pages/dashboard/UserDetailts"));
 const HomePage = React.lazy(() => import("./pages/HomePage"));
+const BranchPage = React.lazy(() => import("./pages/dashboard/BranchPage"));
+const ReadingUpdate = React.lazy(() => import("./pages/update/ReadingUpdate"));
 const WritingDetails = React.lazy(() =>
   import("./pages/create/WritingDetails")
 );
@@ -48,9 +48,7 @@ const ContestPage = React.lazy(() => import("./pages/dashboard/ContestPage"));
 const UserBookingPage = React.lazy(() =>
   import("./pages/booking/UserBookingPage")
 );
-const Branches = React.lazy(() => import("./pages/dashboard/BranchPage"));
-
-const BranchDetails = React.lazy(() => import("./pages/details/BranchDetails"))
+const BranchDetails = React.lazy(() => import("./pages/details/BranchDetails"));
 const ContestDetails = React.lazy(() =>
   import("./pages/details/ContestDetails")
 );
