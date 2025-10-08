@@ -52,6 +52,7 @@ const examReducer = createSlice({
         };
       });
 
+      // localStorage.setItem("examAnswers", JSON.stringify(answers));
       state.answers = answers;
     },
     updateForUserAnswers: (state, action) => {

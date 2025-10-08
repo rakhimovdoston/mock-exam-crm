@@ -30,6 +30,8 @@ import {
   CheckCircleOutlined,
   BranchesOutlined,
   LoadingOutlined,
+  DownCircleFilled,
+  DownloadOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
@@ -317,6 +319,54 @@ const UserDetails = () => {
               }
             };
 
+            const downloadAnswers = async (item) => {
+              if (item.type === "booking") {
+                toast.error("This session not pass exam");
+                return;
+              }
+              setAnswerLoading(true);
+              try {
+                const response = await apiClient.get(
+                  `api/v1/history/download/${item.id}`,
+                  { responseType: "blob" }
+                );
+
+                if (response.code !== 200) {
+                  toast.error(
+                    response.message ||
+                      "There was an some problem to download the answer"
+                  );
+                  return;
+                }
+
+                const url = window.URL.createObjectURL(
+                  new Blob([response.data])
+                );
+                const link = document.createElement("a");
+                link.href = url;
+                link.setAttribute("download", `answers-${item.id}.zip`); //or any other extension
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode.removeChild(link);
+              } catch (err) {
+                const response = err.response;
+                if (response?.status === 400) {
+                  toast.error(
+                    "Test is not completed! Please after test complete the test before downloading answers."
+                  );
+                  return;
+                }
+                if (response?.status === 400) {
+                  toast.error("Test is not found!");
+                  return;
+                }
+
+                toast.error("There was an error to download the answer");
+              } finally {
+                setAnswerLoading(false);
+              }
+            };
+
             const handleSpeakingModalOk = async () => {
               if (errorMessage) {
                 toast.error("Score must be between 0.0 and 9.0");
@@ -546,14 +596,16 @@ const UserDetails = () => {
                                   }}
                                 >
                                   <Text>
-                                    <CalendarOutlined /> Speaking Date for Sessions Booked:{" "}
-                                    {formatDate(group.date)}
+                                    <CalendarOutlined /> Speaking Date for
+                                    Sessions Booked: {formatDate(group.date)}
                                   </Text>
                                   <Text>
                                     <BranchesOutlined /> Branch:{" "}
                                     {group.branchName}
                                   </Text>
-                                  <Text>Speaking Examiner: {group.speakerName}</Text>
+                                  <Text>
+                                    Speaking Examiner: {group.speakerName}
+                                  </Text>
                                 </div>
                               }
                             >
@@ -688,6 +740,18 @@ const UserDetails = () => {
                                                       refreshExamAnswer(result)
                                                     }
                                                   />
+                                                </Tooltip>
+
+                                                <Tooltip title="Download the candidate's answer">
+                                                  <Button
+                                                    icon={<DownloadOutlined />}
+                                                    loading={answerLoading}
+                                                    onClick={() =>
+                                                      downloadAnswers(result)
+                                                    }
+                                                  >
+                                                    Download
+                                                  </Button>
                                                 </Tooltip>
                                                 <Tooltip title="Send to user his answer">
                                                   <Button
