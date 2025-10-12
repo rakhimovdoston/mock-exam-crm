@@ -35,6 +35,7 @@ const ExamHeader = ({
 
   // Load saved state from sessionStorage
   const getSavedState = () => {
+    if (type === "listening") return null;
     try {
       const saved = sessionStorage.getItem(STORAGE_KEY);
       return saved ? JSON.parse(saved) : null;
@@ -50,16 +51,19 @@ const ExamHeader = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isReviewVisible, setIsReviewVisible] = useState(false);
+  const [isErrorSending, setIsErrorSending] = useState(false);
 
   // Save timeLeft to sessionStorage whenever it changes
   useEffect(() => {
     if (timeLeft > 0) {
       const stateToSave = {
         timeLeft,
-        type, // ✅ Save type for debugging
+        type,
         timestamp: Date.now(),
       };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      if (type === "reading") {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      }
     }
   }, [timeLeft, type, STORAGE_KEY]);
 
@@ -96,6 +100,7 @@ const ExamHeader = ({
 
   const handleModalOk = useCallback(async () => {
     setLoading(true);
+    setIsErrorSending(false);
     const latestAnswer = store.getState().exam.answers;
     const request = {
       type: type,
@@ -111,14 +116,15 @@ const ExamHeader = ({
         toast.error(
           response.message || "Failed to submit answers. Please try again."
         );
+        setIsErrorSending(true);
         return;
       }
-      toast.success("Answers submitted successfully!");
-      // Clear saved state after successful submission
       sessionStorage.removeItem(STORAGE_KEY);
+      toast.success("Answers submitted successfully!");
       dispatch(clearExamAnswers());
       navigate(`/exam/${id}`);
     } catch (error) {
+      setIsErrorSending(true);
       console.error("Error submitting answers:", error);
       toast.error("Failed to submit answers. Please try again.");
     } finally {
@@ -138,7 +144,7 @@ const ExamHeader = ({
             }, 2000);
             return 0;
           }
-          return prevTime - 0.01;
+          return prevTime - 1;
         });
       }
     }, 1000);
@@ -276,14 +282,14 @@ const ExamHeader = ({
         open={isModalVisible}
         closable={timeLeft > 0}
         footer={
-          timeLeft > 0 && [
+          (timeLeft > 0 || isErrorSending) && [
             <Button
               key="submit"
               type="primary"
               onClick={handleModalOk}
               loading={loading}
             >
-              Submit
+              {isErrorSending ? "Re Submit" : "Submit"}
             </Button>,
             <Button
               key="cancel"

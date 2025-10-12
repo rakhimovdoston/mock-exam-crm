@@ -9,16 +9,17 @@ import {
 const getAnswersStorageKey = () => {
   // Get current URL to determine exam type
   const path = window.location.pathname;
-  const examId = path.split('/').pop();
-  
-  if (path.includes('/reading/')) {
-    return `exam_answers_reading_${examId}`;
-  } else if (path.includes('/listening/')) {
-    return `exam_answers_listening_${examId}`;
-  } else if (path.includes('/writing/')) {
-    return `exam_answers_writing_${examId}`;
+  if (path.includes("listening")) {
+    return null; // Listening exam answers are not saved
   }
-  
+  const examId = path.split("/").pop();
+
+  if (path.includes("/reading/")) {
+    return `exam_answers_reading_${examId}`;
+  } else if (path.includes("/listening/")) {
+    return `exam_answers_listening_${examId}`;
+  }
+
   // Fallback
   return `exam_answers_${examId}`;
 };
@@ -27,6 +28,7 @@ const getAnswersStorageKey = () => {
 const loadSavedAnswers = () => {
   try {
     const storageKey = getAnswersStorageKey();
+    if (!storageKey) return [];
     const saved = sessionStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
@@ -39,6 +41,7 @@ const loadSavedAnswers = () => {
 const saveAnswersToStorage = (answers) => {
   try {
     const storageKey = getAnswersStorageKey();
+    if (!storageKey) return;
     sessionStorage.setItem(storageKey, JSON.stringify(answers));
   } catch (error) {
     console.error("Error saving answers:", error);

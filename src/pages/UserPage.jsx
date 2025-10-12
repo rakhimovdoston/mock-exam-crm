@@ -29,7 +29,7 @@ const UserPage = () => {
 
   useEffect(() => {
     if (data?.data && timeLeft === 0) {
-      localStorage.removeItem("exam_start");
+      sessionStorage.clear();
       dispatch(logout());
     }
   }, [timeLeft, dispatch]);
@@ -216,7 +216,7 @@ const UserPage = () => {
                 data.data.reading
               )}
               onClick={() => {
-                localStorage.removeItem("exam_start");
+                sessionStorage.clear();
                 dispatch(logout());
               }}
             >
