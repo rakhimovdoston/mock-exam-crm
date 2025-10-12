@@ -60,7 +60,7 @@ const ListItemViewElement = ({
   const checkedValue = () => {
     for (const ans of userAnswers.answers) {
       for (const a of ans.answers) {
-        if (a.key === element.id) {
+        if (a.key === itemNumber) {
           return a.value;
         }
       }
@@ -187,6 +187,7 @@ const ListItemViewElement = ({
                         updateAnswer({ key: itemNumber, value: e.target.value })
                       );
                     } else {
+                      console.log("Dispatching: ", itemNumber, e.target.value);
                       dispatch(
                         updateForUserAnswers({
                           key: itemNumber,

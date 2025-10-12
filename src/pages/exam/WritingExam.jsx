@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import useExamSecurity from "../../hooks/useExamSecurity";
 import { useNavigate, useParams } from "react-router-dom";
@@ -26,19 +26,46 @@ const { Header, Footer, Content } = Layout;
 
 const WritingExam = () => {
   const { id } = useParams();
-  const [task, setTask] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(60 * 60);
+  const navigate = useNavigate();
+  const STORAGE_KEY = `writing_exam_${id}`;
+
+  // Load saved state from sessionStorage
+  const getSavedState = () => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.error("Error loading saved state:", error);
+      return null;
+    }
+  };
+
+  const savedState = getSavedState();
+
+  const [task, setTask] = useState(savedState?.task ?? true);
+  const [timeLeft, setTimeLeft] = useState(savedState?.timeLeft ?? 60 * 60);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const answersRef = useRef([]);
-  const [answers, setAnswers] = useState([]);
-  const navigate = useNavigate();
+  const [answers, setAnswers] = useState(savedState?.answers ?? []);
   const [saveLoading, setSaveLoading] = useState(false);
   const [content, setContent] = useState();
+  const [isErrorSending, setIsErrorSending] = useState(false);
   const { data, error, loading } = useApiRequest(
     `api/v1/exam/module/${id}?moduleType=writing`
   );
 
   useExamSecurity({ allowTypingShortcuts: true });
+
+  // Save state to sessionStorage whenever it changes
+  useEffect(() => {
+    const stateToSave = {
+      task,
+      timeLeft,
+      answers,
+      timestamp: Date.now(),
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+  }, [task, timeLeft, answers, STORAGE_KEY]);
 
   useEffect(() => {
     if (data && data?.data) {
@@ -51,7 +78,7 @@ const WritingExam = () => {
   }, [data?.data, task]);
 
   useEffect(() => {
-    if (data && data?.data) {
+    if (data && data?.data && answers.length === 0) {
       const initAnswers = data.data.map((item) => {
         return {
           id: item.id,
@@ -62,18 +89,51 @@ const WritingExam = () => {
 
       setAnswers(initAnswers);
     }
-  }, [data]);
+  }, [data, answers.length]);
 
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
+
+  const handleModalOk = useCallback(async () => {
+    const latestAnswers = answersRef.current;
+    setSaveLoading(true);
+    setIsErrorSending(false);
+    const request = {
+      answers: latestAnswers,
+    };
+
+    try {
+      const response = await apiClient.post(
+        `/api/v1/exam/writing/${id}`,
+        request
+      );
+      if (response.code !== 200) {
+        toast.error(
+          response.message || "Failed to submit answers. Please try again."
+        );
+        setIsErrorSending(true);
+        return;
+      }
+      toast.success("Answers submitted successfully!");
+      // Clear saved state after successful submission
+      sessionStorage.removeItem(STORAGE_KEY);
+      navigate(`/exam/${id}`);
+    } catch (error) {
+      setIsErrorSending(true);
+      console.error("Error submitting answers:", error);
+      toast.error("Failed to submit answers. Please try again.");
+    } finally {
+      setSaveLoading(false);
+    }
+  }, [id, navigate, STORAGE_KEY]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          setIsModalVisible(true); // Show modal when timeLeft reaches 0
+          setIsModalVisible(true);
           setTimeout(() => {
             handleModalOk();
           }, 2000);
@@ -84,7 +144,7 @@ const WritingExam = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [handleModalOk]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -99,34 +159,6 @@ const WritingExam = () => {
         {minutes > 0 ? "minutes" : "seconds"} remaining
       </span>
     );
-  };
-
-  const handleModalOk = async () => {
-    const latestAnswers = answersRef.current;
-    setSaveLoading(true);
-    const request = {
-      answers: latestAnswers,
-    };
-
-    try {
-      const response = await apiClient.post(
-        `/api/v1/exam/writing/${id}`,
-        request
-      );
-      if (response.code !== 200) {
-        toast.error(
-          response.message || "Failed to submit answers. Please try again."
-        );
-        return;
-      }
-      toast.success("Answers submitted successfully!");
-      navigate(`/exam/${id}`);
-    } catch (error) {
-      console.error("Error submitting answers:", error);
-      toast.error("Failed to submit answers. Please try again.");
-    } finally {
-      setSaveLoading(false);
-    }
   };
 
   const handleModalCancel = () => {
@@ -201,7 +233,6 @@ const WritingExam = () => {
                 alignItems: "center",
               }}
             >
-              {/* {type === "reading" ? "Reading Test" : "Listening Test"} */}
               <img src={logo} alt="Logo" width={100} />
             </div>
             <span
@@ -240,14 +271,14 @@ const WritingExam = () => {
           open={isModalVisible}
           closable={timeLeft > 0}
           footer={
-            timeLeft > 0 && [
+            (timeLeft > 0 || isErrorSending) && [
               <Button
                 key="submit"
                 type="primary"
                 onClick={handleModalOk}
                 loading={saveLoading}
               >
-                Submit
+                {isErrorSending ? "Re Submit" : "Submit"}
               </Button>,
               <Button
                 key="cancel"
@@ -316,7 +347,7 @@ const WritingExam = () => {
               style={{ width: "100%", minHeight: "400px", fontSize: "16px" }}
               placeholder={`Enter here writing task ${
                 content && content.task ? "one" : "two"
-              } your opition`}
+              } your opinion`}
             />
             <p>Word Count: {getWordCount()}</p>
           </Splitter.Panel>
