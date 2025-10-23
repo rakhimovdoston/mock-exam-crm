@@ -36,15 +36,6 @@ const FeedbackBox = ({ title, feedback }) => {
       <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Strength</b>: {feedback.strength} {feedback.sticker}
       </Typography.Text>
-      {/* {feedback.strength && <>
-        <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
-          <b>Description</b> {feedback.strength.description}{" "}
-        </Typography.Text>
-        <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
-          <b>Example:</b>{feedback.strength.example}{" "}
-        </Typography.Text>
-        </>} */}
-
       <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
         <b>Reason</b>: {feedback.reason}
       </Typography.Text>
@@ -70,6 +61,74 @@ const FeedbackBox = ({ title, feedback }) => {
             </Typography.Text>
           </div>
         ))}
+      </div>
+      <Divider />
+    </div>
+  );
+};
+
+const FeedbackAxiomBox = ({ title, feedback }) => {
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      <Typography.Text style={{ fontWeight: "bold", fontSize: 18 }}>
+        {title}: ({feedback.Score})
+      </Typography.Text>
+      <Typography.Paragraph style={{ fontWeight: "normal", fontSize: 16 }}>
+        {feedback?.Description}
+      </Typography.Paragraph>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {feedback.Suggestions && feedback.Suggestions.length > 0 && (
+          <>
+            <Typography.Text style={{ fontWeight: "bold", fontSize: 16 }}>
+              Suggestions:
+            </Typography.Text>
+            <Space direction="vertical" style={{ marginLeft: 20 }}>
+              {feedback.Suggestions.map((suggestion, index) => (
+                <Typography.Text
+                  key={index}
+                  style={{ fontWeight: "normal", fontSize: 16 }}
+                >
+                  - {suggestion}
+                </Typography.Text>
+              ))}
+            </Space>
+          </>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {feedback?.Revisions && feedback?.Revisions.length > 0 && (
+          <>
+            <Typography.Text style={{ fontWeight: "bold", fontSize: 18 }}>
+              Revision:
+            </Typography.Text>
+            {feedback?.Revisions.map((item, index) => (
+              <div
+                key={index}
+                style={{ display: "flex", flexDirection: "column" }}
+              >
+                <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+                  <b>Sentence: </b>
+                  {item.sentenceExample}
+                </Typography.Text>
+                <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+                  <b>Revision: </b>
+                  {item.revision}
+                </Typography.Text>
+                <Typography.Text style={{ fontWeight: "normal", fontSize: 16 }}>
+                  <b>Explanation: </b>
+                  {item.explanation}
+                </Typography.Text>
+              </div>
+            ))}
+          </>
+        )}
       </div>
       <Divider />
     </div>
@@ -263,7 +322,6 @@ const WritingWriting = () => {
         const answer = data.data.answers.find(
           (ans) => ans.writingId === question.id
         );
-
         return (
           <div
             key={question.id}
@@ -295,7 +353,9 @@ const WritingWriting = () => {
                 )}
               </Col>
               <Col xs={24} md={12}>
-                <Typography.Title level={5}>Candidate's Answer</Typography.Title>
+                <Typography.Title level={5}>
+                  Candidate's Answer
+                </Typography.Title>
                 <div
                   style={{
                     border: "1px solid #e0e0e0",
@@ -331,28 +391,6 @@ const WritingWriting = () => {
                   >
                     {answer.feedback.summary}
                   </Typography.Text>
-                  {/* {answer?.feedback?.summary && <div >
-                    <div>
-                      <h3>Strengths:</h3>
-                      <ul>
-                        {answer.feedback.summary.strengths.map((item, index) => (
-                          <li key={index} style={{ fontSize: 16 }}>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h3>Weaknesses:</h3>
-                      <ul>
-                        {answer.feedback.summary.weaknesses.map((item, index) => (
-                          <li key={index} style={{ fontSize: 16 }}>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    </div>} */}
                   <Typography.Text
                     style={{ fontWeight: "normal", fontSize: 16 }}
                   >
@@ -392,6 +430,34 @@ const WritingWriting = () => {
                     />
                   )}
                 </div>
+              </>
+            )}
+            {answer?.axiomFeedback && (
+              <>
+                {answer.axiomFeedback.taskAchievement && (
+                  <FeedbackAxiomBox
+                    title={"Task Achievement"}
+                    feedback={answer.axiomFeedback.taskAchievement}
+                  />
+                )}
+                {answer.axiomFeedback.cohesionAndCoherence && (
+                  <FeedbackAxiomBox
+                    title={"Cohesion and Coherence"}
+                    feedback={answer.axiomFeedback.cohesionAndCoherence}
+                  />
+                )}
+                {answer.axiomFeedback.lexicalResource && (
+                  <FeedbackAxiomBox
+                    title={"Lexical Resource"}
+                    feedback={answer.axiomFeedback.lexicalResource}
+                  />
+                )}
+                {answer.axiomFeedback.grammaticalRangeAndAccuracy && (
+                  <FeedbackAxiomBox
+                    title={"Grammar Range and Accuracy"}
+                    feedback={answer.axiomFeedback.grammaticalRangeAndAccuracy}
+                  />
+                )}
               </>
             )}
           </div>
