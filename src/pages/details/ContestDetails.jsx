@@ -36,6 +36,7 @@ import apiClient from "../../services/api";
 import { useSelector } from "react-redux";
 import { Role } from "../../data/role";
 import { checkRole } from "../../utils/roleUtils";
+import { formatDateTime } from "../../utils/dateUtils";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -78,6 +79,9 @@ const ContestDetails = () => {
     listeningStatus,
     readingStatus,
     writingStatus,
+    listeningTime,
+    readingTime,
+    writingTime,
     listening = [],
     writings = [],
     speaking = {},
@@ -382,6 +386,7 @@ const ContestDetails = () => {
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Listening Section</Title>
                     <Flex align="center" gap={10}>
+                      {listeningTime && <Tag>Time Taken: {listeningTime}</Tag>}
                       {status &&
                         (status === "LISTENING_PROCESS" ? (
                           <Tag color="orange">Listening processing</Tag>
@@ -468,6 +473,7 @@ const ContestDetails = () => {
                   <Flex justify="space-between" align="center" gap={20}>
                     <Title level={3}>Reading Section</Title>
                     <Flex align="center" gap={10}>
+                    {readingTime && <Tag>Time Taken: {readingTime}</Tag>}
                       {status &&
                         (status === "READING_PROCESS" ? (
                           <Tag color="orange">Reading processing</Tag>
@@ -585,6 +591,7 @@ const ContestDetails = () => {
                 <Flex justify="space-between" align="center" gap={20}>
                   <Title level={3}>Writing Section</Title>
                   <Flex align="center" gap={10}>
+                    {writingTime && <Tag>Time Taken: {writingTime}</Tag>}
                     {status &&
                       (status === "WRITING_PROCESS" ? (
                         <Tag color="orange">Writing processing</Tag>

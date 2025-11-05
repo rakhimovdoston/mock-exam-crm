@@ -9,6 +9,12 @@ export const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString();
 };
 
+export const formatDateTime = (number) => {
+  if (!number) return "N/A";
+  const date = new Date(number);
+  return date.toLocaleString();
+}
+
 export const calculateDuration = (start, end) => {
   if (!start || !end) return "N/A";
   const startDate = new Date(start);
