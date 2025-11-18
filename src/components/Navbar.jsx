@@ -12,6 +12,7 @@ import {
   ReadOutlined,
   EditOutlined,
   FileDoneOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import logo from "../assets/logo.jpeg";
 import { Link } from "react-router-dom";
@@ -88,6 +89,12 @@ const Navbar = () => {
       key: "/dashboard/results",
       icon: <FileDoneOutlined />,
       label: <Link to="/dashboard/results">Results</Link>,
+      roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
+    },
+    {
+      key: "/dashboard/test-dates",
+      icon: <CalendarOutlined />,
+      label: <Link to="/dashboard/test-dates">Test Dates</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
   ];

@@ -18,8 +18,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch(logout()); // Dispatch logout action
-    navigate("/login"); // Redirect to login page
+    dispatch(logout());
+    navigate("/login");
   };
 
   const userMenuItems = [

@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./routes/ProtectedRouted";
 import { fetchProfile } from "./store/authReducer";
 import { Role } from "./data/role";
+import TestDates from "./pages/TestDates";
 
 // Lazy load pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -56,7 +57,9 @@ const ContestDetails = React.lazy(() =>
 const UpdateContest = React.lazy(() => import("./pages/details/UpdateContest"));
 const SpeakingPage = React.lazy(() => import("./pages/dashboard/SpeakingPage"));
 const EmployeePage = React.lazy(() => import("./pages/dashboard/EmployeePage"));
-const EmployeeDetails = React.lazy(() => import("./pages/dashboard/EmployeeDetails"));
+const EmployeeDetails = React.lazy(() =>
+  import("./pages/dashboard/EmployeeDetails")
+);
 const ResultPage = React.lazy(() => import("./pages/dashboard/ResultPage"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 
@@ -76,14 +79,6 @@ function App() {
   }, [isLoggedIn, accessToken]);
 
   return (
-    // <ConfigProvider
-    //   theme={{
-    //     algorithm:
-    //       localStorage.getItem("theme") === "dark"
-    //         ? theme.darkAlgorithm
-    //         : theme.darkAlgorithm,
-    //   }}
-    // >
     <Layout style={{ width: "100%", height: "100vh" }}>
       <ToastContainer />
       <AntContent>
@@ -160,6 +155,7 @@ function App() {
               <Route path="ielts/listening/:id" element={<NewListening />} />
               <Route path="ielts/reading" element={<Reading />} />
               <Route path="ielts/reading/create" element={<NewReading />} />
+              <Route path="test-dates" element={<TestDates />} />
               <Route
                 path="ielts/reading/:id/update"
                 element={<ReadingUpdate />}
@@ -225,7 +221,6 @@ function App() {
         </Suspense>
       </AntContent>
     </Layout>
-    // </ConfigProvider>
   );
 }
 

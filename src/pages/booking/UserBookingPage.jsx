@@ -362,7 +362,11 @@ const UserBookingPage = () => {
                               {session.dayOfWeek}
                             </Text>
                             <Text>
-                              <Text strong>Test Time:</Text> {session.time}
+                              <Text strong>Test Slot:</Text> {session.time}
+                            </Text>
+                            <Text>
+                              <Text strong>Test Time:</Text>{" "}
+                              <Tag color="blue">{session.timeString}</Tag>
                             </Text>
                             <Text>
                               <Text strong>Status:</Text>{" "}
@@ -491,7 +495,11 @@ const UserBookingPage = () => {
                           <Text strong>Day of Week:</Text> {session.dayOfWeek}
                         </Text>
                         <Text>
-                          <Text strong>Test Time:</Text> {session.time}
+                          <Text strong>Test Slot:</Text> {session.time}
+                        </Text>
+                        <Text>
+                          <Text strong>Test Time:</Text>{" "}
+                          <Tag color="blue">{session.timeString}</Tag>
                         </Text>
                         <Text>
                           <Text strong>Status:</Text>{" "}
