@@ -7,6 +7,7 @@ import ProtectedRoute from "./routes/ProtectedRouted";
 import { fetchProfile } from "./store/authReducer";
 import { Role } from "./data/role";
 import TestDates from "./pages/TestDates";
+import Device from "./pages/dashboard/Device";
 
 // Lazy load pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -131,6 +132,7 @@ function App() {
               }
             >
               <Route path="" element={<DashboardPage />} />
+              <Route path="devices" element={<Device />} />
               <Route path="users" element={<User />} />
               <Route path="venues" element={<BranchPage />} />
               <Route path="venue/:id" element={<BranchDetails />} />

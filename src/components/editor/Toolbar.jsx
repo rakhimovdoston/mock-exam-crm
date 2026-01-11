@@ -33,9 +33,7 @@ import {
   UnorderedListOutlined,
   FormOutlined,
   CheckSquareOutlined,
-  PlusCircleOutlined,
   PlusOutlined,
-  DropboxOutlined,
 } from "@ant-design/icons";
 import { insertTable, isFormatActive, toggleFormat } from "./editorUtils";
 import { toast } from "react-toastify";

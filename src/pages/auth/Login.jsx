@@ -14,9 +14,14 @@ const Login = () => {
   const dispatch = useDispatch();
 
   const onFinish = async (values) => {
+    const request = {
+      ...values,
+      deviceId: localStorage.getItem("deviceId") || undefined,
+      deviceSecret: localStorage.getItem("deviceSecret") || undefined,
+    };
     setLoading(true);
     try {
-      const response = await apiClient.post("api/v1/auth/authenticate", values);
+      const response = await apiClient.post("api/v1/auth/authenticate", request);
 
       if (response.code !== 200) {
         console.error("Login failed:", response);
