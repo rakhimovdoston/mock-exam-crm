@@ -6,7 +6,9 @@ import {
   Card,
   Checkbox,
   Descriptions,
+  Modal,
   Popconfirm,
+  Select,
   Spin,
   Switch,
   Tag,
@@ -15,8 +17,6 @@ import {
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
-import { checkRole } from "../../utils/roleUtils";
-import { Role } from "../../data/role";
 
 const EmployeeDetails = () => {
   const { id } = useParams();
@@ -32,6 +32,12 @@ const EmployeeDetails = () => {
   const [active, setActive] = useState(false);
   const [updating, setUpdating] = useState(false);
 
+  // Transfer modal state
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [speakers, setSpeakers] = useState([]);
+  const [speakersLoading, setSpeakersLoading] = useState(false);
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState(null);
+
   useEffect(() => {
     if (data?.data) {
       setRoles(data.data.roles || []);
@@ -42,7 +48,6 @@ const EmployeeDetails = () => {
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [adding, setAdding] = useState(false);
-  const [addingLoading, setAddingLoading] = useState(false);
 
   if (loading) {
     return (
@@ -55,33 +60,78 @@ const EmployeeDetails = () => {
     return <div>No data found</div>;
   }
 
-  const checkIsThatRole = (role) => roles.includes(role);
   const handleRoleChange = (checkedValues) => {
     setRoles(checkedValues);
   };
 
-  const handleStatusChange = (checked) => {
-    setActive(checked);
+  const handleStatusChange = async (checked) => {
+    // Agar o'chirilayotgan bo'lsa va ROLE_SPEAKER roli bo'lsa
+    if (!checked && roles.includes("ROLE_SPEAKER")) {
+      const branchId = data.data.branchId;
+
+      if (!branchId) {
+        toast.warn("Branch ID not found!");
+        setActive(false);
+        return;
+      }
+
+      setTransferModalOpen(true);
+      setSpeakersLoading(true);
+      setSelectedSpeakerId(null);
+
+      try {
+        const res = await apiClient.get(`api/v1/branch/speakers/${branchId}`);
+        const allSpeakers = res?.data || [];
+        // Joriy xodimni ro'yxatdan chiqarib tashlash
+        const filtered = allSpeakers.filter((s) => s.id !== data.data.id);
+        setSpeakers(filtered);
+      } catch (err) {
+        toast.error("Failed to load speakers!");
+        setTransferModalOpen(false);
+      } finally {
+        setSpeakersLoading(false);
+      }
+    } else {
+      setActive(checked);
+    }
+  };
+
+  const handleTransferConfirm = () => {
+    if (!selectedSpeakerId) {
+      toast.warn("Please select a speaker to transfer students to!");
+      return;
+    }
+    setActive(false);
+    setTransferModalOpen(false);
+  };
+
+  const handleTransferCancel = () => {
+    setTransferModalOpen(false);
+    setSelectedSpeakerId(null);
   };
 
   const handleUpdate = async () => {
     setUpdating(true);
     try {
-      await apiClient.put(`api/v1/admin/user/roles/update/${data.data.id}`, {
-        roles,
-        active,
-      });
-      message.success("Updated successfully");
-      refresh();
+      let body = { roles, active };
+      if (!active && selectedSpeakerId) {
+        body.transferToSpeakerId = selectedSpeakerId;
+      }
+
+      console.log("Update body:", body);
+      
+      // await apiClient.put(`api/v1/admin/user/roles/update/${data.data.id}`, body);
+      toast.success("Updated successfully!");
+      setRefresh((prev) => prev + 1);
     } catch (err) {
-      message.error("Failed to update");
+      toast.error("Failed to update!");
     } finally {
       setUpdating(false);
     }
   };
 
   const workHoursAdd = async () => {
-    setAddingLoading(true);
+    setAdding(true);
     const requestBody = {
       startTime: startTime.format("HH:mm"),
       endTime: endTime.format("HH:mm"),
@@ -101,14 +151,14 @@ const EmployeeDetails = () => {
     } catch (err) {
       toast.error("Failed something!");
     } finally {
-      setAddingLoading(false);
+      setAdding(false);
     }
   };
 
-  const handleDeleteWorkTime = async (id) => {
+  const handleDeleteWorkTime = async (workTimeId) => {
     try {
       const response = await apiClient.delete(
-        `api/v1/speaking/delete/word-time/${id}`
+        `api/v1/speaking/delete/word-time/${workTimeId}`
       );
 
       if (response.code != 200) {
@@ -119,7 +169,7 @@ const EmployeeDetails = () => {
     } catch (err) {
       toast.error("Failed something!");
     } finally {
-      setAddingLoading(false);
+      setAdding(false);
     }
   };
 
@@ -171,6 +221,42 @@ const EmployeeDetails = () => {
           </Descriptions.Item>
         </Descriptions>
       </Card>
+
+      {/* Transfer Modal */}
+      <Modal
+        title="Transfer Students"
+        open={transferModalOpen}
+        onOk={handleTransferConfirm}
+        onCancel={handleTransferCancel}
+        okText="Confirm"
+        cancelText="Cancel"
+        okButtonProps={{ disabled: !selectedSpeakerId }}
+      >
+        <p style={{ marginBottom: 12 }}>
+          This speaker is being deactivated. Please select a speaker to transfer all their students to.
+        </p>
+        {speakersLoading ? (
+          <div style={{ textAlign: "center", padding: "16px 0" }}>
+            <Spin />
+          </div>
+        ) : speakers.length === 0 ? (
+          <p style={{ color: "#ff4d4f" }}>
+            No other active speakers found in this branch.
+          </p>
+        ) : (
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Select a speaker"
+            value={selectedSpeakerId}
+            onChange={setSelectedSpeakerId}
+            options={speakers.map((s) => ({
+              value: s.id,
+              label: `${s.firstname} ${s.lastname} (${s.username})`,
+            }))}
+          />
+        )}
+      </Modal>
+
       <Card
         title="Work Shifts"
         style={{ marginTop: 20 }}

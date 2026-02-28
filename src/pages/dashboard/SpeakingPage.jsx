@@ -167,6 +167,16 @@ const SpeakingPage = () => {
       // DO NOT use onFilter here (client-side). We handle it in handleTableChange.
     },
     {
+      title: "Payment",
+      dataIndex: "payment",
+      key: "payment",
+      render: (payment) => {
+        const isPayed = payment === "PAID";
+        const color = isPayed ? "green" : payment === 'PENDING' ? 'yellow' : "red";
+        return <Tag color={color}>{isPayed ? "Paid" : payment === 'PENDING' ? 'Processing' : "Not Paid"}</Tag>;
+      },
+    },
+    {
       title: "",
       key: "actions",
       render: (_, record) => (

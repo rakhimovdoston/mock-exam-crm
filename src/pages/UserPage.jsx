@@ -160,6 +160,14 @@ const UserPage = () => {
                           await navigator.mediaDevices.getUserMedia({
                             audio: true,
                           });
+
+                          await navigator.permissions.query({name: 'microphone', }).then((permissionStatus) => {
+                            if (permissionStatus.state === 'denied') {
+                              toast.info(
+                                "Please enable microphone access in your browser settings and try again."
+                              );
+                            }
+                          });
                         if (stream) {
                           navigate(`/listening/${id}`);
                         }

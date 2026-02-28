@@ -74,7 +74,7 @@ const DashboardPage = () => {
         </span>
       </Typography.Title>
       <Row gutter={[16, 16]}>
-        <Col span={12}>
+        <Col span={8}>
           <Card variant="outlined">
             <Statistic
               title="Everester"
@@ -85,13 +85,24 @@ const DashboardPage = () => {
             />
           </Card>
         </Col>
-        <Col span={12}>
+        <Col span={8}>
           <Card variant="outlined">
             <Statistic
               title="Non Everester"
               value={data?.data?.nonEverester}
               formatter={formatter}
-              valueStyle={{ color: "#3f8600" }}
+              valueStyle={{ color: "#cf1322" }}
+              precision={2}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card variant="outlined">
+            <Statistic
+              title="Online Register"
+              value={data?.data?.onlineRegister}
+              formatter={formatter}
+              valueStyle={{ color: "#1677ff" }}
               precision={2}
             />
           </Card>

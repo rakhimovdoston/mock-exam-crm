@@ -80,7 +80,33 @@ const ContestPage = () => {
         else if (status === "PROCESS") color = "orange";
         else if (status === "WAITING") color = "geekblue";
         else if (status === "FAILED") color = "red";
-        return <Tag color={color}>{status === 'PROCESS' ? "In Progress" : status}</Tag>;
+        return (
+          <Tag color={color}>
+            {status === "PROCESS" ? "In Progress" : status}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Payment",
+      dataIndex: "payment",
+      key: "payment",
+      render: (payment) => {
+        const isPayed = payment === "PAID";
+        const color = isPayed
+          ? "green"
+          : payment === "PENDING"
+          ? "yellow"
+          : "red";
+        return (
+          <Tag color={color}>
+            {isPayed
+              ? "Paid"
+              : payment === "PENDING"
+              ? "Processing"
+              : "Not Paid"}
+          </Tag>
+        );
       },
     },
     {

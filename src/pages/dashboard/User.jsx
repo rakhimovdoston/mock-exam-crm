@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Table, Button, Input, Tag } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
@@ -10,61 +10,52 @@ const User = () => {
     current: parseInt(searchParams.get("page")) || 1,
     pageSize: parseInt(searchParams.get("size")) || 10,
   });
-  const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("search") || ""
-  );
+
+  // Draft states - faqat input qiymatlari uchun
+  const [firstname, setFirstname] = useState(searchParams.get("firstname") || "");
+  const [lastname, setLastname] = useState(searchParams.get("lastname") || "");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("username") || "");
+
+  // Applied states - API so'roviga yuboriladi, faqat Search bosilganda yangilanadi
+  const [appliedFilters, setAppliedFilters] = useState({
+    firstname: searchParams.get("firstname") || "",
+    lastname: searchParams.get("lastname") || "",
+    username: searchParams.get("username") || "",
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data, loading } = useApiRequest(
-    `api/v1/admin/user/all?page=${pagination.current - 1}&size=${
-      pagination.pageSize
-    }&search=${searchTerm}`,
-    [pagination.current, pagination.pageSize, searchTerm]
+    `api/v1/admin/user/all?page=${pagination.current - 1}&size=${pagination.pageSize}&username=${appliedFilters.username}&firstname=${appliedFilters.firstname}&lastname=${appliedFilters.lastname}`,
+    [pagination.current, pagination.pageSize, appliedFilters.username, appliedFilters.firstname, appliedFilters.lastname]
   );
 
   const navigate = useNavigate();
+
+  const handleSearch = () => {
+    const newFilters = { firstname, lastname, username: searchTerm };
+    setAppliedFilters(newFilters);
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("page", "1");
+      if (firstname) params.set("firstname", firstname); else params.delete("firstname");
+      if (lastname) params.set("lastname", lastname); else params.delete("lastname");
+      if (searchTerm) params.set("username", searchTerm); else params.delete("username");
+      return params;
+    });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   const handleTableChange = (page, pageSize) => {
     setPagination({ current: page, pageSize });
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-
       params.set("page", String(page));
       params.set("size", String(pageSize));
-
-      if (searchTerm) {
-        params.set("search", searchTerm);
-      } else {
-        params.delete("search");
-      }
-
-      return params;
-    });
-  };
-
-  const handleModalOpen = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    const pageSize = pagination.pageSize;
-
-    setSearchTerm(value);
-    setPagination((prev) => ({ ...prev, current: 1 }));
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-
-      if (value) {
-        params.set("search", value);
-      } else {
-        params.delete("search");
-      }
-
-      params.set("page", "1");
-      if (!params.get("size")) {
-        params.set("size", String(pageSize));
-      }
-
       return params;
     });
   };
@@ -74,14 +65,9 @@ const User = () => {
       title: "№",
       dataIndex: "index",
       key: "index",
-      render: (text, record, index) =>
+      render: (_, __, index) =>
         index + 1 + (pagination.current - 1) * pagination.pageSize,
     },
-    // {
-    //   title: "ID",
-    //   dataIndex: "id",
-    //   key: "id",
-    // },
     {
       title: "First Name",
       dataIndex: "firstname",
@@ -111,6 +97,19 @@ const User = () => {
       dataIndex: "username",
       key: "username",
       sorter: (a, b) => a.username.localeCompare(b.username),
+    },
+    {
+      title: "Registration Source",
+      dataIndex: "registrationSource",
+      key: "registrationSource",
+      render: (source) => {
+        const isAdmin = source === "ADMIN_PANEL";
+        return (
+          <Tag color={isAdmin ? "gold" : "green"}>
+            {isAdmin ? "Admin Created" : "Self Registered"}
+          </Tag>
+        );
+      },
     },
     {
       title: "Everester",
@@ -149,15 +148,6 @@ const User = () => {
     },
   ];
 
-  useEffect(() => {
-    const page = parseInt(searchParams.get("page")) || 1;
-    const size = parseInt(searchParams.get("size")) || 10;
-    const search = searchParams.get("search") || "";
-
-    setPagination({ current: page, pageSize: size });
-    setSearchTerm(search);
-  }, [searchParams]);
-
   return (
     <div>
       <h1>Candidates</h1>
@@ -170,17 +160,31 @@ const User = () => {
           alignItems: "center",
         }}
       >
-        <div
-          style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+          <Input
+            value={firstname}
+            placeholder="Firstname"
+            style={{ width: "200px" }}
+            onChange={(e) => setFirstname(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <Input
+            value={lastname}
+            placeholder="Lastname"
+            style={{ width: "200px" }}
+            onChange={(e) => setLastname(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
           <Input
             value={searchTerm}
-            placeholder="Search"
+            placeholder="Username"
             style={{ width: "200px" }}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
+          <Button type='primary' onClick={handleSearch}>Search</Button>
         </div>
-        <Button type="primary" onClick={handleModalOpen}>
+        <Button type="primary" onClick={() => setIsModalOpen(true)}>
           New Candidates
         </Button>
       </div>
