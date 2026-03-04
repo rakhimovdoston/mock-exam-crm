@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   Spin,
@@ -10,6 +10,7 @@ import {
   Divider,
   Space,
   Input,
+  InputNumber,
   Button,
   Form,
   theme,
@@ -17,6 +18,7 @@ import {
   Flex,
   Tag,
   Modal,
+  Radio,
 } from "antd";
 import {
   ReadOutlined,
@@ -31,6 +33,8 @@ import {
   BranchesOutlined,
   LoadingOutlined,
   DownloadOutlined,
+  LockOutlined,
+  UnlockOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
@@ -39,6 +43,7 @@ import apiClient from "../../services/api";
 import { MaskedInput } from "antd-mask-input";
 import ScoreBox from "../../components/ScoreBox";
 import { calculateDuration, formatDate } from "../../utils/dateUtils";
+import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 
@@ -74,6 +79,27 @@ const UserDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
 
+  // Temporary access state
+  const [tempAccessModalOpen, setTempAccessModalOpen] = useState(false);
+  const [tempDuration, setTempDuration] = useState(30);
+  const [isCustomDuration, setIsCustomDuration] = useState(false);
+  const [customDuration, setCustomDuration] = useState(30);
+  const [tempAccessLoading, setTempAccessLoading] = useState(false);
+  const [tempAccessActive, setTempAccessActive] = useState(false);
+  const [tempAccessUntil, setTempAccessUntil] = useState(null);
+
+  useEffect(() => {
+    const temporaryAccess = data?.data?.temporaryAccess;
+    if (temporaryAccess) {
+      const isActive = dayjs(temporaryAccess).isAfter(dayjs());
+      setTempAccessActive(isActive);
+      setTempAccessUntil(isActive ? dayjs(temporaryAccess).format("DD/MM/YYYY HH:mm") : null);
+    } else {
+      setTempAccessActive(false);
+      setTempAccessUntil(null);
+    }
+  }, [data]);
+
   if (loading) return <LoadingSpinner />;
 
   const user = data?.data;
@@ -108,6 +134,58 @@ const UserDetails = () => {
       toast.error(error.message || "Failed to update user details:");
     } finally {
       setUpdateLoading(false);
+    }
+  };
+
+  const handleGrantAccess = async () => {
+    const duration = isCustomDuration ? customDuration : tempDuration;
+    if (!duration || duration <= 0) {
+      toast.warn("Invalid duration!");
+      return;
+    }
+    setTempAccessLoading(true);
+    try {
+      const response = await apiClient.post(
+        `api/v1/admin/user/${id}/temporary-access?durationMinutes=${duration}`
+      );
+      if (!response?.success) {
+        toast.error(response?.message || "Failed to grant temporary access");
+        return;
+      }
+      const match = response.message?.match(/until (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+      const until = match ? dayjs(match[1]).format("DD/MM/YYYY HH:mm") : null;
+      setTempAccessActive(true);
+      setTempAccessUntil(until);
+      setTempAccessModalOpen(false);
+      toast.success(
+        `${user?.firstname} ${user?.lastname} — ${duration} min temporary access granted${until ? ` (until ${until})` : ""}`
+      );
+    } catch (err) {
+      console.error("Grant access error:", err);
+      toast.error("Failed to grant temporary access");
+    } finally {
+      setTempAccessLoading(false);
+    }
+  };
+
+  const handleRevokeAccess = async () => {
+    setTempAccessLoading(true);
+    try {
+      const response = await apiClient.delete(
+        `api/v1/admin/user/${id}/temporary-access`
+      );
+      if (!response?.success) {
+        toast.error(response?.message || "Failed to revoke temporary access");
+        return;
+      }
+      setTempAccessActive(false);
+      setTempAccessUntil(null);
+      toast.success("Temporary access revoked");
+    } catch (err) {
+      console.error("Revoke access error:", err);
+      toast.error("Failed to revoke temporary access");
+    } finally {
+      setTempAccessLoading(false);
     }
   };
 
@@ -222,10 +300,83 @@ const UserDetails = () => {
               <Button type="primary" onClick={handleEdit}>
                 Edit Details
               </Button>
+              <Divider style={{ margin: "4px 0" }} />
+              {tempAccessActive ? (
+                <Flex vertical gap={8} align="flex-start">
+                  <Tag color="orange" icon={<UnlockOutlined />}>
+                    Temporary access active: until {tempAccessUntil || "—"}
+                  </Tag>
+                  <Button
+                    danger
+                    loading={tempAccessLoading}
+                    onClick={handleRevokeAccess}
+                  >
+                    Revoke Access
+                  </Button>
+                </Flex>
+              ) : (
+                <Button
+                  icon={<LockOutlined />}
+                  onClick={() => setTempAccessModalOpen(true)}
+                >
+                  Grant Temporary Access
+                </Button>
+              )}
             </>
           )}
         </Space>
       </Card>
+
+      {/* Temporary Access Modal */}
+      <Modal
+        title={`Grant Temporary Access — ${user?.firstname} ${user?.lastname}`}
+        open={tempAccessModalOpen}
+        onCancel={() => {
+          setTempAccessModalOpen(false);
+          setIsCustomDuration(false);
+          setTempDuration(30);
+        }}
+        onOk={handleGrantAccess}
+        okText="Grant"
+        cancelText="Cancel"
+        confirmLoading={tempAccessLoading}
+        okButtonProps={{
+          disabled: isCustomDuration && (!customDuration || customDuration <= 0),
+        }}
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Text>
+            User: <b>{user?.firstname} {user?.lastname}</b>
+          </Text>
+          <Text>Duration:</Text>
+          <Radio.Group
+            value={isCustomDuration ? "custom" : tempDuration}
+            onChange={(e) => {
+              if (e.target.value === "custom") {
+                setIsCustomDuration(true);
+              } else {
+                setIsCustomDuration(false);
+                setTempDuration(e.target.value);
+              }
+            }}
+          >
+            <Radio.Button value={15}>15 min</Radio.Button>
+            <Radio.Button value={30}>30 min</Radio.Button>
+            <Radio.Button value={60}>60 min</Radio.Button>
+            <Radio.Button value="custom">Custom</Radio.Button>
+          </Radio.Group>
+          {isCustomDuration && (
+            <InputNumber
+              min={1}
+              value={customDuration}
+              onChange={setCustomDuration}
+              addonAfter="min"
+              style={{ width: 160 }}
+              placeholder="Enter minutes"
+            />
+          )}
+        </Space>
+      </Modal>
 
       <Divider>Booking and Test History</Divider>
 
@@ -246,6 +397,51 @@ const UserDetails = () => {
             const [errorMessage, setErrorMessage] = useState("");
             const [speakingLoading, setSpeakingLoading] = useState(false);
             const [answerLoading, setAnswerLoading] = useState(false);
+            const [currentPayment, setCurrentPayment] = useState(item.payment);
+            const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+            const [selectedPayment, setSelectedPayment] = useState(item.payment);
+            const [paymentLoading, setPaymentLoading] = useState(false);
+
+            const paymentColorMap = {
+              PENDING: "orange",
+              CREATED: "blue",
+              PAID: "green",
+              CANCELLED: "red",
+              EXPIRED: "default",
+            };
+
+            const paymentLabelMap = {
+              PENDING: "⏳ Awaiting Payment",
+              CREATED: "📋 Order Created",
+              PAID: "✓ Paid",
+              CANCELLED: "✕ Cancelled",
+              EXPIRED: "⌛ Expired",
+            };
+
+            const handlePaymentStatusChange = async () => {
+              if (selectedPayment === currentPayment) {
+                setPaymentModalOpen(false);
+                return;
+              }
+              setPaymentLoading(true);
+              try {
+                const response = await apiClient.put(
+                  `api/v1/booking/group/${item.id}/payment-status?status=${selectedPayment}`
+                );
+                if (!response?.success) {
+                  toast.error(response?.message || "Failed to update payment status");
+                  return;
+                }
+                setCurrentPayment(selectedPayment);
+                setPaymentModalOpen(false);
+                toast.success(`Payment status updated to ${selectedPayment}`);
+              } catch (err) {
+                toast.error("Failed to update payment status");
+              } finally {
+                setPaymentLoading(false);
+              }
+            };
+
             const sendAnswerToUser = async (item) => {
               if (!item.speaking) {
                 toast.error("Please set speaking score!");
@@ -405,35 +601,81 @@ const UserDetails = () => {
                       style={{
                         display: "flex",
                         alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
                         gap: "20px",
                       }}
                     >
-                      <Title
-                        level={3}
-                        style={{
-                          fontWeight: "bold",
-                          margin: "0",
-                          color: token.colorPrimary,
-                        }}
+                      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                        <Title
+                          level={3}
+                          style={{
+                            fontWeight: "bold",
+                            margin: "0",
+                            color: token.colorPrimary,
+                          }}
+                        >
+                          {item.mockPackages.name}
+                        </Title>
+                        <Text>
+                          <CalendarOutlined /> Registered Date:{" "}
+                          {formatDate(item.date)}
+                        </Text>
+                        <Button
+                          type={selectTab === "booking" ? "primary" : "default"}
+                          onClick={() => setSelectTab("booking")}
+                        >
+                          Total Session: {item.mockPackages.totalSessions}
+                        </Button>
+                        <Button
+                          type={selectTab === "speaking" ? "primary" : "default"}
+                          onClick={() => setSelectTab("speaking")}
+                        >
+                          Speaking Session: {item.mockPackages.speakingSessions}
+                        </Button>
+                      </div>
+                      {currentPayment === "PAID" ? (
+                        <Tag color="green" style={{ fontSize: 13, padding: "4px 10px" }}>
+                          ✓ Paid
+                        </Tag>
+                      ) : (
+                        <Button
+                          color={paymentColorMap[currentPayment] || "default"}
+                          variant="outlined"
+                          onClick={() => {
+                            setSelectedPayment("PAID");
+                            setPaymentModalOpen(true);
+                          }}
+                        >
+                          {paymentLabelMap[currentPayment] || currentPayment || "—"}
+                        </Button>
+                      )}
+
+                      <Modal
+                        title="Change Payment Status"
+                        open={paymentModalOpen}
+                        onCancel={() => setPaymentModalOpen(false)}
+                        onOk={handlePaymentStatusChange}
+                        okText="Save"
+                        cancelText="Cancel"
+                        confirmLoading={paymentLoading}
                       >
-                        {item.mockPackages.name}
-                      </Title>
-                      <Text>
-                        <CalendarOutlined /> Registered Date:{" "}
-                        {formatDate(item.date)}
-                      </Text>
-                      <Button
-                        type={selectTab === "booking" ? "primary" : "default"}
-                        onClick={() => setSelectTab("booking")}
-                      >
-                        Total Session: {item.mockPackages.totalSessions}
-                      </Button>
-                      <Button
-                        type={selectTab === "speaking" ? "primary" : "default"}
-                        onClick={() => setSelectTab("speaking")}
-                      >
-                        Speaking Session: {item.mockPackages.speakingSessions}
-                      </Button>
+                        <p style={{ marginBottom: 12 }}>
+                          Booking: <b>{item.mockPackages.name}</b>
+                        </p>
+                        <Radio.Group
+                          value={selectedPayment}
+                          onChange={(e) => setSelectedPayment(e.target.value)}
+                          optionType="button"
+                          buttonStyle="solid"
+                        >
+                          <Radio.Button value="PENDING">Pending</Radio.Button>
+                          <Radio.Button value="CREATED">Created</Radio.Button>
+                          <Radio.Button value="PAID">Paid</Radio.Button>
+                          <Radio.Button value="CANCELLED">Cancelled</Radio.Button>
+                          <Radio.Button value="EXPIRED">Expired</Radio.Button>
+                        </Radio.Group>
+                      </Modal>
                     </div>
                   }
                   variant={"borderless"}

@@ -156,32 +156,60 @@ const UserPage = () => {
                     disabled={data.data.listening}
                     onClick={async () => {
                       try {
+                        // 1️⃣ Permission statusni tekshirish (browser qo'llab-quvvatlasa)
+                        if (navigator.permissions) {
+                          const permissionStatus =
+                            await navigator.permissions.query({
+                              name: "microphone",
+                            });
+
+                          if (permissionStatus.state === "denied") {
+                            toast.info(
+                              "Please enable microphone access in your browser settings and try again."
+                            );
+                            return;
+                          }
+                        }
+
+                        // 2️⃣ Microphone so'rash
                         const stream =
                           await navigator.mediaDevices.getUserMedia({
                             audio: true,
                           });
 
-                          await navigator.permissions.query({name: 'microphone', }).then((permissionStatus) => {
-                            if (permissionStatus.state === 'denied') {
-                              toast.info(
-                                "Please enable microphone access in your browser settings and try again."
-                              );
-                            }
-                          });
-                        if (stream) {
-                          navigate(`/listening/${id}`);
-                        }
+                        // 3️⃣ Streamni yopish (faqat permission check uchun)
+                        stream.getTracks().forEach((track) => track.stop());
+
+                        // 4️⃣ Navigate
+                        navigate(`/listening/${id}`);
                       } catch (error) {
                         console.error("Audio permission error: ", error);
 
-                        if (error.name === "NotAllowedError") {
-                          toast.info(
-                            "Please enable microphone access in your browser settings and try again."
-                          );
-                        } else {
-                          toast.error(
-                            "An unexpected error occurred. Please try again."
-                          );
+                        switch (error.name) {
+                          case "NotAllowedError":
+                            toast.info(
+                              "Microphone access denied. Please enable it in browser settings."
+                            );
+                            break;
+
+                          case "NotFoundError":
+                            toast.error("No microphone device found.");
+                            break;
+
+                          case "NotReadableError":
+                            toast.error(
+                              "Microphone is already in use by another application."
+                            );
+                            break;
+
+                          case "SecurityError":
+                            toast.error("Microphone access requires HTTPS.");
+                            break;
+
+                          default:
+                            toast.error(
+                              "An unexpected error occurred. Please try again."
+                            );
                         }
                       }
                     }}
