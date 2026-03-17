@@ -44,8 +44,10 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
   };
 
   const handleCreateUser = (values) => {    
+    const phone = values.phone.replace(/[^0-9+]/g, "");
+    const payload = { ...values, phone };
     apiClient
-      .post("/api/v1/admin/user/save", values)
+      .post("/api/v1/admin/user/save", payload)
       .then((response) => {
         if (response.code === 200) {
           toast.success("User created successfully");

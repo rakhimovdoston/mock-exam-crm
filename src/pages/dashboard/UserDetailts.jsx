@@ -118,10 +118,12 @@ const UserDetails = () => {
   };
 
   const handleSave = async (values) => {
+    const phone = values.phone.replace(/[^0-9+]/g, "");
+    const payload = { ...values, phone };
     try {
       const response = await apiClient.put(
         `api/v1/admin/user/update/${id}`,
-        values
+        payload
       );
       if (response.code != 200) {
         toast.error(response.message || "Failed to update to user details");

@@ -120,7 +120,7 @@ const EmployeeDetails = () => {
 
       console.log("Update body:", body);
       
-      // await apiClient.put(`api/v1/admin/user/roles/update/${data.data.id}`, body);
+      await apiClient.put(`api/v1/admin/user/roles/update/${data.data.id}`, body);
       toast.success("Updated successfully!");
       setRefresh((prev) => prev + 1);
     } catch (err) {
