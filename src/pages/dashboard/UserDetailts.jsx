@@ -44,6 +44,8 @@ import { MaskedInput } from "antd-mask-input";
 import ScoreBox from "../../components/ScoreBox";
 import { calculateDuration, formatDate } from "../../utils/dateUtils";
 import dayjs from "dayjs";
+import { checkRole } from "../../utils/roleUtils";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -62,6 +64,8 @@ const LoadingSpinner = () => (
 
 const UserDetails = () => {
   const { id } = useParams();
+
+  const userRoles = useSelector((state) => state.auth);
 
   const { token } = theme.useToken();
   const [refresh, setRefresh] = useState(1);
@@ -93,7 +97,9 @@ const UserDetails = () => {
     if (temporaryAccess) {
       const isActive = dayjs(temporaryAccess).isAfter(dayjs());
       setTempAccessActive(isActive);
-      setTempAccessUntil(isActive ? dayjs(temporaryAccess).format("DD/MM/YYYY HH:mm") : null);
+      setTempAccessUntil(
+        isActive ? dayjs(temporaryAccess).format("DD/MM/YYYY HH:mm") : null
+      );
     } else {
       setTempAccessActive(false);
       setTempAccessUntil(null);
@@ -105,6 +111,18 @@ const UserDetails = () => {
   const user = data?.data;
   const history = historyData?.data || [];
 
+  const formatPhoneToMask = (phone) => {
+    if (!phone) return "";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length === 12) {
+      return `+${digits.slice(0, 3)} (${digits.slice(3, 5)}) ${digits.slice(
+        5,
+        8
+      )}-${digits.slice(8, 10)}-${digits.slice(10, 12)}`;
+    }
+    return phone;
+  };
+
   const handleEdit = () => {
     setIsEditing(true);
     form.setFieldsValue({
@@ -113,7 +131,7 @@ const UserDetails = () => {
       email: user?.email,
       username: user?.username,
       password: user?.password,
-      phone: user?.phone,
+      phone: formatPhoneToMask(user?.phone),
     });
   };
 
@@ -154,13 +172,19 @@ const UserDetails = () => {
         toast.error(response?.message || "Failed to grant temporary access");
         return;
       }
-      const match = response.message?.match(/until (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+      const match = response.message?.match(
+        /until (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/
+      );
       const until = match ? dayjs(match[1]).format("DD/MM/YYYY HH:mm") : null;
       setTempAccessActive(true);
       setTempAccessUntil(until);
       setTempAccessModalOpen(false);
       toast.success(
-        `${user?.firstname} ${user?.lastname} — ${duration} min temporary access granted${until ? ` (until ${until})` : ""}`
+        `${user?.firstname} ${
+          user?.lastname
+        } — ${duration} min temporary access granted${
+          until ? ` (until ${until})` : ""
+        }`
       );
     } catch (err) {
       console.error("Grant access error:", err);
@@ -343,12 +367,16 @@ const UserDetails = () => {
         cancelText="Cancel"
         confirmLoading={tempAccessLoading}
         okButtonProps={{
-          disabled: isCustomDuration && (!customDuration || customDuration <= 0),
+          disabled:
+            isCustomDuration && (!customDuration || customDuration <= 0),
         }}
       >
         <Space direction="vertical" style={{ width: "100%" }}>
           <Text>
-            User: <b>{user?.firstname} {user?.lastname}</b>
+            User:{" "}
+            <b>
+              {user?.firstname} {user?.lastname}
+            </b>
           </Text>
           <Text>Duration:</Text>
           <Radio.Group
@@ -401,7 +429,9 @@ const UserDetails = () => {
             const [answerLoading, setAnswerLoading] = useState(false);
             const [currentPayment, setCurrentPayment] = useState(item.payment);
             const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-            const [selectedPayment, setSelectedPayment] = useState(item.payment);
+            const [selectedPayment, setSelectedPayment] = useState(
+              item.payment
+            );
             const [paymentLoading, setPaymentLoading] = useState(false);
 
             const paymentColorMap = {
@@ -431,7 +461,9 @@ const UserDetails = () => {
                   `api/v1/booking/group/${item.id}/payment-status?status=${selectedPayment}`
                 );
                 if (!response?.success) {
-                  toast.error(response?.message || "Failed to update payment status");
+                  toast.error(
+                    response?.message || "Failed to update payment status"
+                  );
                   return;
                 }
                 setCurrentPayment(selectedPayment);
@@ -527,12 +559,13 @@ const UserDetails = () => {
                   `api/v1/history/download/${item.id}`,
                   { responseType: "blob" }
                 );
-                const url = window.URL.createObjectURL(
-                  new Blob([response])
-                );
+                const url = window.URL.createObjectURL(new Blob([response]));
                 const link = document.createElement("a");
                 link.href = url;
-                link.setAttribute("download", `Mock-exam-${formatDate(item.testDate)}.pdf`); //or any other extension
+                link.setAttribute(
+                  "download",
+                  `Mock-exam-${formatDate(item.testDate)}.pdf`
+                ); //or any other extension
                 document.body.appendChild(link);
                 link.click();
                 link.parentNode.removeChild(link);
@@ -608,7 +641,13 @@ const UserDetails = () => {
                         gap: "20px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "20px",
+                        }}
+                      >
                         <Title
                           level={3}
                           style={{
@@ -630,15 +669,29 @@ const UserDetails = () => {
                           Total Session: {item.mockPackages.totalSessions}
                         </Button>
                         <Button
-                          type={selectTab === "speaking" ? "primary" : "default"}
+                          type={
+                            selectTab === "speaking" ? "primary" : "default"
+                          }
                           onClick={() => setSelectTab("speaking")}
                         >
                           Speaking Session: {item.mockPackages.speakingSessions}
                         </Button>
                       </div>
-                      {currentPayment === "PAID" ? (
-                        <Tag color="green" style={{ fontSize: 13, padding: "4px 10px" }}>
+                      {/* {currentPayment === "PAID" ? (
+                        <Tag
+                          color="green"
+                          style={{ fontSize: 13, padding: "4px 10px" }}
+                        >
                           ✓ Paid
+                        </Tag>
+                      ) : checkRole(userRoles.user.roles, "ROLE_ADMIN") ? (
+                        <Tag
+                          color={paymentColorMap[currentPayment] || "default"}
+                          style={{ fontSize: 13, padding: "4px 10px" }}
+                        >
+                          {paymentLabelMap[currentPayment] ||
+                            currentPayment ||
+                            "—"}
                         </Tag>
                       ) : (
                         <Button
@@ -649,9 +702,19 @@ const UserDetails = () => {
                             setPaymentModalOpen(true);
                           }}
                         >
-                          {paymentLabelMap[currentPayment] || currentPayment || "—"}
+                          {paymentLabelMap[currentPayment] ||
+                            currentPayment ||
+                            "—"}
                         </Button>
-                      )}
+                      )} */}
+                      <Tag
+                        color={paymentColorMap[currentPayment] || "default"}
+                        style={{ fontSize: 13, padding: "4px 10px" }}
+                      >
+                        {paymentLabelMap[currentPayment] ||
+                          currentPayment ||
+                          "—"}
+                      </Tag>
 
                       <Modal
                         title="Change Payment Status"
@@ -674,7 +737,9 @@ const UserDetails = () => {
                           <Radio.Button value="PENDING">Pending</Radio.Button>
                           <Radio.Button value="CREATED">Created</Radio.Button>
                           <Radio.Button value="PAID">Paid</Radio.Button>
-                          <Radio.Button value="CANCELLED">Cancelled</Radio.Button>
+                          <Radio.Button value="CANCELLED">
+                            Cancelled
+                          </Radio.Button>
                           <Radio.Button value="EXPIRED">Expired</Radio.Button>
                         </Radio.Group>
                       </Modal>

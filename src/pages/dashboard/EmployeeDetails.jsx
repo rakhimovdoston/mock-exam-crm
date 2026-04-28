@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import {
@@ -6,17 +6,45 @@ import {
   Card,
   Checkbox,
   Descriptions,
+  Flex,
+  Form,
   Modal,
   Popconfirm,
   Select,
+  Space,
   Spin,
   Switch,
+  Table,
   Tag,
   TimePicker,
+  Typography,
 } from "antd";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
+
+const { Text } = Typography;
+
+const DAYS_OF_WEEK = [
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY",
+];
+
+const DAY_LABELS = {
+  MONDAY: "Monday",
+  TUESDAY: "Tuesday",
+  WEDNESDAY: "Wednesday",
+  THURSDAY: "Thursday",
+  FRIDAY: "Friday",
+  SATURDAY: "Saturday",
+  SUNDAY: "Sunday",
+};
 
 const EmployeeDetails = () => {
   const { id } = useParams();
@@ -131,28 +159,7 @@ const EmployeeDetails = () => {
   };
 
   const workHoursAdd = async () => {
-    setAdding(true);
-    const requestBody = {
-      startTime: startTime.format("HH:mm"),
-      endTime: endTime.format("HH:mm"),
-      userId: id,
-    };
-    try {
-      const response = await apiClient.post(
-        `api/v1/speaking/record/word-time`,
-        requestBody
-      );
-
-      if (response.code != 200) {
-        toast.warn(response.message || "Work time not saved!");
-        return;
-      }
-      setRefresh((prev) => prev + 1);
-    } catch (err) {
-      toast.error("Failed something!");
-    } finally {
-      setAdding(false);
-    }
+    toast.success("This is service not available now");
   };
 
   const handleDeleteWorkTime = async (workTimeId) => {
@@ -257,6 +264,10 @@ const EmployeeDetails = () => {
         )}
       </Modal>
 
+      {roles.includes("ROLE_SPEAKER") && (
+        <SpeakingScheduleSection speakerId={id} />
+      )}
+
       <Card
         title="Work Shifts"
         style={{ marginTop: 20 }}
@@ -334,6 +345,281 @@ const EmployeeDetails = () => {
           <div>No working hours included</div>
         )}
       </Card>
+    </>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEAKING SCHEDULE SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SpeakingScheduleSection = ({ speakerId }) => {
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null); // null = add, object = edit
+  const [defaultDay, setDefaultDay] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [form] = Form.useForm();
+
+  const fetchSchedules = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiClient.get(
+        `api/v1/speaking/schedule?user_id=${speakerId}`
+      );
+      if (res.success) {
+        setSchedules(res.data || []);
+      } else {
+        toast.error(res.message || "Failed to load schedule");
+      }
+    } catch {
+      toast.error("Failed to load speaking schedule");
+    } finally {
+      setLoading(false);
+    }
+  }, [speakerId]);
+
+  useEffect(() => {
+    fetchSchedules();
+  }, [fetchSchedules]);
+
+  // Group schedules by day
+  const scheduleByDay = DAYS_OF_WEEK.map((day) => ({
+    key: day,
+    day,
+    slots: schedules.filter((s) => s.day_of_week === day),
+  }));
+
+  const openAdd = (day) => {
+    setEditing(null);
+    setDefaultDay(day);
+    form.setFieldsValue({ day_of_week: day, start_time: null, end_time: null });
+    setModalOpen(true);
+  };
+
+  const openEdit = (slot) => {
+    setEditing(slot);
+    setDefaultDay(slot.day_of_week);
+    form.setFieldsValue({
+      day_of_week: slot.day_of_week,
+      start_time: dayjs(slot.start_time, "HH:mm"),
+      end_time: dayjs(slot.end_time, "HH:mm"),
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditing(null);
+    setDefaultDay(null);
+    form.resetFields();
+  };
+
+  const handleSave = async () => {
+    let values;
+    try {
+      values = await form.validateFields();
+    } catch {
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        user_id: Number(speakerId),
+        day_of_week: values.day_of_week,
+        start_time: dayjs(values.start_time).format("HH:mm"),
+        end_time: dayjs(values.end_time).format("HH:mm"),
+      };
+      const res = editing
+        ? await apiClient.put(
+            `api/v1/speaking/schedule/${editing.id}`,
+            payload
+          )
+        : await apiClient.post("api/v1/speaking/schedule", payload);
+
+      if (res.success) {
+        toast.success(editing ? "Schedule updated" : "Schedule added");
+        closeModal();
+        fetchSchedules();
+      } else {
+        toast.error(res.message || "Something went wrong");
+      }
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to save schedule"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (slot) => {
+    setDeletingId(slot.id);
+    try {
+      const res = await apiClient.delete(
+        `api/v1/speaking/schedule/${slot.id}`
+      );
+      if (res.success) {
+        toast.success("Schedule deleted");
+        fetchSchedules();
+      } else {
+        toast.error(res.message || "Failed to delete");
+      }
+    } catch {
+      toast.error("Failed to delete schedule");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const columns = [
+    {
+      title: "Day",
+      dataIndex: "day",
+      key: "day",
+      width: 120,
+      render: (day) => <Text strong>{DAY_LABELS[day]}</Text>,
+    },
+    {
+      title: "Time Ranges",
+      key: "slots",
+      render: (_, record) => {
+        if (!record.slots.length) {
+          return <Text type="secondary" italic>No schedule</Text>;
+        }
+        return (
+          <Flex wrap="wrap" gap={6}>
+            {record.slots.map((slot) => (
+              <Tag
+                key={slot.id}
+                color="blue"
+                style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 8px" }}
+              >
+                <span>
+                  {slot.start_time} – {slot.end_time}
+                </span>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  style={{ padding: 0, height: 16, color: "inherit" }}
+                  onClick={() => openEdit(slot)}
+                />
+                <Popconfirm
+                  title="Delete this time range?"
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={() => handleDelete(slot)}
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    loading={deletingId === slot.id}
+                    style={{ padding: 0, height: 16, color: "inherit" }}
+                  />
+                </Popconfirm>
+              </Tag>
+            ))}
+          </Flex>
+        );
+      },
+    },
+    {
+      title: "",
+      key: "add",
+      width: 60,
+      align: "right",
+      render: (_, record) => (
+        <Button
+          type="dashed"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={() => openAdd(record.day)}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Card
+        title="Speaking Schedule"
+        style={{ marginTop: 20 }}
+        styles={{ body: { padding: 0 } }}
+      >
+        {loading ? (
+          <Flex justify="center" align="center" style={{ minHeight: 150, padding: 24 }}>
+            <Spin />
+          </Flex>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={scheduleByDay}
+            rowKey="key"
+            pagination={false}
+            size="small"
+          />
+        )}
+      </Card>
+
+      <Modal
+        title={
+          editing
+            ? `Edit — ${DAY_LABELS[editing.day_of_week]}`
+            : defaultDay
+            ? `Add — ${DAY_LABELS[defaultDay]}`
+            : "Add Schedule"
+        }
+        open={modalOpen}
+        onCancel={closeModal}
+        footer={[
+          <Button key="cancel" onClick={closeModal}>
+            Cancel
+          </Button>,
+          <Button key="save" type="primary" loading={saving} onClick={handleSave}>
+            Save
+          </Button>,
+        ]}
+        destroyOnHidden
+      >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="day_of_week"
+            label="Day"
+            rules={[{ required: true, message: "Please select a day" }]}
+          >
+            <Select disabled={!!editing}>
+              {DAYS_OF_WEEK.map((day) => (
+                <Select.Option key={day} value={day}>
+                  {DAY_LABELS[day]}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Space size={12} style={{ width: "100%" }}>
+            <Form.Item
+              name="start_time"
+              label="Start Time"
+              rules={[{ required: true, message: "Required" }]}
+              style={{ marginBottom: 0 }}
+            >
+              <TimePicker format="HH:mm" minuteStep={5} placeholder="09:00" />
+            </Form.Item>
+            <Form.Item
+              name="end_time"
+              label="End Time"
+              rules={[{ required: true, message: "Required" }]}
+              style={{ marginBottom: 0 }}
+            >
+              <TimePicker format="HH:mm" minuteStep={5} placeholder="12:00" />
+            </Form.Item>
+          </Space>
+        </Form>
+      </Modal>
     </>
   );
 };

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Select, Button, Spin, Table, Tag, Modal, message } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ListeningModal from "../../components/modal/ListeningModal";
 import useApiRequest from "../../hooks/useApiRequest";
 import { toast } from "react-toastify";
@@ -9,12 +9,17 @@ import apiClient from "../../services/api";
 const { Option } = Select;
 
 const Listening = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedListening, setSelectedListening] = useState(null);
-  const [type, setType] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // Number of items per page
+  const [type, setType] = useState(searchParams.get("type") || "all");
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || 1
+  );
+  const [pageSize, setPageSize] = useState(
+    Number(searchParams.get("pageSize")) || 10
+  );
   const navigate = useNavigate();
   const [isRefresh, setRefresh] = useState(false);
 
@@ -25,13 +30,16 @@ const Listening = () => {
     [type, currentPage, isRefresh]
   );
 
-  useEffect(() => {
-    const queryParams = new URLSearchParams();
-    queryParams.set("type", type);
-    queryParams.set("page", currentPage);
-    queryParams.set("pageSize", pageSize);
-    window.history.replaceState(null, "", `?${queryParams.toString()}`);
-  }, [type, currentPage, pageSize]);
+  const handleTypeChange = (value) => {
+    setType(value);
+    setCurrentPage(1);
+    setSearchParams({ type: value, page: 1, pageSize });
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    setSearchParams({ type, page, pageSize });
+  };
 
   const getPassage = (difficulty) => {
     switch (difficulty) {
@@ -129,8 +137,8 @@ const Listening = () => {
           }}
         >
           <Select
-            defaultValue={type}
-            onChange={(e) => setType(e)}
+            value={type}
+            onChange={handleTypeChange}
             style={{ width: 200 }}
           >
             <Option value="all">All</Option>
@@ -180,7 +188,7 @@ const Listening = () => {
                 current: currentPage,
                 pageSize: pageSize,
                 total: data?.data?.totalSizes,
-                onChange: (page) => setCurrentPage(page),
+                onChange: handlePageChange,
               }}
             />
           </>

@@ -51,6 +51,7 @@ const UserBookingPage = () => {
   const [speakers, setSpeakers] = useState([]);
   const [speakersLoading, setSpeakersLoading] = useState(false);
   const [speakerId, setSpeakerId] = useState();
+  const [speakingTypeStatuses, setSpeakingTypeStatuses] = useState([]);
   const { user } = useSelector((state) => state.auth);
 
   const { data, loading } = useApiRequest(`api/v1/admin/user/by/${id}`, [id]);
@@ -93,6 +94,24 @@ const UserBookingPage = () => {
       fetchSpeakerSession(user.branchId || selectedBranch);
     }
   }, [user.branchId, selectedBranch]);
+
+  useEffect(() => {
+    const fetchSpeakingTypeStatuses = async () => {
+      try {
+        const response = await apiClient.get("api/v1/speaking/type/status");
+        if (response.success) {
+          const activeTypes = response.data.filter((t) => t.active);
+          setSpeakingTypeStatuses(activeTypes);
+          if (activeTypes.length === 1) {
+            setSpeakingType(activeTypes[0].type);
+          }
+        }
+      } catch {
+        // fallback: hech narsa qilmaymiz
+      }
+    };
+    fetchSpeakingTypeStatuses();
+  }, []);
 
   const fetchSession = useCallback(
     async (branch) => {
@@ -589,7 +608,7 @@ const UserBookingPage = () => {
                 gap: "20px",
               }}
             >
-              {checkRole(user.roles, Role.ROLE_ADMIN) && (
+              {/* {checkRole(user.roles, Role.ROLE_ADMIN) && (
                 <Select
                   placeholder="Select branch"
                   style={{ width: 300 }}
@@ -601,7 +620,7 @@ const UserBookingPage = () => {
                     </Option>
                   ))}
                 </Select>
-              )}
+              )} */}
               <DatePicker
                 disabledDate={disablePastDates}
                 style={{ width: "300px" }}
@@ -609,16 +628,30 @@ const UserBookingPage = () => {
                   setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
                 }
               />
-              <Select
-                value={speakingType}
-                placeholder="Select Speaking type"
-                style={{ width: 300 }}
-                onChange={(value) => setSpeakingType(value)}
-              >
-                <Option key={"all"}>All</Option>
-                <Option key={"FACE_TO_FACE"}>Face to Face</Option>
-                <Option key={"ONLINE"}>Online</Option>
-              </Select>
+              {speakingTypeStatuses.length === 1 ? (
+                <Tag
+                  color="blue"
+                  style={{ padding: "6px 12px", fontSize: 14, lineHeight: "22px" }}
+                >
+                  {speakingTypeStatuses[0].type === "FACE_TO_FACE"
+                    ? "Face to Face"
+                    : "Online"}
+                </Tag>
+              ) : (
+                <Select
+                  value={speakingType}
+                  placeholder="Select Speaking type"
+                  style={{ width: 300 }}
+                  onChange={(value) => setSpeakingType(value)}
+                >
+                  <Option value="all">All</Option>
+                  {speakingTypeStatuses.map((t) => (
+                    <Option key={t.type} value={t.type}>
+                      {t.type === "FACE_TO_FACE" ? "Face to Face" : "Online"}
+                    </Option>
+                  ))}
+                </Select>
+              )}
               <Select
                 placeholder="Please select speaker"
                 style={{ width: 300 }}

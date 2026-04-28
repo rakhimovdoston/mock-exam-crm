@@ -306,7 +306,7 @@ const Settings = () => {
       <Divider />
       {checkRole(user.roles, Role.ROLE_ADMIN) && (
         <Space direction="vertical" style={{ width: "800px" }}>
-          <Card>
+          {/* <Card>
             <Skeleton loading={loading} active>
               <Flex justify="space-between" align="start">
                 <Space direction="vertical">
@@ -326,8 +326,8 @@ const Settings = () => {
                 />
               </Flex>
             </Skeleton>
-          </Card>
-          <Card>
+          </Card> */}
+          {/* <Card>
             <Skeleton loading={loading} active>
               <Flex justify="space-between" align="start">
                 <Space direction="vertical">
@@ -345,8 +345,8 @@ const Settings = () => {
                 />
               </Flex>
             </Skeleton>
-          </Card>
-          <Card>
+          </Card> */}
+          {/* <Card>
             <Skeleton loading={loading} active>
               <Flex justify="space-between" align="start">
                 <Space direction="vertical">
@@ -361,6 +361,44 @@ const Settings = () => {
                 <Checkbox
                   checked={data?.data.email}
                   onChange={() => changeConfigService("EMAIL_SERVICE")}
+                />
+              </Flex>
+            </Skeleton>
+          </Card> */}
+          <Card>
+            <Skeleton loading={loading} active>
+              <Flex justify="space-between" align="start">
+                <Space direction="vertical">
+                  <Typography.Title level={3}>
+                    Face to Face Speaking
+                  </Typography.Title>
+                  <p>
+                    Enable this option to allow face-to-face speaking sessions
+                    for students.
+                  </p>
+                </Space>
+                <Checkbox
+                  checked={data?.data.faceToFace}
+                  onChange={() => changeConfigService("SPEAKING_TYPE_FACE_TO_FACE")}
+                />
+              </Flex>
+            </Skeleton>
+          </Card>
+          <Card>
+            <Skeleton loading={loading} active>
+              <Flex justify="space-between" align="start">
+                <Space direction="vertical">
+                  <Typography.Title level={3}>
+                    Online Speaking
+                  </Typography.Title>
+                  <p>
+                    Enable this option to allow online speaking sessions for
+                    students.
+                  </p>
+                </Space>
+                <Checkbox
+                  checked={data?.data.online}
+                  onChange={() => changeConfigService("SPEAKING_TYPE_ONLINE")}
                 />
               </Flex>
             </Skeleton>

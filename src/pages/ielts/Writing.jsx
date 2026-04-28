@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Select, Button, Spin, Result, Table, Tag, Modal } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import emptyCart from "../../assets/not_found.svg";
 import useApiRequest from "../../hooks/useApiRequest"; // Adjust the import path as necessary
 import { toast } from "react-toastify";
@@ -10,27 +10,33 @@ const { Option } = Select;
 
 const Writing = () => {
   const navigate = useNavigate();
-  const [type, setType] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // Number of items per page
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [type, setType] = useState(searchParams.get("type") || "all");
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || 1
+  );
+  const [pageSize, setPageSize] = useState(
+    Number(searchParams.get("pageSize")) || 10
+  );
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedListening, setSelectedListening] = useState(null);
   const [isRefresh, setRefresh] = useState(false);
 
-  // Update the API request URL dynamically based on type and currentPage
   const { loading, data } = useApiRequest(
     `/api/v1/writing/all?type=${type}&page=${currentPage - 1}&size=${pageSize}`,
     [type, currentPage, isRefresh]
   );
 
-  useEffect(() => {
-    // Update the URL query parameters when the page changes
-    const queryParams = new URLSearchParams();
-    queryParams.set("type", type);
-    queryParams.set("page", currentPage);
-    queryParams.set("pageSize", pageSize);
-    window.history.replaceState(null, "", `?${queryParams.toString()}`);
-  }, [type, currentPage, pageSize, isRefresh]);
+  const handleTypeChange = (value) => {
+    setType(value);
+    setCurrentPage(1);
+    setSearchParams({ type: value, page: 1, pageSize });
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    setSearchParams({ type, page, pageSize });
+  };
 
   const handleDelete = async () => {
     try {
@@ -114,9 +120,9 @@ const Writing = () => {
           }}
         >
           <Select
-            defaultValue={type}
+            value={type}
             style={{ width: 200 }}
-            onChange={(value) => setType(value)}
+            onChange={handleTypeChange}
           >
             <Option value="all">All</Option>
             <Option value="true">Part 1</Option>
@@ -144,7 +150,7 @@ const Writing = () => {
               current: currentPage,
               pageSize: pageSize,
               total: data?.data?.totalSizes,
-              onChange: (page) => setCurrentPage(page),
+              onChange: handlePageChange,
             }}
           />
         )}
