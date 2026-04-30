@@ -677,14 +677,14 @@ const UserDetails = () => {
                           Speaking Session: {item.mockPackages.speakingSessions}
                         </Button>
                       </div>
-                      {/* {currentPayment === "PAID" ? (
+                      {currentPayment === "PAID" ? (
                         <Tag
                           color="green"
                           style={{ fontSize: 13, padding: "4px 10px" }}
                         >
                           ✓ Paid
                         </Tag>
-                      ) : checkRole(userRoles.user.roles, "ROLE_ADMIN") ? (
+                      ) : !checkRole(userRoles.user.roles, "ROLE_ADMIN") ? (
                         <Tag
                           color={paymentColorMap[currentPayment] || "default"}
                           style={{ fontSize: 13, padding: "4px 10px" }}
@@ -706,15 +706,7 @@ const UserDetails = () => {
                             currentPayment ||
                             "—"}
                         </Button>
-                      )} */}
-                      <Tag
-                        color={paymentColorMap[currentPayment] || "default"}
-                        style={{ fontSize: 13, padding: "4px 10px" }}
-                      >
-                        {paymentLabelMap[currentPayment] ||
-                          currentPayment ||
-                          "—"}
-                      </Tag>
+                      )}
 
                       <Modal
                         title="Change Payment Status"

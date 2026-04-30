@@ -13,6 +13,7 @@ import {
   Flex,
   Form,
   Input,
+  InputNumber,
   List,
   Modal,
   Popconfirm,
@@ -32,6 +33,7 @@ import {
   EditOutlined,
   PlusOutlined,
   UserOutlined,
+  PercentageOutlined,
 } from "@ant-design/icons";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
@@ -99,9 +101,10 @@ const BranchDetails = () => {
   const [speakersLoading, setSpeakersLoading] = useState(false);
   const [speakers, setSpeakers] = useState([]);
 
+  const [refresh, setRefresh] = useState(0);
   const { data, loading, error } = useApiRequest(
     `api/v1/branch/details/${id}`,
-    []
+    [refresh]
   );
 
   const branch = useMemo(() => {
@@ -281,6 +284,13 @@ const BranchDetails = () => {
           <Empty description="No speakers assigned yet" />
         )}
       </Card>
+
+      {/* ── Discount ───────────────────────────────────────────────────────── */}
+      <DiscountSection
+        branchId={id}
+        branch={branch}
+        onRefresh={() => setRefresh((r) => r + 1)}
+      />
 
       {/* ── Schedule & Holidays side by side ──────────────────────────────── */}
       <Row gutter={[24, 24]}>
@@ -945,6 +955,318 @@ const HolidaySection = ({ branchId }) => {
           </Form.Item>
           <Form.Item name="reason" label="Reason (optional)">
             <Input placeholder="e.g. National holiday" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
+  );
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// DISCOUNT SECTION
+// ═════════════════════════════════════════════════════════════════════════════
+
+const getDiscountStatusTag = (discount) => {
+  if (!discount.active) {
+    return <Tag color="default">Disabled</Tag>;
+  }
+  if (discount.currentlyActive) {
+    return <Tag color="green">Active</Tag>;
+  }
+  const today = dayjs();
+  const start = dayjs(discount.startDate, "YYYY-MM-DD");
+  if (start.isAfter(today)) {
+    return <Tag color="orange">Scheduled</Tag>;
+  }
+  return <Tag color="gold">Expired</Tag>;
+};
+
+const DiscountSection = ({ branchId, branch, onRefresh }) => {
+  const [discounts, setDiscounts] = useState([]);
+  const [discountsLoading, setDiscountsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
+  const [form] = Form.useForm();
+
+  const fetchDiscounts = useCallback(async () => {
+    setDiscountsLoading(true);
+    try {
+      const res = await apiClient.get(`api/v1/branch/${branchId}/discounts`);
+      if (res.success) {
+        setDiscounts(res.data || []);
+      } else {
+        toast.error(res.message || "Failed to load discounts");
+      }
+    } catch {
+      toast.error("Failed to load discounts");
+    } finally {
+      setDiscountsLoading(false);
+    }
+  }, [branchId]);
+
+  useEffect(() => {
+    fetchDiscounts();
+  }, [fetchDiscounts]);
+
+  const openAdd = () => {
+    setEditing(null);
+    form.resetFields();
+    setModalOpen(true);
+  };
+
+  const openEdit = (discount) => {
+    setEditing(discount);
+    form.setFieldsValue({
+      discountPercent: discount.discountPercent,
+      dateRange: [
+        dayjs(discount.startDate, "YYYY-MM-DD"),
+        dayjs(discount.endDate, "YYYY-MM-DD"),
+      ],
+      description: discount.description || "",
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditing(null);
+    form.resetFields();
+  };
+
+  const handleSave = async () => {
+    let values;
+    try {
+      values = await form.validateFields();
+    } catch {
+      return;
+    }
+    setSaving(true);
+    try {
+      const [start, end] = values.dateRange;
+      const payload = {
+        discountPercent: values.discountPercent,
+        startDate: start.format("YYYY-MM-DD"),
+        endDate: end.format("YYYY-MM-DD"),
+        ...(values.description ? { description: values.description } : {}),
+      };
+      const res = editing
+        ? await apiClient.put(
+            `api/v1/branch/${branchId}/discount/${editing.id}`,
+            payload
+          )
+        : await apiClient.post(`api/v1/branch/${branchId}/discount`, payload);
+
+      if (res.success) {
+        toast.success(editing ? "Discount updated" : "Discount added");
+        closeModal();
+        fetchDiscounts();
+        onRefresh();
+      } else {
+        toast.error(res.message || "Failed to save discount");
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to save discount");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggle = async (discount) => {
+    setTogglingId(discount.id);
+    try {
+      const res = await apiClient.put(
+        `api/v1/branch/${branchId}/discount/${discount.id}/toggle?active=${!discount.active}`
+      );
+      if (res.success) {
+        toast.success(res.data?.active ? "Discount enabled" : "Discount disabled");
+        fetchDiscounts();
+        onRefresh();
+      } else {
+        toast.error(res.message || "Failed to toggle discount");
+      }
+    } catch {
+      toast.error("Failed to toggle discount");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const columns = [
+    {
+      title: "%",
+      dataIndex: "discountPercent",
+      key: "discountPercent",
+      width: 70,
+      render: (v) => (
+        <Text strong style={{ color: "#cf1322" }}>
+          {v}%
+        </Text>
+      ),
+    },
+    {
+      title: "Period",
+      key: "period",
+      render: (_, r) => (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {r.startDate} → {r.endDate}
+        </Text>
+      ),
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      render: (v) => v || <Text type="secondary">—</Text>,
+    },
+    {
+      title: "Status",
+      key: "status",
+      width: 100,
+      render: (_, record) => getDiscountStatusTag(record),
+    },
+    {
+      title: "",
+      key: "actions",
+      width: 110,
+      align: "right",
+      render: (_, record) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => openEdit(record)}
+          />
+          <Popconfirm
+            title={record.active ? "Disable this discount?" : "Enable this discount?"}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => handleToggle(record)}
+          >
+            <Button
+              size="small"
+              type={record.active ? "default" : "primary"}
+              loading={togglingId === record.id}
+            >
+              {record.active ? "Disable" : "Enable"}
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Card
+        title={
+          <Space>
+            <PercentageOutlined />
+            <span>Discounts</span>
+            {branch?.activeDiscount && (
+              <Tag color="volcano">
+                {branch.activeDiscount.discountPercent}% Active
+              </Tag>
+            )}
+          </Space>
+        }
+        extra={
+          <Button
+            type="primary"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={openAdd}
+          >
+            Add Discount
+          </Button>
+        }
+        styles={{ body: { padding: 0 } }}
+      >
+        {discountsLoading ? (
+          <Flex
+            justify="center"
+            align="center"
+            style={{ minHeight: 120, padding: 24 }}
+          >
+            <Spin />
+          </Flex>
+        ) : discounts.length === 0 ? (
+          <Flex
+            justify="center"
+            align="center"
+            style={{ minHeight: 120, padding: 24 }}
+          >
+            <Empty description="No discounts yet" />
+          </Flex>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={discounts}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            rowClassName={(record) =>
+              record.currentlyActive ? "discount-row-active" : ""
+            }
+          />
+        )}
+      </Card>
+
+      <Modal
+        title={editing ? "Edit Discount" : "Add Discount"}
+        open={modalOpen}
+        onCancel={closeModal}
+        footer={[
+          <Button key="cancel" onClick={closeModal}>
+            Cancel
+          </Button>,
+          <Button
+            key="save"
+            type="primary"
+            loading={saving}
+            onClick={handleSave}
+          >
+            Save
+          </Button>,
+        ]}
+        destroyOnHidden
+      >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="discountPercent"
+            label="Discount (%)"
+            rules={[
+              { required: true, message: "Please enter discount percent" },
+              {
+                type: "number",
+                min: 1,
+                max: 100,
+                message: "Must be between 1 and 100",
+              },
+            ]}
+          >
+            <InputNumber
+              min={1}
+              max={100}
+              step={0.5}
+              addonAfter="%"
+              style={{ width: "100%" }}
+              placeholder="20"
+            />
+          </Form.Item>
+          <Form.Item
+            name="dateRange"
+            label="Validity Period"
+            rules={[{ required: true, message: "Please select date range" }]}
+          >
+            <DatePicker.RangePicker
+              style={{ width: "100%" }}
+              format="DD MMM YYYY"
+            />
+          </Form.Item>
+          <Form.Item name="description" label="Description (optional)">
+            <Input.TextArea rows={2} placeholder="e.g. Spring sale — 20% off!" />
           </Form.Item>
         </Form>
       </Modal>
