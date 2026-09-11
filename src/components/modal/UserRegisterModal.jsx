@@ -4,8 +4,10 @@ import apiClient from "../../services/api";
 import { MaskedInput } from "antd-mask-input";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useT } from "../../i18n/useT";
 
 const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
+  const t = useT();
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
@@ -22,7 +24,7 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
         form.setFields([
           {
             name: "username",
-            errors: ["Username is already taken"],
+            errors: [t("candidates.usernameTaken")],
           },
         ]);
       } else {
@@ -33,7 +35,7 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
           },
         ]);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to check username availability");
     }
   };
@@ -50,7 +52,7 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
       .post("/api/v1/admin/user/save", payload)
       .then((response) => {
         if (response.code === 200) {
-          toast.success("User created successfully");
+          toast.success(t("candidates.createdOk"));
           form.resetFields();
           setIsModalOpen(false);
           // setRefreshKey((prevKey) => prevKey + 1);
@@ -67,7 +69,7 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
 
   return (
     <Modal
-      title="Create New Candidates"
+      title={t("candidates.createTitle")}
       open={isModalOpen}
       onCancel={handleModalClose}
       footer={null}
@@ -76,33 +78,33 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           <Form.Item
             name="firstname"
-            label="First Name"
+            label={t("candidates.firstName")}
             style={{ flex: 1 }}
             rules={[{ required: true, message: "Please enter the first name" }]}
           >
-            <Input placeholder="Enter first name" />
+            <Input placeholder={t("candidates.firstName")} />
           </Form.Item>
           <Form.Item
             name="lastname"
             style={{ flex: 1 }}
-            label="Last Name"
+            label={t("candidates.lastName")}
             rules={[{ required: true, message: "Please enter the last name" }]}
           >
-            <Input placeholder="Enter last name" />
+            <Input placeholder={t("candidates.lastName")} />
           </Form.Item>
         </div>
         <Form.Item
           name="email"
-          label="Email"
+          label={t("candidates.email")}
           rules={[
             { type: "email", message: "Please enter a valid email address" },
           ]}
         >
-          <Input placeholder="Enter user email" />
+          <Input placeholder={t("candidates.email")} />
         </Form.Item>
         <Form.Item
           name="phone"
-          label="Phone"
+          label={t("candidates.phone")}
           rules={[
             {
               required: true,
@@ -122,19 +124,19 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           <Form.Item
             name="username"
-            label="Username"
+            label={t("candidates.username")}
             style={{ flex: 1 }}
             rules={[{ required: true, message: "Please enter the username" }]}
           >
             <Input
-              placeholder="Enter username"
+              placeholder={t("candidates.username")}
               onBlur={(e) => checkUsernameAvailability(e.target.value)}
             />
           </Form.Item>
         </div>
         <Form.Item
           name="password"
-          label="Password"
+          label={t("candidates.password")}
           rules={[
             { required: true, message: "Please enter a password" },
             {
@@ -143,21 +145,21 @@ const UserRegisterModal = ({ isModalOpen, setIsModalOpen }) => {
             },
           ]}
         >
-          <Input.Password placeholder="Enter password" />
+          <Input.Password placeholder={t("candidates.password")} />
         </Form.Item>
         <Form.Item
           name={"everester"}
-          label="Everester?"
+          label={`${t("candidates.everester")}?`}
           rules={[{ required: true, message: "Please select" }]}
         >
           <Radio.Group>
-            <Radio value={true}>Yes</Radio>
-            <Radio value={false}>No</Radio>
+            <Radio value={true}>{t("common.yes")}</Radio>
+            <Radio value={false}>{t("common.no")}</Radio>
           </Radio.Group>
         </Form.Item>
         <Form.Item style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button type="primary" htmlType="submit">
-            Create
+            {t("common.add")}
           </Button>
         </Form.Item>
       </Form>

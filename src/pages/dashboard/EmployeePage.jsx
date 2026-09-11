@@ -5,10 +5,12 @@ import { MaskedInput } from "antd-mask-input";
 import apiClient from "../../services/api";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useT } from "../../i18n/useT";
 
 const { Option } = Select;
 
 const EmployeePage = () => {
+  const t = useT();
   const [page, setPage] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const [size, setSize] = useState(10);
@@ -35,37 +37,37 @@ const EmployeePage = () => {
       //  + (pagination.current - 1) * pagination.pageSize,
     },
     {
-      title: "Status",
+      title: t("common.status"),
       dataIndex: "active",
       key: "active",
       render: (active) => (
         <Tag color={active ? "green" : "red"}>
-          {active ? "Active" : "Inactive"}
+          {active ? t("common.active") : t("common.inactive")}
         </Tag>
       ),
     },
     {
-      title: "Full Name",
+      title: t("table.fullName"),
       dataIndex: "fullname",
       key: "fullname",
     },
     {
-      title: "Email",
+      title: t("table.email"),
       dataIndex: "email",
       key: "email",
     },
     {
-      title: "Username",
+      title: t("table.username"),
       dataIndex: "username",
       key: "username",
     },
     {
-      title: "Branch",
+      title: t("table.branch"),
       dataIndex: "department",
       key: "department",
     },
     {
-      title: "Positions",
+      title: t("table.positions"),
       dataIndex: "roles",
       key: "roles",
       render: (roles) => (
@@ -82,9 +84,9 @@ const EmployeePage = () => {
               key={idx}
             >
               {role === "ROLE_BRANCH_ADMIN"
-                ? "Mock Organiser"
+                ? t("employees.mockOrganiser")
                 : role === "ROLE_SPEAKER"
-                ? "Speaking Examiner"
+                ? t("employees.speakingExaminer")
                 : role}
             </Tag>
           ))}
@@ -105,7 +107,7 @@ const EmployeePage = () => {
           }}
         >
           <Link to={`/dashboard/employee/${record.id}`}>
-            <Button>View</Button>
+            <Button>{t("common.view")}</Button>
           </Link>
         </div>
       ),
@@ -179,7 +181,7 @@ const EmployeePage = () => {
 
   return (
     <div>
-      <h1>Team Members</h1>
+      <h1>{t("employees.membersTitle")}</h1>
       <div
         style={{
           marginBottom: 16,
@@ -194,7 +196,7 @@ const EmployeePage = () => {
         >
           <Input
             value={search}
-            placeholder="Search members"
+            placeholder={t("employees.searchMembers")}
             style={{ width: "200px" }}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -203,13 +205,13 @@ const EmployeePage = () => {
             onChange={(value) => setSelectPosition(value)}
             style={{ width: 200 }}
           >
-            <Option value="all">All Position</Option>
-            <Option value="BRANCH_ADMIN">Admin</Option>
-            <Option value="SPEAKER">Speaker</Option>
+            <Option value="all">{t("employees.allPosition")}</Option>
+            <Option value="BRANCH_ADMIN">{t("employees.admin")}</Option>
+            <Option value="SPEAKER">{t("table.speaker")}</Option>
           </Select>
         </div>
         <Button type="primary" onClick={() => setIsModalOpen(true)}>
-          New member
+          {t("employees.newMember")}
         </Button>
       </div>
       <Table

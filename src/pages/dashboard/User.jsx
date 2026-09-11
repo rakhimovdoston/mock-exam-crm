@@ -3,8 +3,10 @@ import { Table, Button, Input, Tag } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import UserRegisterModal from "../../components/modal/UserRegisterModal";
+import { useT } from "../../i18n/useT";
 
 const User = () => {
+  const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const [pagination, setPagination] = useState({
     current: parseInt(searchParams.get("page")) || 1,
@@ -69,55 +71,55 @@ const User = () => {
         index + 1 + (pagination.current - 1) * pagination.pageSize,
     },
     {
-      title: "First Name",
+      title: t("candidates.firstName"),
       dataIndex: "firstname",
       key: "firstname",
       sorter: (a, b) => a.firstname.localeCompare(b.firstname),
     },
     {
-      title: "Last Name",
+      title: t("candidates.lastName"),
       dataIndex: "lastname",
       key: "lastname",
       sorter: (a, b) => a.lastname.localeCompare(b.lastname),
     },
     {
-      title: "Email",
+      title: t("candidates.email"),
       dataIndex: "email",
       key: "email",
       render: (email) => (email ? email : "-"),
     },
     {
-      title: "Phone Number",
+      title: t("candidates.phone"),
       dataIndex: "phone",
       key: "phone",
       render: (phone) => (phone ? phone : "-"),
     },
     {
-      title: "Username",
+      title: t("candidates.username"),
       dataIndex: "username",
       key: "username",
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
-      title: "Registration Source",
+      title: t("candidates.registrationSource"),
       dataIndex: "registrationSource",
       key: "registrationSource",
       render: (source) => {
         const isAdmin = source === "ADMIN_PANEL";
         return (
           <Tag color={isAdmin ? "gold" : "green"}>
-            {isAdmin ? "Admin Created" : "Self Registered"}
+            {isAdmin ? t("candidates.adminCreated") : t("candidates.selfRegistered")}
           </Tag>
         );
       },
     },
     {
-      title: "Everester",
+      title: t("candidates.everester"),
       dataIndex: "everester",
       key: "everester",
       render: (everester) => (
         <Tag color={everester ? "green" : "red"}>
-          {everester ? "Yes" : "No"}
+          {everester ? t("common.yes") : t("common.no")}
         </Tag>
       ),
     },
@@ -138,10 +140,10 @@ const User = () => {
             type="primary"
             onClick={() => navigate(`/dashboard/user/${record.id}/booking`)}
           >
-            Book Test
+            {t("candidates.bookTest")}
           </Button>
           <Button onClick={() => navigate(`/dashboard/user/${record.id}`)}>
-            View
+            {t("common.view")}
           </Button>
         </div>
       ),
@@ -150,7 +152,7 @@ const User = () => {
 
   return (
     <div>
-      <h1>Candidates</h1>
+      <h1>{t("candidates.title")}</h1>
       <div
         style={{
           marginBottom: 16,
@@ -163,29 +165,29 @@ const User = () => {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
           <Input
             value={firstname}
-            placeholder="Firstname"
+            placeholder={t("candidates.firstName")}
             style={{ width: "200px" }}
             onChange={(e) => setFirstname(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <Input
             value={lastname}
-            placeholder="Lastname"
+            placeholder={t("candidates.lastName")}
             style={{ width: "200px" }}
             onChange={(e) => setLastname(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <Input
             value={searchTerm}
-            placeholder="Username"
+            placeholder={t("candidates.username")}
             style={{ width: "200px" }}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <Button type='primary' onClick={handleSearch}>Search</Button>
+          <Button type='primary' onClick={handleSearch}>{t("common.search")}</Button>
         </div>
         <Button type="primary" onClick={() => setIsModalOpen(true)}>
-          New Candidates
+          {t("candidates.newCandidate")}
         </Button>
       </div>
       <Table

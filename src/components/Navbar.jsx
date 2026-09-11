@@ -18,11 +18,13 @@ import {
 import logo from "../assets/logo.jpeg";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useT } from "../i18n/useT";
 
 const { Sider } = Layout;
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
+  const t = useT();
 
   const [collapsed, setCollapsed] = useState(false);
 
@@ -30,78 +32,78 @@ const Navbar = () => {
     {
       key: "/dashboard",
       icon: <DashboardOutlined />,
-      label: <Link to="/dashboard">Dashboard</Link>,
+      label: <Link to="/dashboard">{t("nav.dashboard")}</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN", "ROLE_SPEAKER"],
     },
     {
       key: "/dashboard/employees",
       icon: <TeamOutlined />,
-      label: <Link to="/dashboard/employees">Team</Link>,
+      label: <Link to="/dashboard/employees">{t("nav.team")}</Link>,
       roles: ["ROLE_ADMIN"],
     },
     {
       key: "/dashboard/users",
       icon: <UserOutlined />,
-      label: <Link to="/dashboard/users">Candidates</Link>,
+      label: <Link to="/dashboard/users">{t("nav.candidates")}</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
       key: "/dashboard/contest",
       icon: <TrophyOutlined />,
-      label: <Link to="/dashboard/contest">Test Sessions</Link>,
+      label: <Link to="/dashboard/contest">{t("nav.testSessions")}</Link>,
       roles: ["ROLE_BRANCH_ADMIN", "ROLE_ADMIN"],
     },
     {
       key: "/dashboard/speaking",
       icon: <CustomerServiceOutlined />,
-      label: <Link to="/dashboard/speaking">Speaking Sessions</Link>,
+      label: <Link to="/dashboard/speaking">{t("nav.speakingSessions")}</Link>,
       roles: ["ROLE_SPEAKER", "ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
       key: "/dashboard/branches",
       icon: <EnvironmentOutlined />,
-      label: <Link to="/dashboard/venues">Venues</Link>,
+      label: <Link to="/dashboard/venues">{t("nav.venues")}</Link>,
       roles: ["ROLE_ADMIN"],
     },
     {
       key: "/dashboard/ielts",
       icon: <BookOutlined />,
-      label: "IELTS Materials",
+      label: t("nav.materials"),
       roles: ["ROLE_ADMIN"],
       children: [
         {
           key: "/dashboard/ielts/listening",
           icon: <SoundOutlined />,
-          label: <Link to="/dashboard/ielts/listening">Listening</Link>,
+          label: <Link to="/dashboard/ielts/listening">{t("nav.listening")}</Link>,
         },
         {
           key: "/dashboard/ielts/reading",
           icon: <ReadOutlined />,
-          label: <Link to="/dashboard/ielts/reading">Reading</Link>,
+          label: <Link to="/dashboard/ielts/reading">{t("nav.reading")}</Link>,
         },
         {
           key: "/dashboard/ielts/writing",
           icon: <EditOutlined />,
-          label: <Link to="/dashboard/ielts/writing">Writing</Link>,
+          label: <Link to="/dashboard/ielts/writing">{t("nav.writing")}</Link>,
         },
       ],
     },
     {
       key: "/dashboard/results",
       icon: <FileDoneOutlined />,
-      label: <Link to="/dashboard/results">Results</Link>,
+      label: <Link to="/dashboard/results">{t("nav.results")}</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
       key: "/dashboard/test-dates",
       icon: <CalendarOutlined />,
-      label: <Link to="/dashboard/test-dates">Test Dates</Link>,
+      label: <Link to="/dashboard/test-dates">{t("nav.testDates")}</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
       key: "/dashboard/devices",
       icon: <TabletOutlined />,
-      label: <Link to="/dashboard/devices">Devices</Link>,
+      label: <Link to="/dashboard/devices">{t("nav.devices")}</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
   ];

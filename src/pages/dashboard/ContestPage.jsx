@@ -6,10 +6,12 @@ import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { checkRole } from "../../utils/roleUtils";
 import { Role } from "../../data/role";
+import { useT } from "../../i18n/useT";
 
 const { Option } = Select;
 
 const ContestPage = () => {
+  const t = useT();
   const [selectBranch, setSelectBranch] = useState();
   const [testTime, setTestTime] = useState("all");
   const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
@@ -26,27 +28,27 @@ const ContestPage = () => {
       render: (text, record, index) => index + 1 + page * size,
     },
     {
-      title: "Student",
+      title: t("table.student"),
       dataIndex: "studentName",
       key: "studentName",
     },
     {
-      title: "Phone number",
+      title: t("table.phone"),
       dataIndex: "phoneNumber",
       key: "phoneNumber",
     },
     {
-      title: "Branch",
+      title: t("table.branch"),
       dataIndex: "branch",
       key: "branch",
     },
     {
-      title: "Test Date",
+      title: t("table.testDate"),
       dataIndex: "testDate",
       key: "testDate",
     },
     {
-      title: "Test Shift",
+      title: t("table.testShift"),
       dataIndex: "time",
       key: "time",
       render: (time) => {
@@ -62,14 +64,14 @@ const ContestPage = () => {
       },
     },
     {
-      title: "Status",
+      title: t("common.status"),
       dataIndex: "status",
       key: "status",
       filters: [
-        { text: "Waiting", value: "WAITING" },
-        { text: "In Progress", value: "PROCESS" },
-        { text: "Completed", value: "COMPLETED" },
-        { text: "Failed", value: "FAILED" },
+        { text: t("contest.waiting"), value: "WAITING" },
+        { text: t("contest.inProgress"), value: "PROCESS" },
+        { text: t("contest.completed"), value: "COMPLETED" },
+        { text: t("contest.failed"), value: "FAILED" },
       ],
       filterMultiple: true,
       filteredValue:
@@ -80,15 +82,17 @@ const ContestPage = () => {
         else if (status === "PROCESS") color = "orange";
         else if (status === "WAITING") color = "geekblue";
         else if (status === "FAILED") color = "red";
-        return (
-          <Tag color={color}>
-            {status === "PROCESS" ? "In Progress" : status}
-          </Tag>
-        );
+        const labels = {
+          WAITING: t("contest.waiting"),
+          PROCESS: t("contest.inProgress"),
+          COMPLETED: t("contest.completed"),
+          FAILED: t("contest.failed"),
+        };
+        return <Tag color={color}>{labels[status] || status}</Tag>;
       },
     },
     {
-      title: "Payment",
+      title: t("contest.payment"),
       dataIndex: "payment",
       key: "payment",
       render: (payment) => {
@@ -101,10 +105,10 @@ const ContestPage = () => {
         return (
           <Tag color={color}>
             {isPayed
-              ? "Paid"
+              ? t("contest.paid")
               : payment === "PENDING"
-              ? "Processing"
-              : "Not Paid"}
+              ? t("contest.processing")
+              : t("contest.notPaid")}
           </Tag>
         );
       },
@@ -119,7 +123,7 @@ const ContestPage = () => {
               to={`${record.id}/${record.type}`}
               style={{ cursor: "pointer", color: "white" }}
             >
-              Details
+              {t("contest.details")}
             </Link>
           </Button>
         </Flex>
@@ -155,11 +159,11 @@ const ContestPage = () => {
 
   return (
     <div>
-      <h2>📋 Upcoming Test sessions</h2>
+      <h2>📋 {t("contest.upcomingTitle")}</h2>
       <Space style={{ marginBottom: 16 }}>
         {checkRole(user.roles, Role.ROLE_ADMIN) && (
           <Select
-            placeholder="Select branch"
+            placeholder={t("contest.selectBranch")}
             style={{ width: 300 }}
             onChange={(value) => setSelectBranch(value)}
           >
@@ -179,12 +183,12 @@ const ContestPage = () => {
           }}
         />
         <Select
-          placeholder={"Time slot"}
+          placeholder={t("contest.timeSlot")}
           style={{ width: 300 }}
           defaultValue={testTime}
           onChange={(value) => setTestTime(value)}
         >
-          <Option key={"all"}>All</Option>
+          <Option key={"all"}>{t("common.all")}</Option>
           {branches?.data?.data?.testTimes?.map((time) => (
             <Option key={time}>
               {time.charAt(0).toUpperCase() + time.slice(1)}

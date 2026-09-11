@@ -6,11 +6,14 @@ const { Footer } = Layout;
 
 const ExamFooter = ({ selectPart, setSelectPart }) => {
   const { answers } = useSelector((state) => state.exam);
+  const safeAnswers = Array.isArray(answers) ? answers : [];
 
   const getKeysNumbers = (keys) => {
+    if (typeof keys !== "string" || !keys.includes("-")) return [];
     const [start, end] = keys.split("-");
     const startNum = parseInt(start, 10);
     const endNum = parseInt(end, 10);
+    if (Number.isNaN(startNum) || Number.isNaN(endNum)) return [];
     const numbers = [];
     for (let i = startNum; i <= endNum; i++) {
       numbers.push(i);
@@ -29,7 +32,7 @@ const ExamFooter = ({ selectPart, setSelectPart }) => {
         background: "white",
       }}
     >
-      {answers.map((answer, index) => (
+      {safeAnswers.map((answer, index) => (
         <Card
           key={index}
           onClick={() => setSelectPart(answer.type)}
@@ -49,7 +52,7 @@ const ExamFooter = ({ selectPart, setSelectPart }) => {
           }}
         >
           <div style={{ display: "flex", gap: "15px" }}>
-            {answer.answers.map((ans, index) => {
+            {(answer.answers || []).map((ans, index) => {
               return ans.key ? (
                 <span
                   key={index}
@@ -66,7 +69,7 @@ const ExamFooter = ({ selectPart, setSelectPart }) => {
                     key={idx}
                     style={{
                       textAlign: "center",
-                      color: `${ans.values.length > 0 ? "blue" : "gray"}`,
+                      color: `${(ans.values?.length ?? 0) > 0 ? "blue" : "gray"}`,
                     }}
                   >
                     {key}

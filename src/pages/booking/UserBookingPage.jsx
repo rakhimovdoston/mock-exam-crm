@@ -25,11 +25,13 @@ import apiClient from "../../services/api";
 import { useSelector } from "react-redux";
 import { checkRole } from "../../utils/roleUtils";
 import { Role } from "../../data/role";
+import { useT } from "../../i18n/useT";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const UserBookingPage = () => {
+  const t = useT();
   const { id } = useParams();
   const { token } = theme.useToken();
   const navigate = useNavigate();
@@ -48,52 +50,11 @@ const UserBookingPage = () => {
     []
   );
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [speakers, setSpeakers] = useState([]);
-  const [speakersLoading, setSpeakersLoading] = useState(false);
-  const [speakerId, setSpeakerId] = useState();
   const [speakingTypeStatuses, setSpeakingTypeStatuses] = useState([]);
   const { user } = useSelector((state) => state.auth);
 
   const { data, loading } = useApiRequest(`api/v1/admin/user/by/${id}`, [id]);
   const branches = useApiRequest("api/v1/branch/all");
-
-  const fetchSpeakerSession = useCallback(
-    async (branch) => {
-      if (!branch) {
-        branch = selectedBranch;
-      }
-      if (!branch) {
-        toast.warn("Please select Branch");
-        return;
-      }
-      setSpeakersLoading(true);
-      try {
-        const response = await apiClient.get(
-          `api/v1/branch/speakers/${branch}`
-        );
-        if (response.code === 200) {
-          setSpeakers(response.data);
-          return;
-        } else {
-          toast.warn(
-            "This branch has not Speaker. Please add speakers this branch"
-          );
-          setSpeakers([]);
-        }
-      } catch (err) {
-        setSpeakers([]);
-      } finally {
-        setSpeakersLoading(false);
-      }
-    },
-    [selectedBranch]
-  );
-
-  useEffect(() => {
-    if (user.branchId || selectedBranch) {
-      fetchSpeakerSession(user.branchId || selectedBranch);
-    }
-  }, [user.branchId, selectedBranch]);
 
   useEffect(() => {
     const fetchSpeakingTypeStatuses = async () => {
@@ -155,7 +116,7 @@ const UserBookingPage = () => {
       setSessionsLoading(true);
       try {
         const response = await apiClient.get(
-          `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}&speakerId=${speakerId}`
+          `api/v1/test-session/speaking/available?date=${selectedDate}&branch=${branch}&type=${speakingType}`
         );
         if (response.code != 200) {
           setAvailableSpeakingSessions([]);
@@ -174,7 +135,7 @@ const UserBookingPage = () => {
         setSessionsLoading(false);
       }
     },
-    [selectedBranch, selectedDate, speakingType, speakerId]
+    [selectedBranch, selectedDate, speakingType]
   );
 
   if (loading)
@@ -280,13 +241,13 @@ const UserBookingPage = () => {
     setBookingLoading(true);
     try {
       const response = await apiClient.post("api/v1/booking/set", requestBody);
-      if (response.code != 200) {
-        toast.error(response.message || "");
+      if (response?.code !== 200 && response?.success !== true) {
+        toast.error(response?.message || "Failed Booking service");
         return;
       }
       navigate("/dashboard/contest");
     } catch (e) {
-      toast.error(e?.response?.data.message || "Failed Booking service");
+      toast.error(e?.response?.data?.message || "Failed Booking service");
     } finally {
       setBookingLoading(false);
     }
@@ -296,7 +257,7 @@ const UserBookingPage = () => {
     <div>
       <Card>
         <Title level={3} style={{ margin: "10px 0" }}>
-          Booking{" "}
+          {t("booking.title")}{" "}
           <b style={{ color: token.colorPrimary }}>
             {data?.data?.firstname} {data?.data?.lastname}
           </b>
@@ -340,7 +301,7 @@ const UserBookingPage = () => {
             <Collapse.Panel
               header={
                 <Title level={3} style={{ margin: "" }}>
-                  Selected Test session date
+                  {t("booking.selectedTestDate")}
                 </Title>
               }
             >
@@ -377,26 +338,26 @@ const UserBookingPage = () => {
                         >
                           <Space direction="vertical" size="small">
                             <Text>
-                              <Text strong>Day of Week:</Text>{" "}
+                              <Text strong>{t("booking.dayOfWeek")}:</Text>{" "}
                               {session.dayOfWeek}
                             </Text>
                             <Text>
-                              <Text strong>Test Slot:</Text> {session.time}
+                              <Text strong>{t("booking.testSlot")}:</Text> {session.time}
                             </Text>
                             <Text>
-                              <Text strong>Test Time:</Text>{" "}
+                              <Text strong>{t("booking.testTime")}:</Text>{" "}
                               <Tag color="blue">{session.timeString}</Tag>
                             </Text>
                             <Text>
-                              <Text strong>Status:</Text>{" "}
+                              <Text strong>{t("common.status")}:</Text>{" "}
                               <Tag
                                 color={
                                   session.existedSpace ? "success" : "error"
                                 }
                               >
                                 {session.existedSpace
-                                  ? `${session.existedSpace} Available`
-                                  : "Fully Booked"}
+                                  ? `${session.existedSpace} ${t("booking.available")}`
+                                  : t("booking.fullyBooked")}
                               </Tag>
                             </Text>
                           </Space>
@@ -424,7 +385,7 @@ const UserBookingPage = () => {
                 >
                   {checkRole(user.roles, Role.ROLE_ADMIN) && (
                     <Select
-                      placeholder="Select branch"
+                      placeholder={t("booking.selectBranch")}
                       style={{ width: 300 }}
                       onChange={(value) => setSelectedBranch(value)}
                     >
@@ -443,11 +404,11 @@ const UserBookingPage = () => {
                     }
                   />
                   <Select
-                    placeholder={"Select which time"}
+                    placeholder={t("booking.selectTime")}
                     style={{ width: 300 }}
                     onChange={(value) => setSelectedTime(value)}
                   >
-                    <Option key={"all"}>All</Option>
+                    <Option key={"all"}>{t("common.all")}</Option>
                     {branches.data.data.testTimes.map((time) => (
                       <Option key={time}>
                         {time.charAt(0).toUpperCase() + time.slice(1)}
@@ -465,7 +426,7 @@ const UserBookingPage = () => {
                       fetchSession(user.branchId);
                     }}
                   >
-                    Show test session
+                    {t("booking.showTestSession")}
                   </Button>
                 </div>
               </>
@@ -511,23 +472,23 @@ const UserBookingPage = () => {
                     >
                       <Space direction="vertical" size="small">
                         <Text>
-                          <Text strong>Day of Week:</Text> {session.dayOfWeek}
+                          <Text strong>{t("booking.dayOfWeek")}:</Text> {session.dayOfWeek}
                         </Text>
                         <Text>
-                          <Text strong>Test Slot:</Text> {session.time}
+                          <Text strong>{t("booking.testSlot")}:</Text> {session.time}
                         </Text>
                         <Text>
-                          <Text strong>Test Time:</Text>{" "}
+                          <Text strong>{t("booking.testTime")}:</Text>{" "}
                           <Tag color="blue">{session.timeString}</Tag>
                         </Text>
                         <Text>
-                          <Text strong>Status:</Text>{" "}
+                          <Text strong>{t("common.status")}:</Text>{" "}
                           <Tag
                             color={session.existedSpace ? "success" : "error"}
                           >
                             {session.existedSpace
-                              ? `${session.existedSpace} Available`
-                              : "Fully Booked"}
+                              ? `${session.existedSpace} ${t("booking.available")}`
+                              : t("booking.fullyBooked")}
                           </Tag>
                         </Text>
                       </Space>
@@ -545,7 +506,7 @@ const UserBookingPage = () => {
                 <Collapse.Panel
                   header={
                     <Title level={3} style={{ margin: "" }}>
-                      Selected speaking session date
+                      {t("booking.selectedSpeakingDate")}
                     </Title>
                   }
                 >
@@ -582,12 +543,8 @@ const UserBookingPage = () => {
                             >
                               <Space direction="vertical" size="small">
                                 <Text>
-                                  <Text strong>🕒 Speaking Time:</Text>{" "}
+                                  <Text strong>🕒 {t("booking.speakingTime")}:</Text>{" "}
                                   {session.time}
-                                </Text>
-                                <Text>
-                                  <Text strong>🧑‍🏫 Speaker:</Text>{" "}
-                                  {session.speakerName}
                                 </Text>
                               </Space>
                             </Card>
@@ -634,36 +591,26 @@ const UserBookingPage = () => {
                   style={{ padding: "6px 12px", fontSize: 14, lineHeight: "22px" }}
                 >
                   {speakingTypeStatuses[0].type === "FACE_TO_FACE"
-                    ? "Face to Face"
-                    : "Online"}
+                    ? t("booking.faceToFace")
+                    : t("booking.online")}
                 </Tag>
               ) : (
                 <Select
                   value={speakingType}
-                  placeholder="Select Speaking type"
+                  placeholder={t("booking.selectType")}
                   style={{ width: 300 }}
                   onChange={(value) => setSpeakingType(value)}
                 >
-                  <Option value="all">All</Option>
-                  {speakingTypeStatuses.map((t) => (
-                    <Option key={t.type} value={t.type}>
-                      {t.type === "FACE_TO_FACE" ? "Face to Face" : "Online"}
+                  <Option value="all">{t("common.all")}</Option>
+                  {speakingTypeStatuses.map((st) => (
+                    <Option key={st.type} value={st.type}>
+                      {st.type === "FACE_TO_FACE"
+                        ? t("booking.faceToFace")
+                        : t("booking.online")}
                     </Option>
                   ))}
                 </Select>
               )}
-              <Select
-                placeholder="Please select speaker"
-                style={{ width: 300 }}
-                onChange={(value) => setSpeakerId(value)}
-                disabled={speakersLoading || !speakers.length}
-              >
-                {speakers.map((speaker) => (
-                  <Option key={speaker.id} value={speaker.id}>
-                    {speaker.firstname} {speaker.lastname}
-                  </Option>
-                ))}
-              </Select>
               <Button
                 type="primary"
                 onClick={() => {
@@ -675,7 +622,7 @@ const UserBookingPage = () => {
                   fetchSpekingSession(user.branchId);
                 }}
               >
-                Show speaking session
+                {t("booking.showSpeakingSession")}
               </Button>
             </div>
             <List
@@ -716,13 +663,10 @@ const UserBookingPage = () => {
                     >
                       <Space direction="vertical" size="small">
                         <Text>
-                          <Text strong>🕒 Speaking Time:</Text> {session.time}
+                          <Text strong>🕒 {t("booking.speakingTime")}:</Text> {session.time}
                         </Text>
                         <Text>
-                          <Text strong>🧑‍🏫 Speaker:</Text> {session.speakerName}
-                        </Text>
-                        <Text>
-                          <Text strong>Type:</Text>{" "}
+                          <Text strong>{t("booking.type")}:</Text>{" "}
                           <Tag color="green">{session.type}</Tag>
                         </Text>
                       </Space>
@@ -743,7 +687,7 @@ const UserBookingPage = () => {
               onClick={bookingMethod}
               loading={bookingLoading}
             >
-              {activeSpeaking ? "Booking" : "Next"}
+              {activeSpeaking ? t("booking.booking") : t("common.next")}
             </Button>
           </Flex>
         )}

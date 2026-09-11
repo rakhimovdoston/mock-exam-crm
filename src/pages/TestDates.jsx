@@ -15,10 +15,12 @@ import {
 import dayjs from "dayjs";
 import useApiRequest from "../hooks/useApiRequest";
 import { useSelector } from "react-redux";
+import { useT } from "../i18n/useT";
 
 const { Title, Text } = Typography;
 
 const TestDates = () => {
+  const t = useT();
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const { user } = useSelector((state) => state.auth);
   const [selectedBranch, setSelectedBranch] = useState(
@@ -70,8 +72,8 @@ const TestDates = () => {
         <Alert
           type="info"
           showIcon
-          message="Select a branch"
-          description="Choose a branch to view its available test sessions."
+          message={t("testDates.selectBranchAlert")}
+          description={t("testDates.selectBranchAlertDesc")}
         />
       );
     }
@@ -86,7 +88,7 @@ const TestDates = () => {
             minHeight: "200px",
           }}
         >
-          <Spin tip="Loading test dates..." size="large" />
+          <Spin tip={t("testDates.loading")} size="large" />
         </div>
       );
     }
@@ -96,16 +98,16 @@ const TestDates = () => {
         <Alert
           type="error"
           showIcon
-          message="Failed to load test dates"
+          message={t("testDates.loadFailed")}
           description={
-            error?.message || data?.message || "Please try again later."
+            error?.message || data?.message || t("testDates.tryLater")
           }
         />
       );
     }
 
     if (!testDates.length) {
-      return <Empty description="No test sessions found for this date" />;
+      return <Empty description={t("testDates.noSessions")} />;
     }
 
     return (
@@ -160,18 +162,18 @@ const TestDates = () => {
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 <Text>
-                  <Text strong>Day of Week:</Text>{" "}
+                  <Text strong>{t("testDates.dayOfWeek")}:</Text>{" "}
                   {session.dayOfWeek?.toUpperCase?.() || session.dayOfWeek}
                 </Text>
                 <Text>
-                  <Text strong>Test Slot:</Text> {session.time}
+                  <Text strong>{t("testDates.testSlot")}:</Text> {session.time}
                 </Text>
                 <Text>
-                  <Text strong>Test Time:</Text>{" "}
+                  <Text strong>{t("testDates.testTime")}:</Text>{" "}
                   <Tag color="blue">{session.timeString}</Tag>
                 </Text>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Text strong>Status:</Text>
+                  <Text strong>{t("common.status")}:</Text>
                   <Tag
                     color="green"
                     style={{
@@ -183,7 +185,7 @@ const TestDates = () => {
                       fontWeight: 600,
                     }}
                   >
-                    {session.existedSpace} Available
+                    {session.existedSpace} {t("testDates.available")}
                   </Tag>
                 </div>
               </div>
@@ -207,15 +209,13 @@ const TestDates = () => {
       >
         <div>
           <Title level={3} style={{ margin: 0 }}>
-            Test Dates
+            {t("testDates.title")}
           </Title>
-          <Text type="secondary">
-            View every available slot directly from the API response.
-          </Text>
+          <Text type="secondary">{t("testDates.subtitle")}</Text>
         </div>
         <Space size={12} wrap>
           <Space direction="vertical" size={4}>
-            <Text strong>Select date</Text>
+            <Text strong>{t("testDates.selectDate")}</Text>
             <DatePicker
               allowClear={false}
               value={selectedDate}
@@ -224,12 +224,14 @@ const TestDates = () => {
             />
           </Space>
           <Space direction="vertical" size={4}>
-            <Text strong>Select branch</Text>
+            <Text strong>{t("testDates.selectBranch")}</Text>
             <Select
               showSearch
               allowClear
               placeholder={
-                branchLoading ? "Loading branches..." : "Select branch"
+                branchLoading
+                  ? t("testDates.loadingBranches")
+                  : t("testDates.selectBranch")
               }
               optionFilterProp="children"
               style={{ minWidth: 220 }}

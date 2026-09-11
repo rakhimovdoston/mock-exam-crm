@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import {
   Button,
@@ -11,45 +11,66 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import apiClient from "../../services/api";
 import { toast } from "react-toastify";
+import { checkRole } from "../../utils/roleUtils";
+import { Role } from "../../data/role";
+import RecheckWritingModal from "../../components/modal/RecheckWritingModal";
+import { useT } from "../../i18n/useT";
 
 const ResultPage = () => {
+  const t = useT();
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = checkRole(user?.roles || [], Role.ROLE_ADMIN);
+  const [recheckOpen, setRecheckOpen] = useState(false);
   const [date, setDate] = useState(dayjs());
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
+  // Last rank from the previous page — passed to the API so ranking continues.
+  // NOTE: intentionally NOT in the dependency array below (would cause a loop).
+  const [rankNumber, setRankNumber] = useState(0);
   const { data, loading } = useApiRequest(
     `api/v1/admin/user/history?date=${date.format("YYYY-MM-DD")}&page=${
       pagination.current - 1
-    }&size=${pagination.pageSize}`,
+    }&size=${pagination.pageSize}&rankNumber=${rankNumber}`,
     [date, pagination.current, pagination.pageSize]
   );
+
+  // After each fetch, remember the last row's rank for the next page request.
+  useEffect(() => {
+    const rows = data?.data?.data;
+    if (Array.isArray(rows) && rows.length > 0) {
+      const lastRank = rows[rows.length - 1]?.rank;
+      if (lastRank != null) setRankNumber(lastRank);
+    }
+  }, [data]);
   const [exportLoading, setExportLoading] = useState(false);
   const columns = [
     {
-      title: "Rank",
+      title: t("results.rank"),
       dataIndex: "rank",
       key: "rank",
     },
     {
-      title: "Candidate Name",
+      title: t("results.candidateName"),
       dataIndex: "fullName",
       key: "fullName",
     },
     {
-      title: "Main Exam",
+      title: t("results.mainExam"),
       dataIndex: "date",
       key: "date",
     },
     {
-      title: "Speaking Date",
+      title: t("results.speakingDate"),
       dataIndex: "speakingDate",
       key: "speakingDate",
     },
     {
-      title: "Branch",
+      title: t("results.branch"),
       dataIndex: "branchName",
       key: "branchName",
     },
@@ -136,7 +157,7 @@ const ResultPage = () => {
       key: "speakingScore",
     },
     {
-      title: "Overall",
+      title: t("results.overall"),
       dataIndex: "overall",
       key: "overall",
       render: (text) => {
@@ -178,7 +199,7 @@ const ResultPage = () => {
       key: "actions",
       render: (_, record) => (
         <Link to={`/dashboard/contest/${record.bookingId}/TEST`}>
-          <Button>View</Button>
+          <Button>{t("common.view")}</Button>
         </Link>
       ),
     },
@@ -231,12 +252,12 @@ const ResultPage = () => {
   const menuItems = [
     {
       key: "1",
-      label: "Export PDF",
+      label: t("results.exportPdf"),
       onClick: () => exportHistory("pdf"),
     },
     {
       key: "2",
-      label: "Export Excel",
+      label: t("results.exportExcel"),
       onClick: () => exportHistory("excel"),
     },
   ];
@@ -253,30 +274,48 @@ const ResultPage = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <b>Select Date:</b>
+          <b>{t("results.selectDate")}:</b>
           <DatePicker
             style={{ width: "150px" }}
             value={date}
-            onChange={(val) => setDate(val || dayjs())}
+            onChange={(val) => {
+              setDate(val || dayjs());
+              setRankNumber(0);
+              setPagination((prev) => ({ ...prev, current: 1 }));
+            }}
           />
         </div>
-        <Dropdown
-          trigger={["click"]}
-          menu={{
-            items: menuItems,
-          }}
-        >
-          <Button type="primary" icon={"📤"} loading={exportLoading}>
-            Export
-          </Button>
-        </Dropdown>
+        <Flex gap={8}>
+          {isAdmin && (
+            <Button onClick={() => setRecheckOpen(true)}>
+              ♻️ {t("results.recheck")}
+            </Button>
+          )}
+          <Dropdown
+            trigger={["click"]}
+            menu={{
+              items: menuItems,
+            }}
+          >
+            <Button type="primary" icon={"📤"} loading={exportLoading}>
+              {t("common.export")}
+            </Button>
+          </Dropdown>
+        </Flex>
       </div>
+
+      {isAdmin && (
+        <RecheckWritingModal
+          open={recheckOpen}
+          onClose={() => setRecheckOpen(false)}
+        />
+      )}
       <Table
         size="small"
         title={() => (
           <Flex justify="center" gap={10} align="center">
             <Typography.Title level={3} style={{ margin: 0 }}>
-              Test results on the
+              {t("results.title")}
             </Typography.Title>
             <Typography.Title level={4} style={{ margin: 0, color: "#1890ff" }}>
               {date.format("DD MMMM YYYY, (dddd)  ")}

@@ -18,10 +18,12 @@ import { toast } from "react-toastify";
 import { checkRole } from "../../utils/roleUtils";
 import { Role } from "../../data/role";
 import { useSelector } from "react-redux";
+import { useT } from "../../i18n/useT";
 
 const { Option } = Select;
 
 const SpeakingPage = () => {
+  const t = useT();
   const [selectBranch, setSelectBranch] = useState();
   const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [status, setStatus] = useState(); // <-- server filter: status
@@ -118,41 +120,41 @@ const SpeakingPage = () => {
       width: 70,
     },
     {
-      title: "Student",
+      title: t("table.student"),
       dataIndex: "studentName",
       key: "studentName",
     },
     {
-      title: "Branch",
+      title: t("table.branch"),
       dataIndex: "branch",
       key: "branch",
     },
     {
-      title: "Speaker",
+      title: t("table.speaker"),
       dataIndex: "speakerName",
       key: "speakerName",
     },
     {
-      title: "Test Date",
+      title: t("table.testDate"),
       dataIndex: "testDate",
       key: "testDate",
     },
     {
-      title: "Test Shift",
+      title: t("table.testShift"),
       dataIndex: "time",
       key: "time",
       render: (time) => `🕒 ${time}`,
     },
     {
-      title: "Status",
+      title: t("common.status"),
       dataIndex: "status",
       key: "status",
       // IMPORTANT: use filters + controlled filteredValue for server-side filtering
       filters: [
-        { text: "Waiting", value: "WAITING" },
-        { text: "Process", value: "PROCESS" },
-        { text: "Completed", value: "COMPLETED" },
-        { text: "Failed", value: "FAILED" },
+        { text: t("contest.waiting"), value: "WAITING" },
+        { text: t("contest.process"), value: "PROCESS" },
+        { text: t("contest.completed"), value: "COMPLETED" },
+        { text: t("contest.failed"), value: "FAILED" },
       ],
       filterMultiple: true,
       filteredValue: Array.isArray(status) && status.length ? status : null, // controlled UI state
@@ -162,18 +164,24 @@ const SpeakingPage = () => {
         else if (status === "PROCESS") color = "orange";
         else if (status === "WAITING") color = "geekblue";
         else if (status === "FAILED") color = "red";
-        return <Tag color={color}>{status}</Tag>;
+        const labels = {
+          WAITING: t("contest.waiting"),
+          PROCESS: t("contest.process"),
+          COMPLETED: t("contest.completed"),
+          FAILED: t("contest.failed"),
+        };
+        return <Tag color={color}>{labels[status] || status}</Tag>;
       },
       // DO NOT use onFilter here (client-side). We handle it in handleTableChange.
     },
     {
-      title: "Payment",
+      title: t("contest.payment"),
       dataIndex: "payment",
       key: "payment",
       render: (payment) => {
         const isPayed = payment === "PAID";
         const color = isPayed ? "green" : payment === 'PENDING' ? 'yellow' : "red";
-        return <Tag color={color}>{isPayed ? "Paid" : payment === 'PENDING' ? 'Processing' : "Not Paid"}</Tag>;
+        return <Tag color={color}>{isPayed ? t("contest.paid") : payment === 'PENDING' ? t("contest.processing") : t("contest.notPaid")}</Tag>;
       },
     },
     {
@@ -190,12 +198,12 @@ const SpeakingPage = () => {
                   setIsSpeakingModalVisible(true);
                 }}
               >
-                Set Score
+                {t("speaking.setScore")}
               </Button>
             )}
           <Button type="primary">
             <Link to={`${record.id}/${record.type}`} style={{ color: "white" }}>
-              Details
+              {t("contest.details")}
             </Link>
           </Button>
         </Flex>
@@ -207,11 +215,11 @@ const SpeakingPage = () => {
 
   return (
     <div>
-      <h2>📋 Upcoming Speaking</h2>
+      <h2>📋 {t("speaking.upcomingTitle")}</h2>
       <Space style={{ marginBottom: 16, flexWrap: "wrap" }}>
         {checkRole(user.roles, Role.ROLE_ADMIN) && (
           <Select
-            placeholder="Select branch"
+            placeholder={t("contest.selectBranch")}
             style={{ width: 300 }}
             allowClear
             value={selectBranch}
@@ -262,20 +270,20 @@ const SpeakingPage = () => {
       />
 
       <Modal
-        title="Speaking Assessment"
+        title={t("speaking.assessment")}
         open={isSpeakingModalVisible}
         onOk={handleSpeakingModalOk}
         onCancel={handleSpeakingModalCancel}
         confirmLoading={speakingLoading} // <-- correct prop
         okButtonProps={{ disabled: speakingLoading }}
       >
-        <p>Current Speaking Score: {selectedSpeakingScore ?? "0.0"} ball</p>
+        <p>{t("speaking.currentScore")}: {selectedSpeakingScore ?? "0.0"}</p>
         <Input
           min={0.0}
           max={9.0}
           step={0.5}
           value={selectedSpeakingScore}
-          placeholder="Enter new speaking score (5.5)"
+          placeholder={t("speaking.enterScore")}
           type="number"
           onChange={handleInputChange}
         />

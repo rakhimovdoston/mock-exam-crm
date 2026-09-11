@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import SpeakingSlotsSection from "./SpeakingSlotsSection";
 import useApiRequest from "../../hooks/useApiRequest";
 import {
   Alert,
@@ -262,7 +263,7 @@ const BranchDetails = () => {
                       {(speaker.firstname?.[0] || "?").toUpperCase()}
                     </Flex>
                   }
-                  title={`${speaker.firstname || ""} ${speaker.lastname || ""}`.trim()}
+                  title={<Link to={`/dashboard/employee/${speaker.id}`}>{`${speaker.firstname || ""} ${speaker.lastname || ""}`.trim()}</Link>}
                   description={
                     <Space size={12}>
                       {speaker.phone && (
@@ -301,6 +302,9 @@ const BranchDetails = () => {
           <HolidaySection branchId={id} />
         </Col>
       </Row>
+
+      {/* ── Speaking Schedule ─────────────────────────────────────────────── */}
+      <SpeakingSlotsSection branchId={id} />
     </Space>
   );
 };

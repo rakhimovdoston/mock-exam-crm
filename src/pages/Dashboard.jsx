@@ -7,8 +7,10 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import Navbar from "../components/Navbar";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
+import { useT } from "../i18n/useT";
 
 const { Header, Content } = Layout;
 
@@ -16,6 +18,7 @@ const Dashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const t = useT();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -25,13 +28,13 @@ const Dashboard = () => {
   const userMenuItems = [
     {
       key: "settings",
-      label: "Settings",
+      label: t("nav.settings"),
       icon: <SettingOutlined />,
       onClick: () => navigate("/dashboard/settings"),
     },
     {
       key: "logout",
-      label: "Logout",
+      label: t("nav.logout"),
       icon: <LogoutOutlined />,
       onClick: handleLogout,
     },
@@ -51,10 +54,12 @@ const Dashboard = () => {
             background: "white",
             position: "sticky",
             padding: "20px",
+            gap: "16px",
             top: 0,
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           }}
         >
+          <LanguageSwitcher />
           <Dropdown
             menu={{ items: userMenuItems }}
             placement="bottomRight"

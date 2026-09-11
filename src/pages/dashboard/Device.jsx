@@ -2,8 +2,10 @@ import React, { useMemo, useState } from "react";
 import { Alert, Button, Card, Modal, Table, Typography, message } from "antd";
 import useApiRequest from "../../hooks/useApiRequest";
 import apiClient from "../../services/api";
+import { useT } from "../../i18n/useT";
 
 const Device = () => {
+  const t = useT();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -25,13 +27,13 @@ const Device = () => {
     if (!devices.length) {
       return [
         {
-          title: "Device ID",
+          title: t("devices.deviceId"),
           dataIndex: "deviceId",
           key: "deviceId",
           render: (value, _, index) => value ?? `#${index + 1}`,
         },
         {
-          title: "Created by",
+          title: t("devices.createdBy"),
           dataIndex: "createBy",
           key: "createBy",
           render: (value) => value ?? "-",
@@ -48,7 +50,7 @@ const Device = () => {
       render: (value) =>
         value === null || value === undefined ? "-" : String(value),
     }));
-  }, [devices]);
+  }, [devices, t]);
 
   const closeModal = () => setIsModalOpen(false);
 
@@ -95,17 +97,17 @@ const Device = () => {
         }}
       >
         <Typography.Title level={3} style={{ margin: 0 }}>
-          Devices
+          {t("devices.title")}
         </Typography.Title>
         <Button type="primary" onClick={() => setIsModalOpen(true)}>
-          Add Device
+          {t("devices.addDevice")}
         </Button>
       </div>
 
       {error && (
         <Alert
           type="error"
-          message="Failed to load devices"
+          message={t("devices.loadFailed")}
           description={
             error.message ||
             "Something went wrong while fetching the device list."
@@ -122,24 +124,24 @@ const Device = () => {
         rowKey={(record, index) => record?.id ?? record?.deviceId ?? index}
         pagination={false}
         locale={{
-          emptyText: loading ? " " : "No devices found",
+          emptyText: loading ? " " : t("devices.noDevices"),
         }}
       />
 
       <Modal
-        title="Add Device"
+        title={t("devices.addDevice")}
         open={isModalOpen}
         onOk={okHandle}
         onCancel={closeModal}
-        okText="Confirm"
-        cancelText="Cancel"
+        okText={t("common.confirmBtn")}
+        cancelText={t("common.cancel")}
         confirmLoading={isSubmitting}
       >
         <Typography.Paragraph strong style={{ marginBottom: 12 }}>
-          Are you sure you want to add this device?
+          {t("devices.addConfirm")}
         </Typography.Paragraph>
         <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-          Confirm to add this device to the system.
+          {t("devices.addConfirmDesc")}
         </Typography.Paragraph>
       </Modal>
     </Card>

@@ -1,9 +1,13 @@
 import React, { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Layout, Spin } from "antd";
+import { ConfigProvider, Layout, Spin } from "antd";
+import enUS from "antd/locale/en_US";
+import ruRU from "antd/locale/ru_RU";
+import uzUZ from "antd/locale/uz_UZ";
 import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./routes/ProtectedRouted";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { fetchProfile } from "./store/authReducer";
 import { Role } from "./data/role";
 import TestDates from "./pages/TestDates";
@@ -66,8 +70,11 @@ const Settings = React.lazy(() => import("./pages/Settings"));
 
 const { Content: AntContent } = Layout;
 
+const ANTD_LOCALES = { uz: uzUZ, ru: ruRU, en: enUS };
+
 function App() {
   const { accessToken, isLoggedIn, user } = useSelector((state) => state.auth);
+  const lang = useSelector((state) => state.app.lang);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -80,9 +87,11 @@ function App() {
   }, [isLoggedIn, accessToken]);
 
   return (
-    <Layout style={{ width: "100%", height: "100vh" }}>
-      <ToastContainer />
+    <ConfigProvider locale={ANTD_LOCALES[lang] || uzUZ}>
+      <Layout style={{ width: "100%", height: "100vh" }}>
+        <ToastContainer />
       <AntContent>
+        <ErrorBoundary>
         <Suspense
           fallback={
             <div
@@ -221,8 +230,10 @@ function App() {
             />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </AntContent>
-    </Layout>
+      </Layout>
+    </ConfigProvider>
   );
 }
 

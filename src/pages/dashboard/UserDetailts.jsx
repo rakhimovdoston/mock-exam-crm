@@ -46,6 +46,7 @@ import { calculateDuration, formatDate } from "../../utils/dateUtils";
 import dayjs from "dayjs";
 import { checkRole } from "../../utils/roleUtils";
 import { useSelector } from "react-redux";
+import { useT } from "../../i18n/useT";
 
 const { Title, Text } = Typography;
 
@@ -64,6 +65,7 @@ const LoadingSpinner = () => (
 
 const UserDetails = () => {
   const { id } = useParams();
+  const t = useT();
 
   const userRoles = useSelector((state) => state.auth);
 
@@ -227,10 +229,10 @@ const UserDetails = () => {
         <Space direction="vertical" style={{ width: "100%" }} align="start">
           {isEditing ? (
             <Form form={form} onFinish={handleSave} layout="vertical">
-              <h2>Update User details:</h2>
+              <h2>{t("userDetails.updateTitle")}</h2>
               <div style={{ display: "flex", width: "100%", gap: "10px" }}>
                 <Form.Item
-                  label="First Name"
+                  label={t("candidates.firstName")}
                   style={{ flex: 1 }}
                   name="firstname"
                   rules={[
@@ -241,7 +243,7 @@ const UserDetails = () => {
                 </Form.Item>
                 <Form.Item
                   style={{ flex: 1 }}
-                  label="Last Name"
+                  label={t("candidates.lastName")}
                   name="lastname"
                   rules={[{ required: true, message: "Last name is required" }]}
                 >
@@ -249,12 +251,12 @@ const UserDetails = () => {
                 </Form.Item>
               </div>
               <div style={{ display: "flex", width: "100%", gap: "10px" }}>
-                <Form.Item label="Email" style={{ flex: 1 }} name="email">
+                <Form.Item label={t("userDetails.email")} style={{ flex: 1 }} name="email">
                   <Input />
                 </Form.Item>
                 <Form.Item
                   name="phone"
-                  label="Phone"
+                  label={t("userDetails.phone")}
                   rules={[
                     {
                       required: true,
@@ -274,7 +276,7 @@ const UserDetails = () => {
               </div>
               <div style={{ display: "flex", width: "100%", gap: "10px" }}>
                 <Form.Item
-                  label="Username"
+                  label={t("userDetails.login")}
                   style={{ flex: 1 }}
                   name="username"
                   rules={[{ required: true, message: "Login is required" }]}
@@ -282,7 +284,7 @@ const UserDetails = () => {
                   <Input />
                 </Form.Item>
                 <Form.Item
-                  label="Password"
+                  label={t("userDetails.password")}
                   name="password"
                   rules={[{ required: true, message: "Password is required" }]}
                 >
@@ -296,9 +298,11 @@ const UserDetails = () => {
                   loading={updateLoading}
                   disabled={updateLoading}
                 >
-                  Save
+                  {t("common.save")}
                 </Button>
-                <Button onClick={() => setIsEditing(false)}>Cancel</Button>
+                <Button onClick={() => setIsEditing(false)}>
+                  {t("common.cancel")}
+                </Button>
               </Space>
             </Form>
           ) : (
@@ -306,38 +310,38 @@ const UserDetails = () => {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                <Typography>Full name:</Typography>
+                <Typography>{t("userDetails.fullName")}:</Typography>
                 <Title level={3} style={{ margin: 0 }}>
                   {user?.firstname} {user?.lastname}
                 </Title>
               </div>
               <Text>
-                Email: <b>{user?.email}</b>
+                {t("userDetails.email")}: <b>{user?.email}</b>
               </Text>
               <Text>
-                Phone: <b>{user?.phone}</b>
+                {t("userDetails.phone")}: <b>{user?.phone}</b>
               </Text>
               <Text>
-                Login: <b>{user?.username}</b>
+                {t("userDetails.login")}: <b>{user?.username}</b>
               </Text>
               <Text>
-                Password: <b>{user?.password}</b>
+                {t("userDetails.password")}: <b>{user?.password}</b>
               </Text>
               <Button type="primary" onClick={handleEdit}>
-                Edit Details
+                {t("userDetails.editDetails")}
               </Button>
               <Divider style={{ margin: "4px 0" }} />
               {tempAccessActive ? (
                 <Flex vertical gap={8} align="flex-start">
                   <Tag color="orange" icon={<UnlockOutlined />}>
-                    Temporary access active: until {tempAccessUntil || "—"}
+                    {t("userDetails.tempActive")} {tempAccessUntil || "—"}
                   </Tag>
                   <Button
                     danger
                     loading={tempAccessLoading}
                     onClick={handleRevokeAccess}
                   >
-                    Revoke Access
+                    {t("userDetails.revokeAccess")}
                   </Button>
                 </Flex>
               ) : (
@@ -345,7 +349,7 @@ const UserDetails = () => {
                   icon={<LockOutlined />}
                   onClick={() => setTempAccessModalOpen(true)}
                 >
-                  Grant Temporary Access
+                  {t("userDetails.grantAccess")}
                 </Button>
               )}
             </>
@@ -355,7 +359,7 @@ const UserDetails = () => {
 
       {/* Temporary Access Modal */}
       <Modal
-        title={`Grant Temporary Access — ${user?.firstname} ${user?.lastname}`}
+        title={`${t("userDetails.grantTitle")} — ${user?.firstname} ${user?.lastname}`}
         open={tempAccessModalOpen}
         onCancel={() => {
           setTempAccessModalOpen(false);
@@ -363,8 +367,8 @@ const UserDetails = () => {
           setTempDuration(30);
         }}
         onOk={handleGrantAccess}
-        okText="Grant"
-        cancelText="Cancel"
+        okText={t("userDetails.grant")}
+        cancelText={t("common.cancel")}
         confirmLoading={tempAccessLoading}
         okButtonProps={{
           disabled:
@@ -373,12 +377,12 @@ const UserDetails = () => {
       >
         <Space direction="vertical" style={{ width: "100%" }}>
           <Text>
-            User:{" "}
+            {t("userDetails.userLabel")}:{" "}
             <b>
               {user?.firstname} {user?.lastname}
             </b>
           </Text>
-          <Text>Duration:</Text>
+          <Text>{t("userDetails.duration")}:</Text>
           <Radio.Group
             value={isCustomDuration ? "custom" : tempDuration}
             onChange={(e) => {
@@ -393,7 +397,7 @@ const UserDetails = () => {
             <Radio.Button value={15}>15 min</Radio.Button>
             <Radio.Button value={30}>30 min</Radio.Button>
             <Radio.Button value={60}>60 min</Radio.Button>
-            <Radio.Button value="custom">Custom</Radio.Button>
+            <Radio.Button value="custom">{t("userDetails.custom")}</Radio.Button>
           </Radio.Group>
           {isCustomDuration && (
             <InputNumber
@@ -402,13 +406,13 @@ const UserDetails = () => {
               onChange={setCustomDuration}
               addonAfter="min"
               style={{ width: 160 }}
-              placeholder="Enter minutes"
+              placeholder={t("userDetails.enterMinutes")}
             />
           )}
         </Space>
       </Modal>
 
-      <Divider>Booking and Test History</Divider>
+      <Divider>{t("userDetails.bookingHistory")}</Divider>
 
       {historyLoading ? (
         <Spin />
@@ -443,11 +447,11 @@ const UserDetails = () => {
             };
 
             const paymentLabelMap = {
-              PENDING: "⏳ Awaiting Payment",
-              CREATED: "📋 Order Created",
-              PAID: "✓ Paid",
-              CANCELLED: "✕ Cancelled",
-              EXPIRED: "⌛ Expired",
+              PENDING: `⏳ ${t("userDetails.awaitingPayment")}`,
+              CREATED: `📋 ${t("userDetails.orderCreated")}`,
+              PAID: `✓ ${t("userDetails.paid")}`,
+              CANCELLED: `✕ ${t("userDetails.cancelled")}`,
+              EXPIRED: `⌛ ${t("userDetails.expired")}`,
             };
 
             const handlePaymentStatusChange = async () => {
@@ -659,14 +663,14 @@ const UserDetails = () => {
                           {item.mockPackages.name}
                         </Title>
                         <Text>
-                          <CalendarOutlined /> Registered Date:{" "}
+                          <CalendarOutlined /> {t("userDetails.registeredDate")}:{" "}
                           {formatDate(item.date)}
                         </Text>
                         <Button
                           type={selectTab === "booking" ? "primary" : "default"}
                           onClick={() => setSelectTab("booking")}
                         >
-                          Total Session: {item.mockPackages.totalSessions}
+                          {t("userDetails.totalSession")}: {item.mockPackages.totalSessions}
                         </Button>
                         <Button
                           type={
@@ -674,7 +678,7 @@ const UserDetails = () => {
                           }
                           onClick={() => setSelectTab("speaking")}
                         >
-                          Speaking Session: {item.mockPackages.speakingSessions}
+                          {t("userDetails.speakingSession")}: {item.mockPackages.speakingSessions}
                         </Button>
                       </div>
                       {currentPayment === "PAID" ? (
@@ -682,7 +686,7 @@ const UserDetails = () => {
                           color="green"
                           style={{ fontSize: 13, padding: "4px 10px" }}
                         >
-                          ✓ Paid
+                          ✓ {t("userDetails.paid")}
                         </Tag>
                       ) : !checkRole(userRoles.user.roles, "ROLE_ADMIN") ? (
                         <Tag
@@ -709,16 +713,16 @@ const UserDetails = () => {
                       )}
 
                       <Modal
-                        title="Change Payment Status"
+                        title={t("userDetails.changePayment")}
                         open={paymentModalOpen}
                         onCancel={() => setPaymentModalOpen(false)}
                         onOk={handlePaymentStatusChange}
-                        okText="Save"
-                        cancelText="Cancel"
+                        okText={t("common.save")}
+                        cancelText={t("common.cancel")}
                         confirmLoading={paymentLoading}
                       >
                         <p style={{ marginBottom: 12 }}>
-                          Booking: <b>{item.mockPackages.name}</b>
+                          {t("userDetails.bookingLabel")}: <b>{item.mockPackages.name}</b>
                         </p>
                         <Radio.Group
                           value={selectedPayment}
@@ -726,13 +730,13 @@ const UserDetails = () => {
                           optionType="button"
                           buttonStyle="solid"
                         >
-                          <Radio.Button value="PENDING">Pending</Radio.Button>
-                          <Radio.Button value="CREATED">Created</Radio.Button>
-                          <Radio.Button value="PAID">Paid</Radio.Button>
+                          <Radio.Button value="PENDING">{t("userDetails.pending")}</Radio.Button>
+                          <Radio.Button value="CREATED">{t("userDetails.created")}</Radio.Button>
+                          <Radio.Button value="PAID">{t("userDetails.paid")}</Radio.Button>
                           <Radio.Button value="CANCELLED">
-                            Cancelled
+                            {t("userDetails.cancelled")}
                           </Radio.Button>
-                          <Radio.Button value="EXPIRED">Expired</Radio.Button>
+                          <Radio.Button value="EXPIRED">{t("userDetails.expired")}</Radio.Button>
                         </Radio.Group>
                       </Modal>
                     </div>
@@ -756,10 +760,10 @@ const UserDetails = () => {
                                 align="center"
                                 gap={20}
                               >
-                                <p>Speaking Details</p>
+                                <p>{t("userDetails.speakingDetails")}</p>
                                 <p>
-                                  Current Score: {speaking?.score || "0.0"}{" "}
-                                  score
+                                  {t("userDetails.currentScore")}:{" "}
+                                  {speaking?.score || "0.0"}
                                 </p>
                               </Flex>
                             }
@@ -784,13 +788,13 @@ const UserDetails = () => {
                                   style={{ width: "100%" }}
                                 >
                                   <Flex gap={10} align="center">
-                                    <Text strong>Date:</Text>
+                                    <Text strong>{t("userDetails.date")}:</Text>
                                     <Tag color="blue">
                                       {speaking?.date || "N/A"}
                                     </Tag>
                                   </Flex>
                                   <Flex gap={10} align="center">
-                                    <Text strong>Time:</Text>
+                                    <Text strong>{t("userDetails.time")}:</Text>
                                     <Tag color="blue">
                                       {speaking?.time || "N/A"}
                                     </Tag>
@@ -801,11 +805,11 @@ const UserDetails = () => {
                                   style={{ width: "100%" }}
                                 >
                                   <Flex gap={10} align="center">
-                                    <Text strong>Branch:</Text>
+                                    <Text strong>{t("userDetails.branch")}:</Text>
                                     <Text>{speaking?.branchName || "N/A"}</Text>
                                   </Flex>
                                   <Flex gap={10} align="center">
-                                    <Text strong>Speaking Examiner Name:</Text>
+                                    <Text strong>{t("userDetails.examinerName")}:</Text>
                                     <Text>
                                       {speaking?.speakerName || "N/A"}
                                     </Text>
@@ -823,12 +827,12 @@ const UserDetails = () => {
                                   setSelectedSpeaking(speaking);
                                 }}
                               >
-                                Set speaking score
+                                {t("userDetails.setSpeakingScore")}
                               </Button>
                               <Modal
                                 title={
                                   <p>
-                                    Set Speaking Score for{" "}
+                                    {t("userDetails.setScoreFor")}{" "}
                                     <b>{selectedSpeaking?.date}</b>
                                   </p>
                                 }
@@ -842,14 +846,14 @@ const UserDetails = () => {
                                 onCancel={handleSpeakingModalCancel}
                               >
                                 <p>
-                                  Current Speaking Score:{" "}
+                                  {t("userDetails.currentSpeakingScore")}:{" "}
                                   {selectedSpeakingScore ?? "0.0"}
                                 </p>
                                 <Input
                                   min={0.0}
                                   max={9.0}
                                   value={selectedSpeakingScore}
-                                  placeholder="Enter new speaking score (5.5)"
+                                  placeholder={t("userDetails.enterScore")}
                                   type="number"
                                   onChange={handleInputChange}
                                 />
@@ -887,15 +891,16 @@ const UserDetails = () => {
                                   }}
                                 >
                                   <Text>
-                                    <CalendarOutlined /> Speaking Date for
-                                    Sessions Booked: {formatDate(group.date)}
+                                    <CalendarOutlined />{" "}
+                                    {t("userDetails.speakingDateBooked")}:{" "}
+                                    {formatDate(group.date)}
                                   </Text>
                                   <Text>
-                                    <BranchesOutlined /> Branch:{" "}
+                                    <BranchesOutlined /> {t("userDetails.branch")}:{" "}
                                     {group.branchName}
                                   </Text>
                                   <Text>
-                                    Speaking Examiner: {group.speakerName}
+                                    {t("userDetails.examiner")}: {group.speakerName}
                                   </Text>
                                 </div>
                               }
@@ -925,7 +930,7 @@ const UserDetails = () => {
                                               }}
                                             >
                                               <Text>
-                                                <CalendarOutlined /> Test Date:{" "}
+                                                <CalendarOutlined /> {t("userDetails.testDate")}:{" "}
                                                 {formatDate(result.testDate)}
                                               </Text>
                                               <div
@@ -944,7 +949,7 @@ const UserDetails = () => {
                                                     {result.status ===
                                                     "success" ? (
                                                       <>
-                                                        <p>Email sent: </p>
+                                                        <p>{t("userDetails.emailSent")}: </p>
                                                         <CheckCircleOutlined
                                                           style={{
                                                             color:
@@ -956,7 +961,7 @@ const UserDetails = () => {
                                                     ) : result.status ===
                                                       "waiting" ? (
                                                       <>
-                                                        <p>Email waiting:</p>
+                                                        <p>{t("userDetails.emailWaiting")}:</p>
                                                         <LoadingOutlined
                                                           style={{
                                                             color:
@@ -967,7 +972,7 @@ const UserDetails = () => {
                                                       </>
                                                     ) : (
                                                       <>
-                                                        <p>Email sent:</p>
+                                                        <p>{t("userDetails.emailSent")}:</p>
                                                         <CloseCircleOutlined
                                                           style={{
                                                             color:
@@ -988,7 +993,7 @@ const UserDetails = () => {
                                                     {result.smsStatus ===
                                                     "success" ? (
                                                       <>
-                                                        <p>Sms sent: </p>
+                                                        <p>{t("userDetails.smsSent")}: </p>
                                                         <CheckCircleOutlined
                                                           style={{
                                                             color:
@@ -1000,7 +1005,7 @@ const UserDetails = () => {
                                                     ) : result.smsStatus ===
                                                       "waiting" ? (
                                                       <>
-                                                        <p>Sms waiting:</p>
+                                                        <p>{t("userDetails.smsWaiting")}:</p>
                                                         <LoadingOutlined
                                                           style={{
                                                             color:
@@ -1011,7 +1016,7 @@ const UserDetails = () => {
                                                       </>
                                                     ) : (
                                                       <>
-                                                        <p>Sms sent: </p>
+                                                        <p>{t("userDetails.smsSent")}: </p>
                                                         <CloseCircleOutlined
                                                           style={{
                                                             color:
@@ -1023,7 +1028,7 @@ const UserDetails = () => {
                                                     )}
                                                   </Flex>
                                                 )}
-                                                <Tooltip title="Recalculate the student's answer">
+                                                <Tooltip title={t("userDetails.recalcTip")}>
                                                   <Button
                                                     icon={<ReloadOutlined />}
                                                     loading={answerLoading}
@@ -1033,7 +1038,7 @@ const UserDetails = () => {
                                                   />
                                                 </Tooltip>
 
-                                                <Tooltip title="Download the candidate's answer">
+                                                <Tooltip title={t("userDetails.downloadTip")}>
                                                   <Button
                                                     icon={<DownloadOutlined />}
                                                     loading={answerLoading}
@@ -1041,10 +1046,10 @@ const UserDetails = () => {
                                                       downloadAnswers(result)
                                                     }
                                                   >
-                                                    Download
+                                                    {t("userDetails.download")}
                                                   </Button>
                                                 </Tooltip>
-                                                <Tooltip title="Send to user his answer">
+                                                <Tooltip title={t("userDetails.sendTip")}>
                                                   <Button
                                                     type="primary"
                                                     disabled={
@@ -1055,7 +1060,7 @@ const UserDetails = () => {
                                                     }
                                                     loading={answerLoading}
                                                   >
-                                                    Send answer
+                                                    {t("userDetails.sendAnswer")}
                                                   </Button>
                                                 </Tooltip>
                                               </div>
@@ -1077,7 +1082,7 @@ const UserDetails = () => {
                                                 }}
                                               >
                                                 <Text>
-                                                  <BranchesOutlined /> Branch:{" "}
+                                                  <BranchesOutlined /> {t("userDetails.branch")}:{" "}
                                                   <span
                                                     style={{
                                                       fontWeight: "bold",
@@ -1088,7 +1093,7 @@ const UserDetails = () => {
                                                 </Text>
                                                 <Text>
                                                   <ClockCircleOutlined />{" "}
-                                                  Duration:{" "}
+                                                  {t("userDetails.duration2")}:{" "}
                                                   <span
                                                     style={{
                                                       color: token.colorPrimary,
@@ -1103,8 +1108,7 @@ const UserDetails = () => {
                                                 <Text
                                                   style={{ fontWeight: "bold" }}
                                                 >
-                                                  <ClockCircleOutlined /> Test
-                                                  Time:{" "}
+                                                  <ClockCircleOutlined /> {t("userDetails.testTime")}:{" "}
                                                   <span
                                                     style={{
                                                       color: token.colorPrimary,
@@ -1126,7 +1130,7 @@ const UserDetails = () => {
                                                   to={`/dashboard/contest/${result.bookingId}/TEST`}
                                                 >
                                                   <Button type="primary">
-                                                    View booking detail
+                                                    {t("userDetails.viewBooking")}
                                                   </Button>
                                                 </Link>
                                               </Space>
@@ -1194,7 +1198,7 @@ const UserDetails = () => {
                                                 }}
                                               >
                                                 <Text>
-                                                  <BranchesOutlined /> Branch:{" "}
+                                                  <BranchesOutlined /> {t("userDetails.branch")}:{" "}
                                                   <span
                                                     style={{
                                                       fontWeight: "bold",
@@ -1206,8 +1210,7 @@ const UserDetails = () => {
                                                 <Text
                                                   style={{ fontWeight: "bold" }}
                                                 >
-                                                  <ClockCircleOutlined /> Test
-                                                  Date:{" "}
+                                                  <ClockCircleOutlined /> {t("userDetails.testDate")}:{" "}
                                                   <span
                                                     style={{
                                                       color: !isBeforeDate
@@ -1223,8 +1226,7 @@ const UserDetails = () => {
                                                 <Text
                                                   style={{ fontWeight: "bold" }}
                                                 >
-                                                  <ClockCircleOutlined /> Test
-                                                  Time:{" "}
+                                                  <ClockCircleOutlined /> {t("userDetails.testTime")}:{" "}
                                                   <span
                                                     style={{
                                                       color: !isBeforeDate
@@ -1245,14 +1247,14 @@ const UserDetails = () => {
                                                   }}
                                                 >
                                                   {!isBeforeDate
-                                                    ? "The student did not pass the exam"
-                                                    : "Exam is waiting"}
+                                                    ? t("userDetails.notPassed")
+                                                    : t("userDetails.examWaiting")}
                                                 </Text>
                                                 <Link
                                                   to={`/dashboard/contest/${result.id}/TEST`}
                                                 >
                                                   <Button type="primary">
-                                                    View booking detail
+                                                    {t("userDetails.viewBooking")}
                                                   </Button>
                                                 </Link>
                                               </Space>
