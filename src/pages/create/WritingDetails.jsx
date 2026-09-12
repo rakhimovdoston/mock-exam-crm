@@ -37,7 +37,6 @@ const WritingDetails = () => {
         const imageUrl = response.data?.url;
         if (imageUrl) {
           setUploadedImageUrl(imageUrl);
-          toast.success(`${file.name} uploaded successfully.`);
           setRefresh((prev) => prev + 1);
         } else {
           toast.error("Failed to retrieve image URL from server.");
@@ -123,10 +122,10 @@ const WritingDetails = () => {
         toast.error(response.message || "Failed Update Writing");
         return;
       }
-      toast.success("Successfull writing updated")
+      toast.success("Writing task updated")
       navigate("/dashboard/ielts/writing");
     } catch (error) {
-      toast.error(error.message || "Failed update writing!")
+      toast.error(error.message || "Failed to update the writing task")
       console.log("Failed update: ", error); 
     } finally {
       setUpdateLoading(true);

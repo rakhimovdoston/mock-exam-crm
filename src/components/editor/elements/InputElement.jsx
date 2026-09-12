@@ -7,6 +7,8 @@ import { updateAnswer } from "../../../store/answerReducer";
 import { getValueFromAnswer } from "../../../utils";
 import { updateForUserAnswers } from "../../../store/examReducer";
 import { useLocation } from "react-router-dom";
+import { useDrag } from "../contexts/DragContext";
+import DropZone from "./view/DropZone";
 
 const InputElement = ({
   attributes,
@@ -16,6 +18,7 @@ const InputElement = ({
   dragAndDrop = false,
 }) => {
   const location = useLocation();
+  const { onDropAnswer, onClearAnswer } = useDrag();
   const editor = useSlateStatic();
   const path = ReactEditor.findPath(editor, element);
   const { answers } = useSelector((state) => state.answer);
@@ -82,18 +85,29 @@ const InputElement = ({
     setIsModalOpen(false);
   };
 
-  const handleDrop = (e, questionNumber) => {
-    e.preventDefault();
-    const data = e.dataTransfer.getData("drag-item");
-    if (data) {
-      const dropped = JSON.parse(data);
-      if (answers.length > 0) {
-        dispatch(updateAnswer({ key: questionNumber, value: dropped.value }));
-      } else {
-        dispatch(
-          updateForUserAnswers({ key: questionNumber, value: dropped.value })
-        );
-      }
+  // Inside the viewer these come from DragProvider; the standalone editor has
+  // no provider, so fall back to dispatching straight to the right store.
+  const dropAnswer = (key, value, fromKey) => {
+    if (onDropAnswer) {
+      onDropAnswer(key, value, fromKey);
+      return;
+    }
+    if (answers.length > 0) {
+      dispatch(updateAnswer({ key, value }));
+    } else {
+      dispatch(updateForUserAnswers({ key, value }));
+    }
+  };
+
+  const clearAnswer = (key) => {
+    if (onClearAnswer) {
+      onClearAnswer(key);
+      return;
+    }
+    if (answers.length > 0) {
+      dispatch(updateAnswer({ key, value: "" }));
+    } else {
+      dispatch(updateForUserAnswers({ key, value: "" }));
     }
   };
 
@@ -116,52 +130,39 @@ const InputElement = ({
 
   if (dragAndDrop) {
     const questionNumber = parseInt(element.placeholder, 10);
+
     return (
-      <div style={{ display: "inline-flex" }}>
-        <div
-          onDrop={(e) => handleDrop(e, questionNumber)}
-          onDragOver={(e) => e.preventDefault()}
-          // onDragEnter={handleDragEnter}
-          // onDragLeave={handleDragLeave}
-          style={{
-            width: getValueDragAndDrop() ? "fit-content" : 100,
-            minHeight: 10,
-            border: `2px dashed #ccc`,
-            borderRadius: 6,
-            background: "#fafafa",
-            margin: "4px",
-            fontSize: `${size}px`,
-            display: "flex",
-            padding: "1px 8px",
-            justifyContent: "center",
-            alignItems: "center",
-            fontWeight: 500,
-          }}
-        >
-          {getValueDragAndDrop() ? (
-            <strong>{getValueDragAndDrop()}</strong>
-          ) : (
-            <strong style={{ opacity: 1 }}>{questionNumber}</strong>
-          )}
-        </div>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <DropZone
+          questionNumber={questionNumber}
+          value={getValueDragAndDrop()}
+          onDropAnswer={dropAnswer}
+          onClearAnswer={clearAnswer}
+          fontSize={size}
+          emptyWidth={120}
+          placeholder="Drop here"
+        />
         <span>{children}</span>
-      </div>
+      </span>
     );
   }
 
-  const hasAnswer = Boolean(inpValue || selectedValues);
+  const currentValue = inpValue || getValue();
+  const hasAnswer = Boolean(
+    checkUrl() && view ? inpValue || selectedValues : currentValue
+  );
 
   return (
     <span
       {...attributes}
       contentEditable={false}
-      style={{ display: "inline-flex", alignItems: "center", margin: "4px" }}
+      className={`exam-gap${hasAnswer ? " exam-gap--filled" : ""}`}
     >
       {checkUrl() && view ? (
         <>
           <Button
             type={hasAnswer ? "primary" : "default"}
-            style={{ width: "100px" }}
+            style={{ minWidth: "100px" }}
             onClick={() => setIsModalOpen(true)}
           >
             {element.placeholder}
@@ -191,8 +192,12 @@ const InputElement = ({
         <Input
           type={element.inputType || "text"}
           id={"ques-" + (element.placeholder || "input")}
-          placeholder={element.placeholder}
-          value={inpValue || getValue()}
+          prefix={
+            element.placeholder ? (
+              <span className="exam-gap__num">{element.placeholder}</span>
+            ) : null
+          }
+          value={currentValue}
           autoComplete="off"
           spellCheck={false}
           autoCorrect="off"
@@ -200,12 +205,7 @@ const InputElement = ({
           allowClear={false}
           onChange={handleChange}
           onBlur={handleBlur}
-          style={{
-            padding: "4px",
-            borderRadius: "10px",
-            textAlign: "center",
-            fontSize: `${size}px`,
-          }}
+          style={{ fontSize: `${size}px` }}
         />
       )}
       {children}

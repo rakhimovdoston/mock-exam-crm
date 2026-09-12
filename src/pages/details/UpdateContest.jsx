@@ -187,7 +187,7 @@ const UpdateContest = () => {
         toast.error(response.message || "Not changed");
         return;
       }
-      toast.success("Successfull changed!");
+      toast.success("Booking updated.");
       navigate(`/dashboard/${type === "TEST" ? "contest" : "speaking"}`);
     } catch (err) {
       toast.error("Not updated");

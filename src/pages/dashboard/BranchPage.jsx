@@ -39,12 +39,12 @@ const BranchPage = () => {
         `api/v1/${type}/active/${id}?active=${!active}`
       );
       if (response.code !== 200) {
-        toast.error(response.message || `Failed update ${type}`);
+        toast.error(response.message || `Failed to update ${type}.`);
       }
-      toast.success(`Successfull update ${type}`);
+      toast.success(`${type} updated.`);
       setRefresh((prev) => prev + 1);
     } catch (err) {
-      toast.error(err.message || `Failed update ${type}`);
+      toast.error(err.message || `Failed to update ${type}.`);
     }
   };
   const [form] = Form.useForm();

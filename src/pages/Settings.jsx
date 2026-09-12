@@ -46,7 +46,7 @@ const Settings = () => {
         );
         return;
       }
-      toast.success("Porfile info successfull changed!");
+      toast.success("Profile updated.");
       profileForm.resetFields();
     } catch (err) {
       toast.error(
@@ -70,7 +70,7 @@ const Settings = () => {
         );
         return;
       }
-      toast.success("Porfile info successfull changed!");
+      toast.success("Profile updated.");
       passwordForm.resetFields();
       setUpdatePassword(false);
     } catch (err) {

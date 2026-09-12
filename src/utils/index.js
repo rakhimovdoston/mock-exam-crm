@@ -421,3 +421,17 @@ export const countListHeaderOrDragDrop = (content) => {
   }
   return count;
 };
+
+const PART_LABELS = {
+  part_1: "Part 1",
+  part_2: "Part 2",
+  part_3: "Part 3",
+  part_4: "Part 4",
+  easy: "Passage 1",
+  medium: "Passage 2",
+  hard: "Passage 3",
+};
+
+/** Human label for an exam part/passage key, with a positional fallback. */
+export const getPartLabel = (type, index = 0) =>
+  PART_LABELS[type] || `Part ${index + 1}`;

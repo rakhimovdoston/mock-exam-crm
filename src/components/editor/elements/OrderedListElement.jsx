@@ -1,6 +1,16 @@
 import React from "react";
+import { useReturnDrop } from "../contexts/DragContext";
 
-const OrderedListElement = ({ attributes, children, element }) => {  
+const OrderedListElement = ({
+  attributes,
+  children,
+  element,
+  is_passage = false,
+}) => {
+  // Question-side lists double as the word bank for drag & drop questions.
+  const { isOver, dropProps } = useReturnDrop();
+  const isBank = !is_passage;
+
   const checkISDecimal = (element) => {
     return element.listStyleType === "decimal" ? element.start : 1;
   };
@@ -31,39 +41,16 @@ const OrderedListElement = ({ attributes, children, element }) => {
   if (isDecimal(element) && checkMatchingInformation) {
 
     return (
-      <div style={{ width: "100%" }}>
-        <table
-          style={{
-            borderCollapse: "collapse",
-            width: "100%",
-            tableLayout: "fixed",
-          }}
-        >
+      <div style={{ width: "100%", overflowX: "auto" }}>
+        <table className="exam-matching-table">
           <thead>
-            <tr style={{ backgroundColor: "#f7f7f7" }}>
-              <th
-                style={{
-                  textAlign: "left",
-                  paddingRight: "12px",
-                  border: "1px solid #ccc",
-                }}
-              ></th>
-              {/* <div style={{ display: "flex", justifyContent: "flex-end" }}> */}
+            <tr>
+              <th></th>
               {itemElement.headingOptions.map((heading, index) => (
-                <th
-                  key={index}
-                  style={{
-                    textAlign: "center",
-                    width: "28px",
-                    height: "48px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                  }}
-                >
+                <th key={index} style={{ width: "56px" }}>
                   {heading.value}
                 </th>
               ))}
-              {/* </div> */}
             </tr>
           </thead>
           <tbody {...attributes}>{children}</tbody>
@@ -75,6 +62,8 @@ const OrderedListElement = ({ attributes, children, element }) => {
   return (
     <ol
       {...attributes}
+      {...(isBank ? dropProps : {})}
+      className={isBank ? `exam-bank${isOver ? " exam-bank--over" : ""}` : ""}
       style={{
         listStyle: element.listStyleType || "decimal",
         padding: "0 0 0 20px",

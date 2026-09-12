@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Layout, Spin, Splitter } from "antd";
+import { Button, Layout, Result, Spin, Splitter } from "antd";
 
 import ExamHeader from "../../components/layouts/ExamHeader";
 import ExamFooter from "../../components/layouts/ExamFooter";
@@ -16,8 +16,12 @@ import {
   getQuestionNumbers,
   getQuestionNumbersForHeadins,
 } from "../../utils";
+import "../../styles/exam.css";
 
 const { Content } = Layout;
+
+// How far, in % of the pane width, a part slides aside when it is not open.
+const PANE_TRAVEL = 55;
 
 const ReadingExam = () => {
   const { id } = useParams();
@@ -51,10 +55,25 @@ const ReadingExam = () => {
   if (error || !examParts.length) {
     return (
       <CenteredContainer>
-        <h2>Error loading exam data</h2>
+        <Result
+          status="warning"
+          title="We could not load this section"
+          subTitle="Please refresh the page. If the problem continues, call your invigilator."
+          extra={
+            <Button type="primary" onClick={() => window.location.reload()}>
+              Reload
+            </Button>
+          }
+        />
       </CenteredContainer>
     );
   }
+
+  // Position in the filmstrip that every pane is offset against.
+  const activeIndex = Math.max(
+    examParts.findIndex((part) => part.type === selectedPart),
+    0
+  );
 
   const countListHeader = (content) => {
     let count = 0;
@@ -79,6 +98,7 @@ const ReadingExam = () => {
     >
       <ExamHeader type="reading" />
       <Content
+        className="exam-body"
         style={{
           flex: 1,
           overflow: "hidden",
@@ -86,35 +106,33 @@ const ReadingExam = () => {
           flexDirection: "column",
         }}
       >
-        <div
-          style={{
-            position: "relative",
-            flex: 1,
-            overflowY: "auto",
-          }}
-        >
-          {examParts.map((part) => {
+        <div className="exam-panes">
+          {examParts.map((part, index) => {
+            const isActive = part.type == selectedPart;
+            // Panes travel a fraction of the full width, which reads as a
+            // gentle parallax rather than a hard filmstrip snap.
+            const offset = (index - activeIndex) * PANE_TRAVEL;
+
             return (
-              <Splitter
+              <div
                 key={part.id}
+                className={`exam-pane${isActive ? " exam-pane--active" : ""}`}
                 style={{
-                  display: part.type == selectedPart ? "flex" : "none",
-                  boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+                  transform: `translateX(${offset}%) scale(${
+                    isActive ? 1 : 0.985
+                  })`,
                 }}
               >
+                <Splitter style={{ height: "100%", background: "var(--exam-bg)" }}>
                 <Splitter.Panel defaultSize="50%" min="40%" max="60%">
-                  <div>
-                    <h2 style={{ padding: "10px" }}>
+                  <div className="exam-split-panel">
+                    <h2 className="exam-passage-title">
                       Reading Passage{" "}
                       {getPassageNumberByPassageType(selectedPart)}
                     </h2>
                     <p
-                      style={{
-                        padding: "0 10px",
-                        fontStyle: "italic",
-                        fontSize: `${size}px`,
-                        margin: 0,
-                      }}
+                      className="exam-passage-note"
+                      style={{ fontSize: `${size}px` }}
                     >
                       You should spend about 20 minutes on{" "}
                       <b>Questions {getNumberByPassageType(selectedPart)}</b>,
@@ -129,33 +147,34 @@ const ReadingExam = () => {
                     />
                   </div>
                 </Splitter.Panel>
-                <Splitter.Panel style={{ padding: "10px" }}>
-                  {part.questions.map((question) => (
-                    <div key={question.id}>
-                      <p
-                        style={{
-                          fontSize: `${size}px`,
-                          fontWeight: "bold",
-                          color: "#1677ff",
-                        }}
+                <Splitter.Panel>
+                  <div className="exam-split-panel">
+                    {part.questions.map((question) => (
+                      <div
+                        key={question.id}
+                        className="exam-panel"
+                        style={{ padding: "16px 18px", marginBottom: 16 }}
                       >
-                        Questions{" "}
-                        {question.type === "Matching Headings"
-                          ? getQuestionNumbersForHeadins(
-                              countListHeader(part.content),
-                              part.type
-                            )
-                          : getQuestionNumbers(question)}
-                      </p>
-                      <RichTextViewer
-                        headings={countListHeader(part.content)}
-                        content={question.content}
-                        type={question.type}
-                      />
-                    </div>
-                  ))}
+                        <h2 className="exam-section-title">
+                          Questions{" "}
+                          {question.type === "Matching Headings"
+                            ? getQuestionNumbersForHeadins(
+                                countListHeader(part.content),
+                                part.type
+                              )
+                            : getQuestionNumbers(question)}
+                        </h2>
+                        <RichTextViewer
+                          headings={countListHeader(part.content)}
+                          content={question.content}
+                          type={question.type}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </Splitter.Panel>
-              </Splitter>
+                </Splitter>
+              </div>
             );
           })}
         </div>

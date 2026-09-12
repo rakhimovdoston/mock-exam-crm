@@ -1,8 +1,7 @@
 import React from "react";
-import { Card, Layout } from "antd";
 import { useSelector } from "react-redux";
-
-const { Footer } = Layout;
+import { getPartLabel } from "../../utils";
+import "../../styles/exam.css";
 
 const ExamFooter = ({ selectPart, setSelectPart }) => {
   const { answers } = useSelector((state) => state.exam);
@@ -20,67 +19,81 @@ const ExamFooter = ({ selectPart, setSelectPart }) => {
     }
     return numbers;
   };
+
+  // Flatten one part into question chips: { number, answered }
+  const getQuestionChips = (part) =>
+    (part.answers || []).flatMap((ans) => {
+      if (ans.key) {
+        return [{ number: ans.key, answered: Boolean(ans.value) }];
+      }
+      const answeredCount = ans.values?.length ?? 0;
+      return getKeysNumbers(ans.keys).map((number, idx) => ({
+        number,
+        answered: idx < answeredCount,
+      }));
+    });
+
   return (
-    <Footer
-      style={{
-        position: "sticky",
-        padding: "10px 30px",
-        bottom: 0,
-        display: "flex",
-        justifyContent: "space-between",
-        gap: "10px",
-        background: "white",
-      }}
-    >
-      {safeAnswers.map((answer, index) => (
-        <Card
-          key={index}
-          onClick={() => setSelectPart(answer.type)}
-          style={{
-            height: "50px",
-            flex: 1,
-            border: `1px solid ${
-              selectPart === answer.type ? "#1890ff" : "#d9d9d9"
-            }`,
-            backgroundColor: "white",
-            borderRadius: "10px",
-            cursor: "pointer",
-            padding: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div style={{ display: "flex", gap: "15px" }}>
-            {(answer.answers || []).map((ans, index) => {
-              return ans.key ? (
+    <footer className="exam-partnav exam-partnav--questions">
+      {safeAnswers.map((part, index) => {
+        const chips = getQuestionChips(part);
+        const answeredCount = chips.filter((chip) => chip.answered).length;
+        const isActive = selectPart === part.type;
+
+        return (
+          <div
+            key={part.type ?? index}
+            role="button"
+            tabIndex={0}
+            onClick={() => setSelectPart(part.type)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setSelectPart(part.type);
+              }
+            }}
+            className={`exam-partnav__item${
+              isActive ? " exam-partnav__item--active" : ""
+            }`}
+          >
+            <span className="exam-partnav__label">
+              {getPartLabel(part.type, index)}
+              <span
+                style={{ opacity: 0.6, fontWeight: 500, marginInlineStart: 6 }}
+              >
+                {answeredCount}/{chips.length}
+              </span>
+            </span>
+
+            {/* Same nodes in both states: the chips morph between numbers and
+                dots, cascading from the left as a part opens. */}
+            <span className="exam-partnav__dots">
+              {chips.map((chip, chipIndex) => (
                 <span
-                  key={index}
+                  key={`${chip.number}-${chipIndex}`}
+                  className={[
+                    "exam-qdot",
+                    chip.answered ? "exam-qdot--filled" : "",
+                    isActive ? "" : "exam-qdot--collapsed",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   style={{
-                    textAlign: "center",
-                    color: `${ans.value ? "blue" : "gray"}`,
+                    // Numbers collapse at once, but only expand after the part
+                    // that was open has finished folding its own away.
+                    transitionDelay: isActive
+                      ? `${200 + chipIndex * 14}ms`
+                      : "0ms",
                   }}
                 >
-                  {ans.key}
+                  {chip.number}
                 </span>
-              ) : (
-                getKeysNumbers(ans.keys).map((key, idx) => (
-                  <span
-                    key={idx}
-                    style={{
-                      textAlign: "center",
-                      color: `${(ans.values?.length ?? 0) > 0 ? "blue" : "gray"}`,
-                    }}
-                  >
-                    {key}
-                  </span>
-                ))
-              );
-            })}
+              ))}
+            </span>
           </div>
-        </Card>
-      ))}
-    </Footer>
+        );
+      })}
+    </footer>
   );
 };
 

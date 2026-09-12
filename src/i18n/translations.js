@@ -55,6 +55,8 @@ const translations = {
       devices: "Qurilmalar",
       settings: "Sozlamalar",
       logout: "Chiqish",
+      darkMode: "Tungi rejim",
+      lightMode: "Kunduzgi rejim",
     },
     table: {
       student: "O'quvchi",
@@ -297,6 +299,11 @@ const translations = {
       examWaiting: "Imtihon kutilmoqda",
     },
     settings: { title: "Sozlamalar", textSize: "Matn o'lchami", language: "Til" },
+    examDone: {
+      title: "Siz bugun Mock testlarni muvaffaqiyatli bajardingiz",
+      text: "Javoblaringiz 1 soat ichida yuboriladi.",
+      note: "Bu oynani yopishingiz mumkin. Natijalar tayyor bo'lgach xabar beriladi.",
+    },
   },
 
   ru: {
@@ -352,6 +359,8 @@ const translations = {
       devices: "Устройства",
       settings: "Настройки",
       logout: "Выход",
+      darkMode: "Тёмная тема",
+      lightMode: "Светлая тема",
     },
     table: {
       student: "Студент",
@@ -594,6 +603,11 @@ const translations = {
       examWaiting: "Экзамен в ожидании",
     },
     settings: { title: "Настройки", textSize: "Размер текста", language: "Язык" },
+    examDone: {
+      title: "Вы успешно завершили сегодняшний мок-экзамен",
+      text: "Ваши ответы будут отправлены в течение 1 часа.",
+      note: "Это окно можно закрыть. Мы сообщим, когда результаты будут готовы.",
+    },
   },
 
   en: {
@@ -649,6 +663,8 @@ const translations = {
       devices: "Devices",
       settings: "Settings",
       logout: "Logout",
+      darkMode: "Dark mode",
+      lightMode: "Light mode",
     },
     table: {
       student: "Student",
@@ -891,6 +907,11 @@ const translations = {
       examWaiting: "Exam is waiting",
     },
     settings: { title: "Settings", textSize: "Text size", language: "Language" },
+    examDone: {
+      title: "You have successfully completed today's mock exam",
+      text: "Your answers will be sent within 1 hour.",
+      note: "You can close this window. We will let you know when your results are ready.",
+    },
   },
 };
 

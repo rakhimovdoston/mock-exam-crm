@@ -3,15 +3,19 @@ import { useParams } from "react-router-dom";
 import useApiRequest from "../../hooks/useApiRequest";
 import useExamSecurity from "../../hooks/useExamSecurity";
 import { useDispatch } from "react-redux";
-import { Layout, Spin } from "antd";
+import { Button, Layout, Result, Spin } from "antd";
 import ExamFooter from "../../components/layouts/ExamFooter";
 import ExamHeader from "../../components/layouts/ExamHeader";
 import RichTextViewer from "../../components/editor/RichTextViewer";
 import { getQuestionNumbers } from "../../utils";
 import { initilalizeExam } from "../../store/examReducer";
 import { toast } from "react-toastify";
+import "../../styles/exam.css";
 
 const { Content } = Layout;
+
+// How far, in % of the pane width, a part slides aside when it is not open.
+const PANE_TRAVEL = 55;
 
 const ListeningExam = () => {
   const { id } = useParams();
@@ -331,6 +335,12 @@ const ListeningExam = () => {
     }
   }, [audios, audioDurations]);
 
+  // Position in the filmstrip that every pane is offset against.
+  const activeIndex = Math.max(
+    (data?.data || []).findIndex((part) => part.type === selectPart),
+    0
+  );
+
   const totalListeningTime = audioDurations.length
     ? Math.ceil(audioDurations.reduce((sum, dur) => sum + dur, 0)) + 10
     : 0;
@@ -360,7 +370,16 @@ const ListeningExam = () => {
           height: "100vh",
         }}
       >
-        <h2>Error loading exam data</h2>
+        <Result
+          status="warning"
+          title="We could not load this section"
+          subTitle="Please refresh the page. If the problem continues, call your invigilator."
+          extra={
+            <Button type="primary" onClick={() => window.location.reload()}>
+              Reload
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -379,29 +398,39 @@ const ListeningExam = () => {
         isTimerReady={isTimerReady}
         totalExamTimeInSeconds={totalListeningTime}
       />
-      <Content style={{ padding: "40px", overflowY: "auto" }}>
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-          }}
-        >
-          <audio ref={audioRef} autoPlay preload="auto" />
+      <Content className="exam-body exam-panes">
+        <audio ref={audioRef} autoPlay preload="auto" />
 
-          {/* ALL PARTS */}
-          {data?.data?.map((part) => (
+        {/* ALL PARTS */}
+        {data?.data?.map((part, index) => (
+          <div
+            key={part.type}
+            className={`exam-pane${
+              selectPart === part.type ? " exam-pane--active" : ""
+            }`}
+            style={{
+              overflowY: "auto",
+              transform: `translateX(${
+                (index - activeIndex) * PANE_TRAVEL
+              }%) scale(${selectPart === part.type ? 1 : 0.985})`,
+            }}
+          >
             <div
-              key={part.type}
               style={{
-                display: selectPart === part.type ? "block" : "none",
-                position: "relative",
+                maxWidth: 1040,
+                margin: "0 auto",
+                padding: "28px 24px 36px",
               }}
             >
               {part.questions.map((question) => (
-                <div key={question.id}>
-                  <p style={{ fontSize: "20px", fontWeight: "bold" }}>
+                <div
+                  key={question.id}
+                  className="exam-panel"
+                  style={{ padding: "18px 20px", marginBottom: 18 }}
+                >
+                  <h2 className="exam-section-title">
                     Questions {getQuestionNumbers(question)}
-                  </p>
+                  </h2>
                   <RichTextViewer
                     content={question.content}
                     type={question.type}
@@ -409,8 +438,8 @@ const ListeningExam = () => {
                 </div>
               ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </Content>
 
       <ExamFooter selectPart={selectPart} setSelectPart={setSelectPart} />

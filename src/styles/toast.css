@@ -1,0 +1,158 @@
+/* ==========================================================================
+   Toast notifications.
+
+   react-toastify ships its stylesheet separately; it is imported alongside
+   this file in src/components/AppToaster.jsx. Everything below re-skins it to
+   match the rest of the app: the same surfaces, borders, radius and semantic
+   colours, in both light and night mode.
+
+   The library's own light-theme variables are pointed at our theme-aware
+   tokens, so a single set of rules covers both themes — the container always
+   runs in "light" mode and simply follows [data-theme].
+   ========================================================================== */
+
+:root {
+  --toastify-font-family: inherit;
+  --toastify-toast-width: 380px;
+  --toastify-toast-min-height: 0;
+  --toastify-toast-max-height: 600px;
+  --toastify-toast-padding: 0;
+  --toastify-toast-bd-radius: 12px;
+  --toastify-toast-offset: 14px;
+
+  --toastify-color-light: var(--app-surface);
+  --toastify-text-color-light: var(--app-text);
+  --toastify-toast-shadow: 0 12px 32px rgba(16, 24, 40, 0.14);
+
+  --toastify-color-success: #12b76a;
+  --toastify-color-error: #e5233d;
+  --toastify-color-warning: #f79009;
+  --toastify-color-info: #3f4196;
+
+  --toastify-icon-color-success: var(--toastify-color-success);
+  --toastify-icon-color-error: var(--toastify-color-error);
+  --toastify-icon-color-warning: var(--toastify-color-warning);
+  --toastify-icon-color-info: var(--toastify-color-info);
+}
+
+[data-theme="dark"] {
+  --toastify-toast-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  /* Lifted so they stay legible against a dark surface. */
+  --toastify-color-success: #32d583;
+  --toastify-color-error: #ff6b7d;
+  --toastify-color-warning: #fdb022;
+  --toastify-color-info: #8f94e8;
+}
+
+.Toastify__toast-container {
+  width: auto;
+  max-width: min(420px, calc(100vw - 28px));
+  padding: 0;
+}
+
+.Toastify__toast {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 14px 14px 14px 18px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--toastify-toast-bd-radius);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  box-shadow: var(--toastify-toast-shadow);
+}
+
+/* Semantic accent, used by the rail, the icon and the progress bar. */
+.Toastify__toast--success {
+  --toast-accent: var(--toastify-color-success);
+}
+.Toastify__toast--error {
+  --toast-accent: var(--toastify-color-error);
+}
+.Toastify__toast--warning {
+  --toast-accent: var(--toastify-color-warning);
+}
+.Toastify__toast--info,
+.Toastify__toast--default {
+  --toast-accent: var(--toastify-color-info);
+}
+
+.Toastify__toast::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: var(--toast-accent);
+}
+
+.Toastify__toast-body {
+  margin: 0;
+  padding: 0;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.Toastify__toast-icon {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  margin-inline-end: 0;
+  flex: 0 0 auto;
+  color: var(--toast-accent);
+}
+
+.Toastify__close-button {
+  align-self: flex-start;
+  margin: 0;
+  padding: 2px;
+  color: var(--app-text-muted);
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
+.Toastify__close-button:hover,
+.Toastify__close-button:focus-visible {
+  opacity: 1;
+}
+
+.Toastify__progress-bar {
+  height: 2px;
+  bottom: 0;
+  background: var(--toast-accent);
+  opacity: 0.55;
+}
+
+.Toastify__progress-bar--wrp {
+  height: 2px;
+}
+
+.Toastify__progress-bar--bg {
+  background: transparent;
+}
+
+.Toastify__spinner {
+  border-color: var(--app-border);
+  border-right-color: var(--toast-accent);
+}
+
+@media (max-width: 520px) {
+  .Toastify__toast-container {
+    max-width: calc(100vw - 20px);
+    inset-inline: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .Toastify__toast {
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Layout, Button, Modal, Result, Dropdown, Flex, Select } from "antd";
+import { Button, Dropdown, Flex, Modal, Result, Segmented, Tooltip } from "antd";
 import {
   ClockCircleOutlined,
   FullscreenExitOutlined,
@@ -8,17 +8,23 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
 import AnswerReviewModal from "../modal/AnswerReviewModal";
-import { logo } from "../../assets";
+import ThemeSwitcher from "../ThemeSwitcher";
+import BrandMark from "./BrandMark";
 import store from "../../store";
 import { changeSize } from "../../store/appReducer";
 import { clearExamAnswers } from "../../store/examReducer";
+import "../../styles/exam.css";
 
-const { Header } = Layout;
+const TEXT_SIZES = [
+  { label: "Small", value: "12" },
+  { label: "Medium", value: "16" },
+  { label: "Large", value: "20" },
+];
 
 const ExamHeader = ({
   type,
@@ -29,6 +35,8 @@ const ExamHeader = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const previousTotalRef = useRef(null);
+  const textSize = useSelector((state) => state.app.size);
+  const [fullScreen, setFullScreen] = useState(isFullScreen());
 
   // ✅ Updated: More specific storage key
   const STORAGE_KEY = `exam_timer_${type}_${id}`;
@@ -152,145 +160,129 @@ const ExamHeader = ({
     return () => clearInterval(timer);
   }, [type, isTimerReady, handleModalOk]);
 
-  const formatTime = (seconds) => {
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+  // Keep the icon in sync when the browser leaves full screen via Esc.
+  useEffect(() => {
+    const sync = () => setFullScreen(isFullScreen());
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
 
-    if (seconds == 0) return <span>--</span>;
-    return (
-      <span style={{ color: minutes <= 1 ? "red" : "black" }}>
-        <span style={{ fontWeight: "bold" }}>
-          {minutes > 0
-            ? minutes.toString().padStart(2, "0")
-            : secs.toString().padStart(2, "0")}
-        </span>{" "}
-        {minutes > 0 ? "minutes" : "seconds"} remaining
-      </span>
-    );
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
   };
 
+  const isTimerVisible =
+    type === "reading" || (type === "listening" && isTimerReady);
+
+  const timerClassName = [
+    "exam-timer",
+    isTimerVisible && timeLeft <= 60 ? "exam-timer--danger" : "",
+    isTimerVisible && timeLeft > 60 && timeLeft <= 300 ? "exam-timer--warn" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <>
-      <Header
-        style={{
-          textAlign: "center",
-          position: "sticky",
-          top: 0,
-          background: "white",
-          boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <img src={logo} alt="Logo" width={100} />
-          </div>
-          <span
-            style={{
-              fontSize: "16px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <ClockCircleOutlined
-              style={{
-                fontSize: "16px",
-                color: timeLeft <= 60 ? "red" : "black",
-              }}
-            />
-            {type === "reading" || (type === "listening" && isTimerReady)
-              ? formatTime(timeLeft)
-              : "--"}
-          </span>
-          <div style={{ display: "flex", gap: 15 }}>
+      <header className="exam-header">
+        <BrandMark />
+
+        <div className={timerClassName}>
+          <ClockCircleOutlined />
+          {isTimerVisible ? (
+            <>
+              <span>{formatTime(timeLeft)}</span>
+              <span className="exam-timer__unit">remaining</span>
+            </>
+          ) : (
+            <span className="exam-timer__unit">preparing audio…</span>
+          )}
+        </div>
+
+        <div className="exam-header__actions">
+          <ThemeSwitcher type="default" />
+
+          <Tooltip title={fullScreen ? "Exit full screen" : "Full screen"}>
             <Button
+              aria-label={fullScreen ? "Exit full screen" : "Full screen"}
               onClick={enterFullScreen}
               icon={
-                isFullScreen() ? (
+                fullScreen ? (
                   <FullscreenExitOutlined />
                 ) : (
                   <FullscreenOutlined />
                 )
               }
             />
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    label: (
-                      <Flex justify="space-between" align="center" gap={20}>
-                        <span>Text Size</span>
-                        <Select
-                          style={{ width: 90 }}
-                          defaultValue={
-                            localStorage.getItem("size") || "middle"
-                          }
-                          onChange={(e) => dispatch(changeSize({ size: e }))}
-                        >
-                          <Select.Option value="12">Small</Select.Option>
-                          <Select.Option value="16">Middle</Select.Option>
-                          <Select.Option value="20">Large</Select.Option>
-                        </Select>
-                      </Flex>
-                    ),
-                    disabled: true,
-                    key: "1",
-                  },
-                ],
-              }}
-              trigger={["click"]}
-            >
-              <Button icon={<SettingOutlined />} />
-            </Dropdown>
-            <Button
-              icon={<ProfileOutlined />}
-              onClick={() => setIsReviewVisible(true)}
-            >
-              Review
-            </Button>
-            <Button
-              type="primary"
-              style={{ fontWeight: "bold" }}
-              onClick={() => setIsModalVisible(true)}
-            >
-              Submit
-            </Button>
-          </div>
+          </Tooltip>
+
+          <Dropdown
+            trigger={["click"]}
+            placement="bottomRight"
+            dropdownRender={() => (
+              <div
+                style={{
+                  background: "var(--exam-surface)",
+                  border: "1px solid var(--exam-border)",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
+                  padding: 14,
+                }}
+              >
+                <Flex vertical gap={8}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>
+                    Text size
+                  </span>
+                  <Segmented
+                    options={TEXT_SIZES}
+                    value={String(textSize)}
+                    onChange={(value) => dispatch(changeSize({ size: value }))}
+                  />
+                </Flex>
+              </div>
+            )}
+          >
+            <Tooltip title="Text size">
+              <Button aria-label="Text size" icon={<SettingOutlined />} />
+            </Tooltip>
+          </Dropdown>
+
+          <Button
+            icon={<ProfileOutlined />}
+            onClick={() => setIsReviewVisible(true)}
+          >
+            Review
+          </Button>
+
+          <Button
+            type="primary"
+            style={{ fontWeight: 600 }}
+            onClick={() => setIsModalVisible(true)}
+          >
+            Submit
+          </Button>
         </div>
-      </Header>
+      </header>
+
       <AnswerReviewModal
         open={isReviewVisible}
         onClose={() => setIsReviewVisible(false)}
       />
+
       <Modal
         open={isModalVisible}
         closable={timeLeft > 0}
+        maskClosable={false}
         footer={
           (timeLeft > 0 || isErrorSending) && [
-            <Button
-              key="submit"
-              type="primary"
-              onClick={handleModalOk}
-              loading={loading}
-            >
-              {isErrorSending ? "Re Submit" : "Submit"}
-            </Button>,
             <Button
               key="cancel"
               onClick={handleModalCancel}
@@ -298,15 +290,29 @@ const ExamHeader = ({
             >
               Cancel
             </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleModalOk}
+              loading={loading}
+            >
+              {isErrorSending ? "Re-submit" : "Submit answers"}
+            </Button>,
           ]
         }
         centered
       >
         <Result
+          status={timeLeft <= 0 ? "info" : "warning"}
           title={
             timeLeft <= 0
-              ? "Time is up. sending your answers"
-              : "Are you sure you want to submit?"
+              ? "Time is up — sending your answers"
+              : "Submit your answers?"
+          }
+          subTitle={
+            timeLeft <= 0
+              ? "Please wait, do not close this window."
+              : "You cannot return to this section after submitting."
           }
         />
       </Modal>

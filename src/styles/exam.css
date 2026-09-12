@@ -1,0 +1,1052 @@
+/* ==========================================================================
+   Candidate-facing exam UI.
+
+   Covers the exam chrome (header, part navigation, panels) and every
+   interactive control rendered from Slate content: gap-fill inputs, radio
+   options, checkboxes, heading selects and drag & drop targets.
+
+   Colours mirror the brand tokens in src/theme/index.js and are all expressed
+   as CSS variables, so night mode is a single token override at the bottom of
+   the :root block — no rule below needs a dark variant.
+   ========================================================================== */
+
+:root {
+  --exam-accent: #3f4196;
+  --exam-accent-soft: #f1f1fb;
+  --exam-accent-border: #c9cbe8;
+  --exam-accent-wash: rgba(63, 65, 150, 0.14);
+  --exam-focus-ring: 0 0 0 3px rgba(63, 65, 150, 0.12);
+  --exam-glow: rgba(63, 65, 150, 0.1);
+  --exam-on-accent: #ffffff;
+
+  --exam-danger: #e5233d;
+  --exam-danger-bg: #fef3f2;
+  --exam-danger-border: #f5bcc2;
+  --exam-warning: #f79009;
+  --exam-warn-bg: #fff8ec;
+  --exam-warn-border: #f6d9a8;
+  --exam-warn-text: #b54708;
+  --exam-success: #12b76a;
+  --exam-success-bg: #ecfdf3;
+  --exam-success-text: #027a48;
+
+  --exam-surface: #ffffff;
+  --exam-surface-2: #f9fafb;
+  --exam-field-bg: #fcfcfd;
+  --exam-hover-bg: #fafbfc;
+  --exam-hover-accent-bg: #fafbff;
+  --exam-muted-bg: #f2f4f7;
+  --exam-bg: #f6f7f9;
+  --exam-border: #e4e7ec;
+  --exam-border-strong: #d0d5dd;
+  --exam-text: #101828;
+  --exam-text-muted: #667085;
+
+  --exam-radius: 10px;
+  --exam-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+
+  /* How long the closing part gets before the opening part starts expanding. */
+  --exam-nav-delay: 200ms;
+}
+
+/* Night mode. The exam screens follow the same switch as the admin panel;
+   every colour below is a token override, no rule is duplicated. */
+[data-theme="dark"] {
+  --exam-accent: #7b80e0;
+  --exam-accent-soft: #262b45;
+  --exam-accent-border: #3a4070;
+  --exam-accent-wash: rgba(123, 128, 224, 0.22);
+  --exam-focus-ring: 0 0 0 3px rgba(123, 128, 224, 0.25);
+  --exam-glow: rgba(123, 128, 224, 0.14);
+  --exam-on-accent: #12151c;
+
+  --exam-danger: #ff6b7d;
+  --exam-danger-bg: #2a1418;
+  --exam-danger-border: #5c2730;
+  --exam-warning: #f79009;
+  --exam-warn-bg: #2a1f10;
+  --exam-warn-border: #5a4320;
+  --exam-warn-text: #f6b44c;
+  --exam-success: #32d583;
+  --exam-success-bg: #10261b;
+  --exam-success-text: #6ce9a6;
+
+  --exam-surface: #191d26;
+  --exam-surface-2: #20242e;
+  --exam-field-bg: #161a22;
+  --exam-hover-bg: #20242e;
+  --exam-hover-accent-bg: #222739;
+  --exam-muted-bg: #20242e;
+  --exam-bg: #12151c;
+  --exam-border: #2a3140;
+  --exam-border-strong: #3a4252;
+  --exam-text: #ccd1da;
+  --exam-text-muted: #8b93a1;
+
+  --exam-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Layout chrome ───────────────────────────────────────────────────────── */
+
+.exam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 68px;
+  padding: 0 20px;
+  background: var(--exam-surface);
+  border-bottom: 1px solid var(--exam-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.exam-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Timer pill */
+.exam-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--exam-accent-soft);
+  color: var(--exam-accent);
+  border: 1px solid var(--exam-accent-border);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.exam-timer__unit {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.exam-timer--warn {
+  background: var(--exam-warn-bg);
+  border-color: var(--exam-warn-border);
+  color: var(--exam-warn-text);
+}
+
+.exam-timer--danger {
+  background: var(--exam-danger-bg);
+  border-color: var(--exam-danger-border);
+  color: var(--exam-danger);
+  animation: exam-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes exam-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+/* Content surface */
+.exam-body {
+  background: var(--exam-bg);
+}
+
+.exam-panel {
+  background: var(--exam-surface);
+  border: 1px solid var(--exam-border);
+  border-radius: 14px;
+  box-shadow: var(--exam-shadow);
+}
+
+/* Question group heading — "Questions 1-10" */
+.exam-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--exam-radius);
+  background: var(--exam-accent-soft);
+  color: var(--exam-accent);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.exam-section-title::before {
+  content: "";
+  width: 4px;
+  align-self: stretch;
+  min-height: 18px;
+  border-radius: 999px;
+  background: var(--exam-accent);
+}
+
+/* ── Part navigation (footer) ────────────────────────────────────────────── */
+
+.exam-partnav {
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--exam-surface);
+  border-top: 1px solid var(--exam-border);
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  overflow-x: auto;
+}
+
+.exam-partnav__item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--exam-border);
+  border-radius: 12px;
+  background: var(--exam-surface);
+  cursor: pointer;
+  transition: border-color 0.22s ease, background 0.22s ease,
+    box-shadow 0.22s ease, flex-grow 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Question navigation: the open part is exactly as wide as its numbers need,
+   and the remaining parts share the leftover space evenly so the bar always
+   spans the full screen width.
+
+   The two moves are sequenced. First the part being closed folds its numbers
+   into dots; no width is redistributed yet, because every item's flex-grow is
+   held back by the same delay. Only then, in one single reflow, does the
+   opening part release its stretched width while its numbers expand and the
+   closed part takes over the free space. Staggering the flex-grow per item
+   instead would make the opening part shrink a second time as its neighbour
+   started claiming a share. */
+.exam-partnav--questions .exam-partnav__item {
+  flex: 1 1 auto;
+  min-width: 0;
+  transition: border-color 0.22s ease, background 0.22s ease,
+    box-shadow 0.22s ease,
+    flex-grow 0.3s cubic-bezier(0.22, 1, 0.36, 1) var(--exam-nav-delay);
+}
+
+.exam-partnav--questions .exam-partnav__item--active {
+  flex: 0 0 auto;
+}
+
+
+.exam-partnav__item:hover {
+  border-color: var(--exam-accent-border);
+  background: var(--exam-hover-accent-bg);
+}
+
+.exam-partnav__item--active {
+  border-color: var(--exam-accent);
+  background: var(--exam-accent-soft);
+  box-shadow: 0 2px 10px var(--exam-accent-wash);
+}
+
+.exam-partnav__label {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--exam-text);
+  white-space: nowrap;
+  transition: color 0.22s ease;
+}
+
+.exam-partnav__item--active .exam-partnav__label {
+  color: var(--exam-accent);
+}
+
+.exam-partnav__dots {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* If a part still has more numbers than fit, scroll them instead of wrapping. */
+.exam-partnav__item--active .exam-partnav__dots {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.exam-partnav__item--active .exam-partnav__dots::-webkit-scrollbar {
+  display: none;
+}
+
+/* One chip per question number: filled = answered.
+   The same node is reused for the collapsed state, so switching parts morphs
+   the numbers into dots (and back) instead of remounting them. */
+.exam-qdot {
+  flex: 0 0 auto;
+  min-width: 24px;
+  width: auto;
+  height: 24px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--exam-border-strong);
+  background: var(--exam-surface);
+  color: var(--exam-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: min-width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    font-size 0.18s ease, background 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.exam-qdot--collapsed {
+  min-width: 8px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 0;
+}
+
+.exam-qdot--filled {
+  border-color: var(--exam-accent);
+  background: var(--exam-accent);
+  color: var(--exam-on-accent);
+}
+
+/* ── Gap-fill input ──────────────────────────────────────────────────────── */
+
+.exam-gap {
+  display: inline-flex;
+  align-items: center;
+  margin: 3px 4px;
+  vertical-align: middle;
+}
+
+/* The affix wrapper — or the bare input when there is no number badge — owns
+   the surface. The inner field is always transparent, so the two can never end
+   up painted differently while typing. */
+.exam-gap .ant-input-affix-wrapper,
+.exam-gap > .ant-input {
+  border-radius: 8px;
+  border: 1.5px solid var(--exam-border-strong);
+  background: var(--exam-field-bg);
+  transition: border-color 0.18s ease, background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.exam-gap .ant-input-affix-wrapper {
+  width: auto;
+  padding-block: 3px;
+}
+
+/* Predictable inline width for the field itself. */
+.exam-gap .ant-input-affix-wrapper > .ant-input {
+  width: 130px;
+  min-width: 0;
+}
+
+.exam-gap .ant-input-affix-wrapper > .ant-input,
+.exam-gap .ant-input-affix-wrapper > .ant-input:hover,
+.exam-gap .ant-input-affix-wrapper > .ant-input:focus {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.exam-gap .ant-input-affix-wrapper:hover,
+.exam-gap > .ant-input:hover {
+  border-color: var(--exam-accent-border);
+}
+
+/* While the candidate is typing the control lifts to the plain surface colour
+   and shows a focus ring. */
+.exam-gap .ant-input-affix-wrapper-focused,
+.exam-gap > .ant-input:focus {
+  border-color: var(--exam-accent);
+  box-shadow: var(--exam-focus-ring);
+  background: var(--exam-surface);
+}
+
+/* Answered and not being edited — tinted so it reads at a glance on review. */
+.exam-gap--filled
+  .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-focused),
+.exam-gap--filled > .ant-input:not(:focus) {
+  border-color: var(--exam-accent);
+  background: var(--exam-accent-soft);
+}
+
+.exam-gap--filled .ant-input {
+  font-weight: 600;
+  color: var(--exam-text);
+}
+
+/* Inside table completion tasks the gap should fill its cell. */
+td .exam-gap,
+th .exam-gap {
+  display: flex;
+  width: 100%;
+  margin-inline: 0;
+}
+
+td .exam-gap .ant-input-affix-wrapper,
+th .exam-gap .ant-input-affix-wrapper {
+  width: 100%;
+}
+
+td .exam-gap .ant-input-affix-wrapper > .ant-input,
+th .exam-gap .ant-input-affix-wrapper > .ant-input {
+  width: 100%;
+}
+
+/* Question number badge inside the input */
+.exam-gap__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  margin-inline-end: 2px;
+  border-radius: 6px;
+  background: var(--exam-accent);
+  color: var(--exam-on-accent);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+/* ── Radio / checkbox options ────────────────────────────────────────────── */
+
+/* Borders stay out of the way: invisible at rest (but reserved, so nothing
+   shifts), faint on hover, slightly stronger once the option is selected. */
+.exam-option.ant-radio-wrapper,
+.exam-option.ant-checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 9px 12px;
+  border: 1.5px solid transparent;
+  border-radius: var(--exam-radius);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.exam-option.ant-radio-wrapper:hover,
+.exam-option.ant-checkbox-wrapper:hover {
+  border-color: var(--exam-border);
+  background: var(--exam-hover-bg);
+}
+
+.exam-option.ant-radio-wrapper-checked,
+.exam-option.ant-checkbox-wrapper-checked {
+  border-color: var(--exam-accent-border);
+  background: var(--exam-accent-soft);
+  font-weight: 600;
+}
+
+.exam-option > span:last-child {
+  padding-inline-start: 8px;
+  line-height: 1.5;
+}
+
+/* Block wrapper Slate renders around each option, so the row is always as wide
+   as the question column no matter what container it sits in. */
+.exam-option-row {
+  display: block;
+  width: 100%;
+}
+
+.exam-option.ant-radio-wrapper,
+.exam-option.ant-checkbox-wrapper {
+  box-sizing: border-box;
+  margin-inline-end: 0;
+}
+
+/* Letter-only options (matching grids): centred, no stretched label. */
+.exam-option--compact.ant-radio-wrapper {
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.exam-option--compact > span:last-child {
+  padding-inline-start: 6px;
+}
+
+/* Options stack */
+.exam-options {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.exam-question {
+  margin-bottom: 22px;
+}
+
+.exam-question__prompt {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.exam-question__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  background: var(--exam-accent);
+  color: var(--exam-on-accent);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px dashed var(--exam-accent-border);
+  background: var(--exam-accent-soft);
+  color: var(--exam-accent);
+  font-size: 13px;
+  font-style: normal;
+}
+
+/* Compact radio grid used by matching questions */
+.exam-radio-grid.ant-radio-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+/* Answer controls sit under the statement and span the question column. */
+.exam-answer-block {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.exam-radio-column.ant-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+/* Rows inside carry .exam-option, so they only need to stop antd's inline
+   sizing from shrinking them back to the label width. */
+.exam-radio-column .ant-radio-wrapper {
+  width: 100%;
+  margin-inline-end: 0;
+}
+
+
+/* ── Control markers scale with the Text size setting ────────────────────── */
+
+/* antd hard-codes 16px boxes; these are expressed in em so Small/Medium/Large
+   scale the circle and the tick along with the label. */
+.exam-option .ant-radio,
+.exam-option .ant-checkbox,
+.exam-radio-column .ant-radio,
+.exam-matching-table .ant-radio {
+  font-size: inherit;
+  align-self: flex-start;
+  margin-top: 0.1em;
+}
+
+.exam-option .ant-radio-inner,
+.exam-radio-column .ant-radio-inner,
+.exam-matching-table .ant-radio-inner {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.exam-option .ant-radio-inner::after,
+.exam-radio-column .ant-radio-inner::after,
+.exam-matching-table .ant-radio-inner::after {
+  width: 1.15em;
+  height: 1.15em;
+  margin-block-start: -0.575em;
+  margin-inline-start: -0.575em;
+  border-radius: 1.15em;
+}
+
+.exam-option .ant-checkbox-inner {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.exam-option .ant-checkbox-inner::after {
+  width: 0.36em;
+  height: 0.58em;
+}
+
+/* ── Heading select ──────────────────────────────────────────────────────── */
+
+.exam-select.ant-select {
+  min-width: 160px;
+}
+
+.exam-select .ant-select-selector {
+  border-radius: 8px !important;
+  border-width: 1.5px !important;
+  border-color: var(--exam-border-strong) !important;
+}
+
+.exam-select.ant-select-focused .ant-select-selector {
+  border-color: var(--exam-accent) !important;
+  box-shadow: var(--exam-focus-ring) !important;
+}
+
+.exam-select--filled .ant-select-selector {
+  border-color: var(--exam-accent) !important;
+  background: var(--exam-accent-soft) !important;
+  font-weight: 600;
+}
+
+/* ── Drag & drop ─────────────────────────────────────────────────────────── */
+
+.exam-drop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 3px 12px;
+  border: 2px dashed var(--exam-border-strong);
+  border-radius: 8px;
+  background: var(--exam-hover-bg);
+  color: var(--exam-text-muted);
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.exam-drop--over {
+  border-color: var(--exam-accent);
+  border-style: solid;
+  background: var(--exam-accent-soft);
+  color: var(--exam-accent);
+}
+
+/* A filled slot can be picked up again and moved, or dragged back to the bank */
+.exam-drop--filled {
+  border-style: solid;
+  border-color: var(--exam-accent);
+  background: var(--exam-accent-soft);
+  color: var(--exam-accent);
+  cursor: grab;
+}
+
+.exam-drop--filled:active {
+  cursor: grabbing;
+}
+
+.exam-drop__value {
+  overflow-wrap: anywhere;
+}
+
+.exam-drop__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 2px;
+  padding: 0;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 999px;
+  background: var(--exam-accent-wash);
+  color: var(--exam-accent);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.exam-drop__clear:hover {
+  opacity: 1;
+  background: var(--exam-danger);
+  color: var(--exam-on-accent);
+}
+
+/* Word bank: highlights while an answer is dragged back onto it */
+.exam-bank {
+  border-radius: 10px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.exam-bank--over {
+  background: var(--exam-accent-soft);
+  box-shadow: inset 0 0 0 2px var(--exam-accent-border);
+}
+
+.exam-drop__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--exam-accent);
+  color: var(--exam-on-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.exam-drop__placeholder {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Draggable answer chip */
+.exam-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 6px;
+  padding: 7px 12px;
+  border: 1.5px solid var(--exam-border-strong);
+  border-radius: 8px;
+  background: var(--exam-surface);
+  box-shadow: var(--exam-shadow);
+  font-weight: 600;
+  cursor: grab;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.exam-chip:hover {
+  border-color: var(--exam-accent);
+  color: var(--exam-accent);
+  transform: translateY(-1px);
+}
+
+.exam-chip--dragging {
+  border-style: dashed;
+  border-color: var(--exam-accent);
+  background: var(--exam-accent-soft);
+  opacity: 0.7;
+  cursor: grabbing;
+}
+
+/* Once an item has been placed it leaves the bank entirely, so what is left in
+   the list is exactly what is still available. It comes back the moment its
+   answer is cleared or dragged out of a slot. */
+.exam-chip--used {
+  display: none;
+}
+
+.exam-chip:active {
+  cursor: grabbing;
+}
+
+/* ── Matching table ──────────────────────────────────────────────────────── */
+
+.exam-matching-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 1px solid var(--exam-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.exam-matching-table th {
+  padding: 10px 8px;
+  background: var(--exam-accent-soft);
+  color: var(--exam-accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--exam-border);
+}
+
+.exam-matching-table th:first-child {
+  text-align: left;
+}
+
+.exam-matching-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--exam-border);
+  vertical-align: middle;
+}
+
+.exam-matching-table tr:last-child td {
+  border-bottom: none;
+}
+
+.exam-matching-table__statement {
+  text-align: left;
+  min-width: 240px;
+  line-height: 1.5;
+}
+
+.exam-matching-table__cell {
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.exam-matching-table__cell:hover {
+  background: var(--exam-accent-soft);
+}
+
+/* The whole cell is the click target, so the radio sits centred and takes the
+   surrounding text size instead of antd's fixed 14px. */
+.exam-matching-table__cell .ant-radio-wrapper {
+  display: inline-flex;
+  margin: 0;
+  padding: 4px;
+  font-size: inherit;
+}
+
+/* ── Reading passage / question panels ───────────────────────────────────── */
+
+.exam-split-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+
+.exam-passage-title {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--exam-text);
+}
+
+.exam-passage-note {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--exam-radius);
+  background: var(--exam-surface-2);
+  border: 1px solid var(--exam-border);
+  color: var(--exam-text-muted);
+  line-height: 1.55;
+}
+
+/* ── Writing ─────────────────────────────────────────────────────────────── */
+
+.exam-writing-textarea.ant-input {
+  border-radius: 12px;
+  border: 1.5px solid var(--exam-border-strong);
+  padding: 16px 18px;
+  line-height: 1.7;
+  resize: none;
+}
+
+.exam-writing-textarea.ant-input:focus {
+  border-color: var(--exam-accent);
+  box-shadow: var(--exam-focus-ring);
+}
+
+.exam-wordcount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--exam-muted-bg);
+  color: var(--exam-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-wordcount--met {
+  background: var(--exam-success-bg);
+  color: var(--exam-success-text);
+}
+
+/* ── Answer review ───────────────────────────────────────────────────────── */
+
+.exam-review__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: var(--exam-accent-soft);
+  border: 1px solid var(--exam-accent-border);
+}
+
+.exam-review__count {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--exam-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-review__part {
+  margin-bottom: 18px;
+}
+
+.exam-review__part-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--exam-text-muted);
+}
+
+.exam-review__part-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--exam-border);
+}
+
+.exam-review__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.exam-review__cell {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--exam-border);
+  background: var(--exam-surface);
+  min-width: 0;
+}
+
+.exam-review__cell--empty {
+  border-style: dashed;
+  border-color: var(--exam-danger-border);
+  background: var(--exam-danger-bg);
+}
+
+.exam-review__num {
+  flex: 0 0 auto;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--exam-accent);
+  color: var(--exam-on-accent);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-review__cell--empty .exam-review__num {
+  background: var(--exam-muted-bg);
+  color: var(--exam-text-muted);
+}
+
+.exam-review__value {
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.exam-review__value--empty {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--exam-danger);
+}
+
+/* ── Part panes ──────────────────────────────────────────────────────────── */
+
+/* Every part stays mounted and stacked as one filmstrip: each pane is parked at
+   (its index - the open index) * 100%, so the parts before the open one sit to
+   the left and the ones after sit to the right. Moving forward therefore slides
+   the old part out to the left and brings the new one in from the right, and
+   moving back does the mirror image — for any distance, 1 -> 3 included.
+   The panes are never unmounted, so highlighted text survives the switch.
+   The horizontal offset itself is set inline by the exam pages. */
+.exam-pane {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  /* Long, front-loaded easing: quick to leave, very slow to settle. */
+  transition: transform 0.62s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.62s;
+}
+
+.exam-pane--active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform 0.62s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.06s, visibility 0s;
+}
+
+.exam-panes {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Respect the OS "reduce motion" setting. */
+@media (prefers-reduced-motion: reduce) {
+  .exam-qdot,
+  .exam-pane,
+  .exam-partnav__item,
+  .exam-timer,
+  .exam-chip,
+  .exam-drop {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+}

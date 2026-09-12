@@ -149,7 +149,7 @@ const UserDetails = () => {
         toast.error(response.message || "Failed to update to user details");
         return;
       }
-      toast.success("Successfull update user details!");
+      toast.success("Candidate details updated.");
       setRefresh((prev) => prev + 1);
       setIsEditing(false);
     } catch (error) {

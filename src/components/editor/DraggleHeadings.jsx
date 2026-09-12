@@ -5,24 +5,25 @@ const DraggableHeading = ({ element }) => {
   const text = element.children[0]?.text;
   const { answers } = useSelector((state) => state.answer);
   const examAnswers = useSelector((state) => state.exam);
+  const { size } = useSelector((state) => state.app);
   const [isDragging, setIsDragging] = useState(false);
-  const [isMouseDown, setIsMouseDown] = useState(false); // 👈 new state
   const dragRef = useRef(null);
 
   const handleDragStart = (e) => {
     setIsDragging(true);
+    e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData(
       "drag-item",
       JSON.stringify({
         id: element.id,
         value: text,
+        from: "bank",
       })
     );
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
-    setIsMouseDown(false);
   };
 
   const isUsed = () => {
@@ -33,31 +34,25 @@ const DraggableHeading = ({ element }) => {
     return usedInUserAnswers || usedInExamAnswers;
   };
 
+  const used = isUsed();
+
   return (
     <div
       ref={dragRef}
-      draggable={!isUsed()}
-      onMouseDown={() => setIsMouseDown(true)} // 👈 real click detection
-      onMouseUp={() => setIsMouseDown(false)} // 👈 reset on mouse up
+      // Placed items are hidden by .exam-chip--used, so only the words still
+      // available stay in the bank.
+      aria-hidden={used || undefined}
+      draggable={!used}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragOver={(e) => e.preventDefault()}
-      style={{
-        padding: "4px 8px",
-        width: "fit-content",
-        borderRadius: "5px",
-        backgroundColor: isDragging ? "#dbe9ff" : "#fff",
-        cursor: isUsed() ? "default" : "grab", // 👈 fix here
-        fontSize: "14px",
-        opacity: isDragging ? 0.7 : 1,
-        marginBottom: "4px",
-        userSelect: "none",
-        fontWeight: "bold",
-        textDecoration: isUsed() ? "line-through" : "none",
-        textDecorationColor: isUsed() ? "#ff4d4f" : "none",
-        border: isDragging ? "2px dashed #1677FF" : "1px solid #ddd",
-        transition: "all 0.2s ease-in-out",
-      }}
+      className={[
+        "exam-chip",
+        isDragging ? "exam-chip--dragging" : "",
+        used ? "exam-chip--used" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={{ fontSize: `${size}px` }}
     >
       {text}
     </div>

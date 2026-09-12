@@ -60,7 +60,7 @@ const Listening = () => {
         `/api/v1/listening/delete/${selectedListening.id}`
       );
       if (response.code === 200) {
-        toast.success("Listening deleted successfully!");
+        toast.success("Listening test deleted.");
         setDeleteModalVisible(false);
         setRefresh(!isRefresh);
       } else {

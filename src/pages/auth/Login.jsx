@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Form, Input, Button, message, Image, Col } from "antd";
+import { Form, Input, Button, message, Image, Col, theme } from "antd";
 import logo from "../../assets/logo.jpeg";
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
@@ -10,6 +10,7 @@ import { login } from "../../store/authReducer";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const { token } = theme.useToken();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -35,10 +36,9 @@ const Login = () => {
         login({ accessToken: access_token, refreshToken: refresh_token })
       );
       navigate("/");
-      toast.success("Login successful!");
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Usernae or password is incorrect.");
+      toast.error("Username or password is incorrect.");
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ const Login = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh", // Full viewport height
-        backgroundColor: "#f5f5f5", // Optional background color
+        backgroundColor: token.colorBgLayout,
       }}
     >
       <Form
@@ -62,9 +62,10 @@ const Login = () => {
           maxWidth: 360,
           width: "100%",
           padding: "24px",
-          backgroundColor: "#fff",
-          borderRadius: "8px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)", // Optional shadow for better appearance
+          backgroundColor: token.colorBgContainer,
+          border: `1px solid ${token.colorBorderSecondary}`,
+          borderRadius: token.borderRadiusLG,
+          boxShadow: token.boxShadowTertiary,
         }}
         onFinish={onFinish}
       >

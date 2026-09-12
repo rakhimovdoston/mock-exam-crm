@@ -57,7 +57,7 @@ const Reading = () => {
         `/api/v1/reading/delete/${selectedListening.id}`
       );
       if (response.code === 200) {
-        toast.success("Reading deleted successfully!");
+        toast.success("Reading passage deleted.");
         setDeleteModalVisible(false);
         setRefresh(!isRefresh);
       } else {

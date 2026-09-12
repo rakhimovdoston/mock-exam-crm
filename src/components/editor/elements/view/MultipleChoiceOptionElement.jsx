@@ -1,7 +1,6 @@
 import { Radio } from "antd";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getValueFromAnswer } from "../../../../utils";
 import { updateAnswer } from "../../../../store/answerReducer";
 import { updateForUserAnswers } from "../../../../store/examReducer";
 
@@ -27,25 +26,29 @@ const MultipleChoiceOptionElement = ({ element, attributes, children }) => {
     return false;
   };
 
+  const select = () => {
+    if (answers.length > 0) {
+      dispatch(updateAnswer({ key: element.id, value: element.optionValue }));
+    } else {
+      dispatch(
+        updateForUserAnswers({ key: element.id, value: element.optionValue })
+      );
+    }
+  };
+
+  // The Slate attributes belong on a block wrapper, not on antd's <label> —
+  // that keeps the option row a full-width block in every container.
   return (
-    <Radio
-      {...attributes}
-      checked={checkedValue() || checkCorrectAnswer()}
-      onClick={() => {
-        if (answers.length > 0) {
-          dispatch(
-            updateAnswer({ key: element.id, value: element.optionValue })
-          );
-        } else {
-          dispatch(
-            updateForUserAnswers({ key: element.id, value: element.optionValue })
-          );
-        }
-      }}
-      style={{ fontSize: `${size}px` }}
-    >
-      {children}
-    </Radio>
+    <div {...attributes} className="exam-option-row">
+      <Radio
+        className="exam-option"
+        checked={checkedValue() || checkCorrectAnswer()}
+        onClick={select}
+        style={{ fontSize: `${size}px` }}
+      >
+        {children}
+      </Radio>
+    </div>
   );
 };
 

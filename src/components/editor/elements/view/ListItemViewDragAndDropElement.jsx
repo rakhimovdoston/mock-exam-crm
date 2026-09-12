@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { useDrag } from "../../contexts/DragContext";
 import DraggableHeading from "../../DraggleHeadings";
 import { useSelector } from "react-redux";
 import { ReactEditor, useSlateStatic } from "slate-react";
 import { Node } from "slate";
+import DropZone from "./DropZone";
 
 const ListItemViewDragAndDropElement = ({
   attributes,
@@ -13,11 +14,10 @@ const ListItemViewDragAndDropElement = ({
   startNumber,
   is_passage = false,
 }) => {
-  const { onDropAnswer } = useDrag();
+  const { onDropAnswer, onClearAnswer } = useDrag();
   const { answers } = useSelector((state) => state.answer);
-  const examAnswers = useSelector((state) => state.exam)
+  const examAnswers = useSelector((state) => state.exam);
   const questionNumber = startNumber + index;
-  const [isOver, setIsOver] = useState(false);
   const { size } = useSelector((state) => state.app);
   const questionType = element.questionsType || null;
   const editor = useSlateStatic();
@@ -46,23 +46,6 @@ const ListItemViewDragAndDropElement = ({
       />
     );
   }
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const data = e.dataTransfer.getData("drag-item");
-    if (data) {
-      const dropped = JSON.parse(data);
-      onDropAnswer(questionNumber, dropped.value);
-    }
-  };
-
-  const handleDragEnter = () => {
-    setIsOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsOver(false);
-  };
 
   const getValue = (number) => {
     if (answers.length > 0) {
@@ -98,43 +81,22 @@ const ListItemViewDragAndDropElement = ({
 
     const listItemIndex = path[path.length - 1];
     const itemNumber = start + listItemIndex;
+
     return (
       <li {...attributes}>
-        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-          <p style={{ margin: "0", padding: "0", fontSize: `${size}px` }}>{children}</p>
-          <div
-            onDrop={(e) => {
-              e.preventDefault();
-              const data = e.dataTransfer.getData("drag-item");
-              if (data) {
-                const dropped = JSON.parse(data);
-                onDropAnswer(itemNumber, dropped.value);
-              }
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            style={{
-              width: "fit-content",
-              minHeight: 10,
-              border: `2px dashed ${isOver ? "#1677FF" : "#aaa"}`, // 👈 Dynamic border
-              borderRadius: 6,
-              background: isOver ? "#e6f0ff" : "#fafafa",
-              marginBottom: 6,
-              fontSize: `${size}px`,
-              display: "flex",
-              padding: "1px 8px",
-              justifyContent: "center",
-              alignItems: "center",
-              fontWeight: 500,
-            }}
-          >
-            {getValue(itemNumber) ? (
-              <strong>{getValue(itemNumber)}</strong>
-            ) : (
-              <strong style={{ opacity: 0.5 }}>Drop here</strong>
-            )}
-          </div>
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <p style={{ margin: "0", padding: "0", fontSize: `${size}px` }}>
+            {children}
+          </p>
+          <DropZone
+            questionNumber={itemNumber}
+            value={getValue(itemNumber)}
+            onDropAnswer={onDropAnswer}
+            onClearAnswer={onClearAnswer}
+            fontSize={size}
+            showNumber={false}
+            emptyWidth={140}
+          />
         </div>
       </li>
     );
@@ -143,31 +105,15 @@ const ListItemViewDragAndDropElement = ({
   return (
     <div {...attributes}>
       {is_passage && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          style={{
-            width: getValue(questionNumber) ? "fit-content" : 300,
-            minHeight: 10,
-            border: `2px dashed ${isOver ? "#1677FF" : "#aaa"}`, // 👈 Dynamic border
-            borderRadius: 6,
-            background: isOver ? "#e6f0ff" : "#fafafa",
-            marginBottom: 6,
-            fontSize: 14,
-            display: "flex",
-            padding: "1px 8px",
-            justifyContent: "center",
-            alignItems: "center",
-            fontWeight: 500,
-          }}
-        >
-          {getValue(questionNumber) ? (
-            <strong>{getValue(questionNumber)}</strong>
-          ) : (
-            <strong style={{ opacity: 0.5 }}>{questionNumber}</strong>
-          )}
+        <div style={{ marginBottom: 8 }}>
+          <DropZone
+            questionNumber={questionNumber}
+            value={getValue(questionNumber)}
+            onDropAnswer={onDropAnswer}
+            onClearAnswer={onClearAnswer}
+            fontSize={size}
+            emptyWidth={280}
+          />
         </div>
       )}
       <div>{children}</div>

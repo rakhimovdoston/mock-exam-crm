@@ -1,14 +1,15 @@
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useLayoutEffect, useMemo } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ConfigProvider, Layout, Spin } from "antd";
 import enUS from "antd/locale/en_US";
 import ruRU from "antd/locale/ru_RU";
 import uzUZ from "antd/locale/uz_UZ";
-import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./routes/ProtectedRouted";
 import ErrorBoundary from "./components/ErrorBoundary";
+import AppToaster from "./components/AppToaster";
 import { fetchProfile } from "./store/authReducer";
+import { getThemeConfig } from "./theme";
 import { Role } from "./data/role";
 import TestDates from "./pages/TestDates";
 import Device from "./pages/dashboard/Device";
@@ -75,8 +76,21 @@ const ANTD_LOCALES = { uz: uzUZ, ru: ruRU, en: enUS };
 function App() {
   const { accessToken, isLoggedIn, user } = useSelector((state) => state.auth);
   const lang = useSelector((state) => state.app.lang);
+  const themeMode = useSelector((state) => state.app.theme);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // One theme for the whole app: the admin panel, the candidate screens and the
+  // exam itself all follow the switch stored in Redux.
+  const activeTheme = themeMode;
+
+  const themeConfig = useMemo(() => getThemeConfig(activeTheme), [activeTheme]);
+
+  // Layout effect: the attribute has to be on the root before the browser
+  // snapshots the page for the theme's view transition.
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = activeTheme;
+  }, [activeTheme]);
 
   useEffect(() => {
     if (isLoggedIn && accessToken) {
@@ -87,9 +101,9 @@ function App() {
   }, [isLoggedIn, accessToken]);
 
   return (
-    <ConfigProvider locale={ANTD_LOCALES[lang] || uzUZ}>
+    <ConfigProvider locale={ANTD_LOCALES[lang] || uzUZ} theme={themeConfig}>
       <Layout style={{ width: "100%", height: "100vh" }}>
-        <ToastContainer />
+        <AppToaster />
       <AntContent>
         <ErrorBoundary>
         <Suspense

@@ -125,7 +125,7 @@ const ContestDetails = () => {
         );
         return;
       }
-      toast.success("Retry this exam for this " + section + " successfully!");
+      toast.success(`${section} is ready for a retry.`);
       setRefresh((prev) => prev + 1);
     } catch (error) {
       console.log("Error resetting section:", error);

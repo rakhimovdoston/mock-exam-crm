@@ -1,87 +1,54 @@
 import React from "react";
-import { Card, Checkbox } from "antd";
-import { useDispatch, useSelector } from "react-redux";
-import { updateMultipleAnswer } from "../../../store/answerReducer";
-import { updateForUserMultipleAnswers } from "../../../store/examReducer";
+import { CheckSquareOutlined } from "@ant-design/icons";
+import { useSelector } from "react-redux";
+
+const NUMBER_WORDS = ["ONE", "TWO", "THREE", "FOUR"];
 
 const MultipleChoiceMultipleAnswerElement = ({
   attributes,
   element,
   children,
 }) => {
-  const dispatch = useDispatch();
-  const { answers } = useSelector((state) => state.answer);
-  const userAnswer = useSelector((state) => state.exam);
   const { size } = useSelector((state) => state.app);
 
-  const getValue = (questionNumber) => {
-    switch (questionNumber) {
-      case 1:
-        return "ONE";
-      case 2:
-        return "TWO";
-      case 3:
-        return "THREE";
-      case 4:
-        return "FOUR";
-      default:
-        return `ONE`;
-    }
-  };
+  const questionElement = React.Children.toArray(children).find(
+    (child) => child.props.children?.props.element.type === "span"
+  );
+  const optionElements = React.Children.toArray(children).filter(
+    (child) => child.props.children?.props.element.type === "checkbox"
+  );
 
-  const getLetters = (options) => {
-    return String.fromCharCode(65) + "-" + String.fromCharCode(65 + 5);
-  };
+  const requiredCount = NUMBER_WORDS[element.questionNumber - 1] || "ONE";
+
+  // Letter range is derived from the options actually present in the node.
+  const optionCount =
+    element.children?.filter((child) => child.type === "checkbox").length || 6;
+  const letters = `A-${String.fromCharCode(64 + optionCount)}`;
+
+  // Question numbers this block covers, e.g. 31-32.
+  const start = element.startInputId || 1;
+  const end = start + (element.questionNumber || 1) - 1;
+  const range = start === end ? `${start}` : `${start}-${end}`;
 
   return (
     <div
       {...attributes}
-      style={{
-        fontSize: `${size}px`,
-        marginBottom: "1rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-      }}
+      className="exam-question"
+      style={{ fontSize: `${size}px` }}
     >
-      <div style={{ fontSize: `${size}px` }}>
-        <em>
-          Choose <b>{getValue(element.questionNumber)}</b> letters{" "}
-          <b>{getLetters(element.options)}</b>
-        </em>
+      <div className="exam-question__prompt">
+        <span className="exam-question__num">{range}</span>
+        {questionElement}
       </div>
-      {/* {element.options.map((opt, index) => (
-          <div key={index} style={{ display: "flex", gap: "0.5rem" }}>
-            <span style={{ fontWeight: "bold" }}>
-              {String.fromCharCode(65 + index)}.
-            </span>
-            <Checkbox
-              checked={checkIsAnswer(opt, answers)}
-              onChange={(e) => {
-                if (answers.length > 0) {
-                  dispatch(
-                    updateMultipleAnswer({ keys: getKeys(), values: opt })
-                  );
-                } else {
-                  dispatch(
-                    updateForUserMultipleAnswers({
-                      keys: getKeys(),
-                      values: opt,
-                    })
-                  );
-                }
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                fontSize: `${size}px`,
-              }}
-            >
-              <span>{opt}</span>
-            </Checkbox>
-          </div>
-        ))} */}
-      {children}
+
+      <div className="exam-hint" contentEditable={false}>
+        <CheckSquareOutlined />
+        <span>
+          Choose <b>{requiredCount}</b> letters <b>{letters}</b>
+        </span>
+      </div>
+
+      <div className="exam-options">{optionElements}</div>
     </div>
   );
 };

@@ -1,13 +1,37 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  margin: 0;
-  padding: 0;
+/* ==========================================================================
+   Global base styles.
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  /* background-color: #242424; */
+   Design tokens live in src/theme/index.js and are applied through antd's
+   ConfigProvider. This file only holds the reset and the few app-level rules
+   antd cannot own (table row highlights, scrollbars, raw heading scale).
+   The CSS variables below mirror the antd tokens so plain elements and antd
+   components stay visually in sync in both themes.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  --app-bg: #f6f7f9;
+  --app-surface: #ffffff;
+  --app-border: #e4e7ec;
+  --app-text: #101828;
+  --app-text-muted: #667085;
+
+  --app-link: #3f4196;
+  --app-link-hover: #5a5cbe;
+
+  --app-row-success: #ecfdf3;
+  --app-row-danger: #fef3f2;
+  --app-row-muted: #fafbfc;
+  --app-row-accent: #f1f1fb;
+
+  --app-scrollbar: #d0d5dd;
+  --app-scrollbar-hover: #b4bac5;
+
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5715;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,59 +39,201 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --app-bg: #12151c;
+  --app-surface: #191d26;
+  --app-border: #2a3140;
+  --app-text: #ccd1da;
+  --app-text-muted: #8b93a1;
+
+  --app-link: #8f94e8;
+  --app-link-hover: #adb1f0;
+
+  --app-row-success: #142c20;
+  --app-row-danger: #2e181c;
+  --app-row-muted: #171b23;
+  --app-row-accent: #1f2338;
+
+  --app-scrollbar: #333a47;
+  --app-scrollbar-hover: #444d5e;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-size: 1.2em;
-  line-height: 1.6;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5715;
+  color: var(--app-text);
+  background-color: var(--app-bg);
+}
+
+/* Raw headings follow the same scale as antd Typography so pages that mix
+   <h1>/<h2> with <Typography.Title> do not jump around. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0 0 8px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--app-text);
+}
+h1 {
+  font-size: 24px;
+}
+h2 {
+  font-size: 20px;
+}
+h3 {
+  font-size: 17px;
+}
+h4 {
+  font-size: 15px;
+}
+h5,
+h6 {
+  font-size: 14px;
+}
+
+p {
+  margin: 0 0 8px;
+}
+p:last-child {
+  margin-bottom: 0;
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: var(--app-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--app-link-hover);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Links used as button labels must take the button's own colour. */
+.ant-btn a,
+.ant-menu a,
+.ant-breadcrumb a {
+  color: inherit;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+img {
+  max-width: 100%;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* ── App-level helpers referenced from components ───────────────────────── */
+
+.header-title {
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+/* BranchDetails: days without a schedule, past holidays, active discount */
+.ant-table-row-muted > td {
+  background: var(--app-row-muted) !important;
+}
+.past-holiday-row > td {
+  background: var(--app-row-muted) !important;
+  color: var(--app-text-muted) !important;
+}
+.discount-row-active > td {
+  background: var(--app-row-accent) !important;
+}
+
+/* Reading/Listening history answer tables */
+.correct-row > td {
+  background: var(--app-row-success) !important;
+}
+.wrong-row > td {
+  background: var(--app-row-danger) !important;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--app-scrollbar) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-scrollbar-hover);
+  background-clip: content-box;
+}
+
+/* ── Theme change transition ────────────────────────────────────────────────
+   The theme switch animates a circle out of the button itself (see
+   src/components/ThemeSwitcher.jsx). The default cross-fade is turned off so
+   only that clip-path animation plays.
+
+   Going to night mode the incoming view is clipped and grows, so it has to sit
+   on top. Going back to light the outgoing dark view is clipped and shrinks
+   instead, so the layers swap — that is what .theme-reveal-out switches.
+   ========================================================================== */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2147483646;
+  /* Start clipped to nothing at the button, so the first painted frame already
+     matches where the script animation begins. --reveal-x/y are set by the
+     switcher before the transition starts. */
+  clip-path: circle(0px at var(--reveal-x, 50%) var(--reveal-y, 50%));
+}
+
+/* Reverse direction: the view being replaced is the one that animates — it
+   starts whole and shrinks, so the incoming view below must not be clipped. */
+.theme-reveal-out::view-transition-old(root) {
+  z-index: 2147483646;
+}
+
+.theme-reveal-out::view-transition-new(root) {
+  z-index: 1;
+  clip-path: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-.highlighted-text {
-  background-color: yellow;
 }

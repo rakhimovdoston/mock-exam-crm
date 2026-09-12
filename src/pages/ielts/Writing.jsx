@@ -44,7 +44,7 @@ const Writing = () => {
         `/api/v1/writing/delete/${selectedListening.id}`
       );
       if (response.code === 200) {
-        toast.success("Reading deleted successfully!");
+        toast.success("Writing task deleted.");
         setDeleteModalVisible(false);
         setRefresh(!isRefresh);
       } else {

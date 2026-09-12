@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Image, Layout, Menu } from "antd";
+import { Layout, Menu } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -15,16 +15,19 @@ import {
   CalendarOutlined,
   TabletOutlined,
 } from "@ant-design/icons";
-import logo from "../assets/logo.jpeg";
-import { Link } from "react-router-dom";
+import logo from "../assets/logo.png";
+import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useT } from "../i18n/useT";
 
 const { Sider } = Layout;
 
+const MATERIALS_KEY = "/dashboard/ielts";
+
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
   const t = useT();
+  const location = useLocation();
 
   const [collapsed, setCollapsed] = useState(false);
 
@@ -60,13 +63,13 @@ const Navbar = () => {
       roles: ["ROLE_SPEAKER", "ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
-      key: "/dashboard/branches",
+      key: "/dashboard/venues",
       icon: <EnvironmentOutlined />,
       label: <Link to="/dashboard/venues">{t("nav.venues")}</Link>,
       roles: ["ROLE_ADMIN"],
     },
     {
-      key: "/dashboard/ielts",
+      key: MATERIALS_KEY,
       icon: <BookOutlined />,
       label: t("nav.materials"),
       roles: ["ROLE_ADMIN"],
@@ -74,7 +77,9 @@ const Navbar = () => {
         {
           key: "/dashboard/ielts/listening",
           icon: <SoundOutlined />,
-          label: <Link to="/dashboard/ielts/listening">{t("nav.listening")}</Link>,
+          label: (
+            <Link to="/dashboard/ielts/listening">{t("nav.listening")}</Link>
+          ),
         },
         {
           key: "/dashboard/ielts/reading",
@@ -115,25 +120,52 @@ const Navbar = () => {
 
   const filteredItems = filterByRole(menuItems, user?.roles[0]);
 
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
-  };
+  // Highlight the deepest menu entry whose path prefixes the current URL, so
+  // detail pages (/dashboard/user/12) keep their parent section active.
+  const allKeys = filteredItems.flatMap((item) =>
+    item.children ? item.children.map((child) => child.key) : [item.key]
+  );
+  const selectedKey = allKeys
+    .filter(
+      (key) =>
+        location.pathname === key || location.pathname.startsWith(`${key}/`)
+    )
+    .sort((a, b) => b.length - a.length)[0];
 
-  const deftaultSelectedKey = location.pathname || "/dashboard";
+  const isMaterials = location.pathname.startsWith(MATERIALS_KEY);
 
   return (
-    <Sider collapsible collapsed={collapsed} onCollapse={toggleCollapse}>
+    <Sider
+      collapsible
+      collapsed={collapsed}
+      onCollapse={setCollapsed}
+      width={232}
+      style={{ height: "100vh", position: "sticky", top: 0, left: 0 }}
+    >
       <div
         className="logo"
-        style={{ color: "white", textAlign: "center", padding: "16px" }}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          padding: collapsed ? "16px 8px" : "20px 16px",
+          transition: "padding 0.2s ease",
+        }}
       >
-        <Link to="/dashboard">
-          <Image
+        <Link
+          to="/dashboard"
+          style={{
+            display: "block",
+            // background: "#ffffff",
+            borderRadius: 12,
+            padding: collapsed ? "6px 4px" : "10px 14px",
+            lineHeight: 0,
+            width: "100%",
+          }}
+        >
+          <img
             src={logo}
-            style={{ borderRadius: "8px" }}
-            alt="Mock Exam Logo"
-            width={collapsed ? 40 : 100} // Adjust size based on collapsed state
-            preview={false}
+            alt="Everest Mock Exam"
+            style={{ width: "100%", display: "block" }}
           />
         </Link>
       </div>
@@ -141,8 +173,10 @@ const Navbar = () => {
       <Menu
         theme="dark"
         mode="inline"
-        defaultSelectedKeys={[deftaultSelectedKey]}
+        selectedKeys={selectedKey ? [selectedKey] : []}
+        defaultOpenKeys={isMaterials ? [MATERIALS_KEY] : []}
         items={filteredItems}
+        style={{ borderInlineEnd: "none" }}
       />
     </Sider>
   );

@@ -12,21 +12,12 @@ const ReadOnlyMultipleChoiceElement = ({ element, attributes, children }) => {
   );
 
   return (
-    <div {...attributes} style={{ marginBottom: "1rem" }}>
-      <div
-        style={{
-          display: "flex",
-          gap: "5px",
-          marginBottom: "10px",
-          fontSize: `${size}px`,
-        }}
-      >
-        <b>{element.id}.</b>
+    <div {...attributes} className="exam-question">
+      <div className="exam-question__prompt" style={{ fontSize: `${size}px` }}>
+        <span className="exam-question__num">{element.id}</span>
         {questionElement}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        {optionElements}
-      </div>
+      <div className="exam-options">{optionElements}</div>
     </div>
   );
 };

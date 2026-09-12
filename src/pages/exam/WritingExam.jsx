@@ -2,16 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import useApiRequest from "../../hooks/useApiRequest";
 import useExamSecurity from "../../hooks/useExamSecurity";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Layout,
-  Button,
-  Modal,
-  Spin,
-  Card,
-  Input,
-  Splitter,
-  Result,
-} from "antd";
+import { Layout, Button, Modal, Spin, Input, Splitter, Result, Tooltip } from "antd";
 import {
   ClockCircleOutlined,
   FullscreenExitOutlined,
@@ -20,9 +11,14 @@ import {
 import { toast } from "react-toastify";
 import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
-import { logo } from "../../assets";
+import BrandMark from "../../components/layouts/BrandMark";
+import ThemeSwitcher from "../../components/ThemeSwitcher";
+import "../../styles/exam.css";
 
-const { Header, Footer, Content } = Layout;
+const { Footer, Content } = Layout;
+
+// Official IELTS minimums, shown as a live target under the answer box.
+const WORD_TARGETS = { task1: 150, task2: 250 };
 
 const WritingExam = () => {
   const { id } = useParams();
@@ -50,6 +46,7 @@ const WritingExam = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [content, setContent] = useState();
   const [isErrorSending, setIsErrorSending] = useState(false);
+  const [fullScreen, setFullScreen] = useState(isFullScreen());
   const { data, error, loading } = useApiRequest(
     `api/v1/exam/module/${id}?moduleType=writing`
   );
@@ -94,6 +91,13 @@ const WritingExam = () => {
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
+
+  // Keep the icon in sync when the browser leaves full screen via Esc.
+  useEffect(() => {
+    const sync = () => setFullScreen(isFullScreen());
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
 
   const handleModalOk = useCallback(async () => {
     const latestAnswers = answersRef.current;
@@ -147,31 +151,22 @@ const WritingExam = () => {
   }, [handleModalOk]);
 
   const formatTime = (seconds) => {
-    const minutes = Math.floor((seconds % 3600) / 60);
+    const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return (
-      <span>
-        <span style={{ fontWeight: "bold" }}>
-          {minutes > 0
-            ? minutes.toString().padStart(2, "0")
-            : seconds.toString().padStart(2, "0")}
-        </span>{" "}
-        {minutes > 0 ? "minutes" : "seconds"} remaining
-      </span>
-    );
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
   };
 
-  const getWordCount = () => {
-    if (answers.length === 0) return 0;
-    const text = answers.find((ans) => ans.task === task);
-    return text && text.answer.trim()
-      ? text.answer.trim().split(/\s+/).length
-      : 0;
-  };
+  const countWords = (text) =>
+    text && text.trim() ? text.trim().split(/\s+/).length : 0;
+
+  const getWordCountFor = (taskFlag) =>
+    countWords(answers.find((ans) => ans.task === taskFlag)?.answer);
 
   const getValue = () => {
     return answers.find((ans) => ans.task === task)?.answer || "";
@@ -202,191 +197,253 @@ const WritingExam = () => {
           height: "100vh",
         }}
       >
-        <h2>Error loading exam data</h2>
+        <Result
+          status="warning"
+          title="We could not load this section"
+          subTitle="Please refresh the page. If the problem continues, call your invigilator."
+          extra={
+            <Button type="primary" onClick={() => window.location.reload()}>
+              Reload
+            </Button>
+          }
+        />
       </div>
     );
   }
 
+  const wordTarget = task ? WORD_TARGETS.task1 : WORD_TARGETS.task2;
+  const wordCount = getWordCountFor(task);
+  const timerClassName = [
+    "exam-timer",
+    timeLeft <= 60 ? "exam-timer--danger" : "",
+    timeLeft > 60 && timeLeft <= 300 ? "exam-timer--warn" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <Layout style={{ position: "relative", height: "100vh" }}>
-      <>
-        <Header
-          style={{
-            textAlign: "center",
-            position: "sticky",
-            top: 0,
-            background: "white",
-            boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+    <Layout style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <header className="exam-header">
+        <BrandMark />
+
+        <div className={timerClassName}>
+          <ClockCircleOutlined />
+          <span>{formatTime(timeLeft)}</span>
+          <span className="exam-timer__unit">remaining</span>
+        </div>
+
+        <div className="exam-header__actions">
+          <ThemeSwitcher type="default" />
+
+          <Tooltip title={fullScreen ? "Exit full screen" : "Full screen"}>
+            <Button
+              aria-label={fullScreen ? "Exit full screen" : "Full screen"}
+              onClick={enterFullScreen}
+              icon={
+                fullScreen ? (
+                  <FullscreenExitOutlined />
+                ) : (
+                  <FullscreenOutlined />
+                )
+              }
+            />
+          </Tooltip>
+          <Button
+            type="primary"
+            style={{ fontWeight: 600 }}
+            onClick={() => setIsModalVisible(true)}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
+            Submit
+          </Button>
+        </div>
+      </header>
+
+      <Modal
+        open={isModalVisible}
+        closable={timeLeft > 0}
+        maskClosable={false}
+        footer={
+          (timeLeft > 0 || isErrorSending) && [
+            <Button
+              key="cancel"
+              onClick={handleModalCancel}
+              disabled={timeLeft <= 0}
             >
-              <img src={logo} alt="Logo" width={100} />
-            </div>
-            <span
-              style={{
-                fontSize: "16px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleModalOk}
+              loading={saveLoading}
             >
-              <ClockCircleOutlined style={{ fontSize: "16px" }} />
-              {formatTime(timeLeft)}
-            </span>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Button
-                onClick={enterFullScreen}
-                icon={
-                  isFullScreen() ? (
-                    <FullscreenExitOutlined />
-                  ) : (
-                    <FullscreenOutlined />
-                  )
-                }
-              />
-              <Button
-                type="primary"
-                style={{ fontWeight: "bold" }}
-                onClick={() => setIsModalVisible(true)}
-              >
-                Submit
-              </Button>
-            </div>
-          </div>
-        </Header>
-        <Modal
-          open={isModalVisible}
-          closable={timeLeft > 0}
-          footer={
-            (timeLeft > 0 || isErrorSending) && [
-              <Button
-                key="submit"
-                type="primary"
-                onClick={handleModalOk}
-                loading={saveLoading}
-              >
-                {isErrorSending ? "Re Submit" : "Submit"}
-              </Button>,
-              <Button
-                key="cancel"
-                onClick={handleModalCancel}
-                disabled={timeLeft <= 0}
-              >
-                Cancel
-              </Button>,
-            ]
+              {isErrorSending ? "Re-submit" : "Submit answers"}
+            </Button>,
+          ]
+        }
+        centered
+      >
+        <Result
+          status={timeLeft <= 0 ? "info" : "warning"}
+          title={
+            timeLeft <= 0
+              ? "Time is up — sending your answers"
+              : "Submit both tasks?"
           }
-          centered
-        >
-          <Result
-            title={
-              timeLeft <= 0
-                ? "Time is up. sending your answers"
-                : "Are you sure you want to submit?"
-            }
-          />
-        </Modal>
-      </>
-      <Content style={{ padding: "40px", overflowY: "auto" }}>
-        <Splitter style={{ display: "flex", gap: "20px" }}>
+          subTitle={
+            timeLeft <= 0
+              ? "Please wait, do not close this window."
+              : `Task 1: ${getWordCountFor(true)} words · Task 2: ${getWordCountFor(
+                  false
+                )} words. You cannot return after submitting.`
+          }
+        />
+      </Modal>
+
+      <Content
+        className="exam-body"
+        style={{ flex: 1, overflow: "hidden", padding: 16 }}
+      >
+        <Splitter style={{ height: "100%" }}>
           {content && (
             <Splitter.Panel defaultSize={"50%"} min={"30%"} max={"70%"}>
-              <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>
-                {content.task ? "Writing Task 1" : "Writing Task 2"}
-              </h2>
-              <p
-                style={{
-                  fontSize: "18px",
-                  fontWeight: 600,
-                  height: "180px",
-                  overflowY: "auto",
-                  whiteSpace: "pre-wrap",
-                  borderRadius: "4px",
-                }}
-              >
-                {content.title}
-              </p>
-              <p></p>
-              {content.image && (
-                <img
-                  src={content.image}
-                  alt="Task"
-                  style={{ maxWidth: "100%" }}
-                />
-              )}
+              <div className="exam-split-panel" style={{ paddingRight: 10 }}>
+                <div className="exam-panel" style={{ padding: "18px 20px" }}>
+                  <h2 className="exam-section-title">
+                    {content.task ? "Writing Task 1" : "Writing Task 2"}
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: 16,
+                      lineHeight: 1.7,
+                      whiteSpace: "pre-wrap",
+                      margin: 0,
+                    }}
+                  >
+                    {content.title}
+                  </p>
+                  {content.image && (
+                    <img
+                      src={content.image}
+                      alt="Task"
+                      style={{
+                        marginTop: 16,
+                        maxWidth: "100%",
+                        borderRadius: 10,
+                        border: "1px solid var(--exam-border)",
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
             </Splitter.Panel>
           )}
-          <Splitter.Panel style={{ flex: 1 }}>
-            <h2 style={{ fontSize: "16px", fontWeight: "bold" }}>
-              Enter here your answers:
-            </h2>
-            <Input.TextArea
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-              value={getValue()}
-              onChange={(e) => {
-                const updatedAnswers = answers.map((ans) =>
-                  ans.task === task ? { ...ans, answer: e.target.value } : ans
-                );
-                setAnswers(updatedAnswers);
+
+          <Splitter.Panel>
+            <div
+              className="exam-split-panel"
+              style={{
+                paddingLeft: 10,
+                display: "flex",
+                flexDirection: "column",
               }}
-              style={{ width: "100%", minHeight: "400px", fontSize: "16px" }}
-              placeholder={`Enter here writing task ${
-                content && content.task ? "one" : "two"
-              } your opinion`}
-            />
-            <p>Word Count: {getWordCount()}</p>
+            >
+              <div
+                className="exam-panel"
+                style={{
+                  padding: "18px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: 1,
+                  minHeight: 0,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 12,
+                    gap: 12,
+                  }}
+                >
+                  <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
+                    Your answer
+                  </h2>
+                  <span
+                    className={`exam-wordcount${
+                      wordCount >= wordTarget ? " exam-wordcount--met" : ""
+                    }`}
+                  >
+                    {wordCount}
+                    <span style={{ opacity: 0.7, fontWeight: 500 }}>
+                      / {wordTarget} words
+                    </span>
+                  </span>
+                </div>
+
+                <Input.TextArea
+                  className="exam-writing-textarea"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
+                  value={getValue()}
+                  onChange={(e) => {
+                    const updatedAnswers = answers.map((ans) =>
+                      ans.task === task
+                        ? { ...ans, answer: e.target.value }
+                        : ans
+                    );
+                    setAnswers(updatedAnswers);
+                  }}
+                  style={{ flex: 1, minHeight: 320, fontSize: 16 }}
+                  placeholder={`Write your answer for ${
+                    content && content.task ? "Task 1" : "Task 2"
+                  } here…`}
+                />
+              </div>
+            </div>
           </Splitter.Panel>
         </Splitter>
       </Content>
 
-      <Footer
-        style={{
-          position: "sticky",
-          padding: "10px 30px",
-          bottom: 0,
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "10px",
-          background: "white",
-        }}
-      >
-        {data.data.map((answer, index) => (
-          <Card
-            key={index}
-            onClick={() => setTask(answer.task)}
-            style={{
-              height: "50px",
-              flex: 1,
-              border: `1px solid ${
-                task === answer.task ? "#1890ff" : "#d9d9d9"
-              }`,
-              backgroundColor: "white",
-              borderRadius: "10px",
-              cursor: "pointer",
-              padding: "10px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {answer.task ? "Writing Task 1" : "Writing Task 2"}
-          </Card>
-        ))}
+      <Footer className="exam-partnav" style={{ padding: "10px 16px" }}>
+        {data.data.map((answer, index) => {
+          const isActive = task === answer.task;
+          const taskWords = getWordCountFor(answer.task);
+          const target = answer.task ? WORD_TARGETS.task1 : WORD_TARGETS.task2;
+
+          return (
+            <div
+              key={index}
+              role="button"
+              tabIndex={0}
+              onClick={() => setTask(answer.task)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setTask(answer.task);
+                }
+              }}
+              className={`exam-partnav__item${
+                isActive ? " exam-partnav__item--active" : ""
+              }`}
+              style={{ justifyContent: "space-between" }}
+            >
+              <span className="exam-partnav__label">
+                {answer.task ? "Writing Task 1" : "Writing Task 2"}
+              </span>
+              <span
+                className={`exam-wordcount${
+                  taskWords >= target ? " exam-wordcount--met" : ""
+                }`}
+                style={{ padding: "3px 10px", fontSize: 12 }}
+              >
+                {taskWords} / {target}
+              </span>
+            </div>
+          );
+        })}
       </Footer>
     </Layout>
   );

@@ -42,8 +42,9 @@ const CheckboxViewElement = ({ attributes, element, children }) => {
   return (
     <div {...attributes}>
       <Checkbox
+        className="exam-option"
         checked={checkIsAnswer(element.optionValue, answers)}
-        onChange={(e) => {
+        onChange={() => {
           if (answers.length > 0) {
             dispatch(
               updateMultipleAnswer({
@@ -60,11 +61,7 @@ const CheckboxViewElement = ({ attributes, element, children }) => {
             );
           }
         }}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          fontSize: `${size}px`,
-        }}
+        style={{ fontSize: `${size}px` }}
       >
         <span>{children}</span>
       </Checkbox>

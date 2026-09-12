@@ -159,7 +159,7 @@ const EmployeeDetails = () => {
   };
 
   const workHoursAdd = async () => {
-    toast.success("This is service not available now");
+    toast.info("This service is not available yet.");
   };
 
   const handleDeleteWorkTime = async (workTimeId) => {

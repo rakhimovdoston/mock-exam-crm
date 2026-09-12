@@ -31,9 +31,17 @@ import { updateAnswer } from "../../store/answerReducer";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { updateForUserAnswers } from "../../store/examReducer";
-import { Button, Flex } from "antd";
+import { Button, Flex, Tooltip } from "antd";
 import MultipleChoiceOptionElement from "./elements/view/MultipleChoiceOptionElement";
 import CheckboxViewElement from "./elements/view/CheckboxViewElement";
+import "../../styles/exam.css";
+
+const HIGHLIGHT_COLORS = [
+  { value: "#FFE58F", label: "Yellow" },
+  { value: "#BAE0FF", label: "Blue" },
+  { value: "#B7EB8F", label: "Green" },
+  { value: "#FFCCC7", label: "Red" },
+];
 
 const initialValue = [
   {
@@ -198,6 +206,8 @@ const RichTextViewer = ({
   const dispatch = useDispatch();
   const location = useLocation();
   const { size } = useSelector((state) => state.app);
+  const adminAnswers = useSelector((state) => state.answer.answers);
+  const examAnswers = useSelector((state) => state.exam.answers);
 
   const editor = useMemo(() => {
     const baseEditor = withHistory(withReact(createEditor()));
@@ -266,7 +276,7 @@ const RichTextViewer = ({
       case "input":
         return <InputElement {...props} dragAndDrop={checkDragAndDrop} />;
       case "ordered-list":
-        return <OrderedListElement {...props} />;
+        return <OrderedListElement {...props} is_passage={is_passage} />;
       case "unordered-list":
         return (
           <UnorderedListElement
@@ -315,13 +325,52 @@ const RichTextViewer = ({
     return injectHeadingOptions(converted, headings, type);
   }, [content, headings]);
 
-  const onDropAnswer = (key, value) => {
-    if (location.pathname.includes("/dashboard/ielts")) {
-      dispatch(updateAnswer({ key, value }));
-    } else {
-      dispatch(updateForUserAnswers({ key, value }));
-    }
-  };
+  const isAnswerKeyMode = location.pathname.includes("/dashboard/ielts");
+
+  const setAnswerValue = useCallback(
+    (key, value) => {
+      if (isAnswerKeyMode) {
+        dispatch(updateAnswer({ key, value }));
+      } else {
+        dispatch(updateForUserAnswers({ key, value }));
+      }
+    },
+    [dispatch, isAnswerKeyMode]
+  );
+
+  // A word bank belongs to one part, so a moved answer is only cleared from
+  // slots inside that same part — never from a typed answer elsewhere.
+  const getScopeFor = useCallback(
+    (key) => {
+      if (isAnswerKeyMode) return adminAnswers;
+      const part = examAnswers.find((item) =>
+        (item.answers || []).some((answer) => answer.key === key)
+      );
+      return part ? part.answers : [];
+    },
+    [isAnswerKeyMode, adminAnswers, examAnswers]
+  );
+
+  const onDropAnswer = useCallback(
+    (key, value, fromKey = null) => {
+      if (fromKey != null && fromKey === key) return;
+
+      // One bank item can only sit in one slot: free the slot that holds it.
+      const previous = getScopeFor(key).find(
+        (answer) =>
+          answer.key !== undefined && answer.key !== key && answer.value === value
+      );
+      if (previous) setAnswerValue(previous.key, "");
+
+      setAnswerValue(key, value);
+    },
+    [getScopeFor, setAnswerValue]
+  );
+
+  const onClearAnswer = useCallback(
+    (key) => setAnswerValue(key, ""),
+    [setAnswerValue]
+  );
 
   return (
     <div
@@ -333,7 +382,7 @@ const RichTextViewer = ({
       }}
       onMouseUp={handleMouseUp}
     >
-      <DragProvider onDropAnswer={onDropAnswer}>
+      <DragProvider onDropAnswer={onDropAnswer} onClearAnswer={onClearAnswer}>
         <Slate
           key={JSON.stringify(content)}
           editor={editor}
@@ -346,45 +395,49 @@ const RichTextViewer = ({
                   position: "absolute",
                   top: `${menuPosition.top}px`,
                   left: menuPosition.left,
-                  background: "#fff",
-                  borderRadius: "5px",
+                  background: "var(--exam-surface)",
+                  border: "1px solid var(--exam-border)",
+                  borderRadius: 10,
                   zIndex: 1000,
-                  boxShadow: "0 2px 8px rgba(2, 23, 255, 0.55)",
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
                 }}
               >
-                <Flex align="center" gap={5} style={{ padding: "5px" }}>
-                  <Button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggleFormat(editor, "highlight", "#FFFF00");
-                      setMenuPosition();
-                    }}
-                    style={{ fontSize: "12px", background: "#FFFF00" }}
-                  />
-                  <Button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggleFormat(editor, "highlight", "#ADD8E6");
-                      setMenuPosition();
-                    }}
-                    style={{ fontSize: "12px", background: "#ADD8E6" }}
-                  />
-                  <Button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggleFormat(editor, "highlight", "#90EE90");
-                      setMenuPosition();
-                    }}
-                    style={{ fontSize: "12px", background: "#90EE90" }}
-                  />
-                  <Button
-                    type="dashed"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggleFormat(editor, "highlight", "transparent");
-                      setMenuPosition();
-                    }}
-                  />
+                <Flex align="center" gap={6} style={{ padding: 6 }}>
+                  {HIGHLIGHT_COLORS.map((color) => (
+                    <Tooltip key={color.value} title={color.label}>
+                      <button
+                        type="button"
+                        aria-label={color.label}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleFormat(editor, "highlight", color.value);
+                          setMenuPosition();
+                        }}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          padding: 0,
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          border: "1px solid rgba(16, 24, 40, 0.12)",
+                          background: color.value,
+                        }}
+                      />
+                    </Tooltip>
+                  ))}
+                  <Tooltip title="Clear highlight">
+                    <Button
+                      size="small"
+                      type="text"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        toggleFormat(editor, "highlight", "transparent");
+                        setMenuPosition();
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </Tooltip>
                 </Flex>
               </div>,
               document.body

@@ -100,28 +100,17 @@ const ListItemViewElement = ({
     return (
       <tr {...attributes}>
         <td
-          style={{
-            padding: "8px",
-            verticalAlign: "top",
-            minWidth: "250px",
-            border: "1px solid #ccc",
-            fontSize: `${size}px`
-          }}
+          className="exam-matching-table__statement"
+          style={{ fontSize: `${size}px` }}
         >
-          <strong>{itemNumber}.</strong> {children}
+          <span className="exam-question__num">{itemNumber}</span>{" "}
+          {children}
         </td>
         {headingOptions.map((opt) => (
           <td
             key={opt.key}
-            style={{
-              textAlign: "center",
-              width: "100%",
-              cursor: "pointer",
-              height: "auto",
-              transition: "background-color 0.2s ease-in-out",
-              border: "1px solid #ccc",
-              fontSize: `${size}px`
-            }}
+            className="exam-matching-table__cell"
+            style={{ fontSize: `${size}px` }}
             onClick={() => {
               setSelected(opt.key);
               const payload = { key: itemNumber, value: opt.key };
@@ -131,10 +120,6 @@ const ListItemViewElement = ({
                 dispatch(updateForUserAnswers(payload));
               }
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "#f0f8ff")
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
           >
             <Radio
               checked={
@@ -169,16 +154,11 @@ const ListItemViewElement = ({
         {headingOptions &&
           headingOptions.length > 0 &&
           parentNode.listStyleType === "decimal" && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
+            <div className="exam-answer-block">
               {/* <strong>{element.label}</strong> */}
               {parentNode.listStyleType === "decimal" && checkQuestionTypes ? (
                 <Radio.Group
-                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                  className="exam-radio-column"
                   value={selectValue || selected || checkedValue()}
                   onChange={(e) => {
                     setSelected(e.target.value);
@@ -187,7 +167,6 @@ const ListItemViewElement = ({
                         updateAnswer({ key: itemNumber, value: e.target.value })
                       );
                     } else {
-                      console.log("Dispatching: ", itemNumber, e.target.value);
                       dispatch(
                         updateForUserAnswers({
                           key: itemNumber,
@@ -201,7 +180,8 @@ const ListItemViewElement = ({
                     <Radio
                       key={opt.key}
                       value={opt.key}
-                      style={{ fontWeight: 500, fontSize: `${size}px` }}
+                      className="exam-option"
+                      style={{ fontSize: `${size}px` }}
                     >
                       {opt.value.toUpperCase()}
                     </Radio>
@@ -209,10 +189,17 @@ const ListItemViewElement = ({
                 </Radio.Group>
               ) : questionType === "Matching Headings" ? (
                 <Select
-                  style={{ width: "130px", fontSize: `${size}px` }}
-                  defaultValue={""}
+                  className={`exam-select${
+                    selectValue || element.headingMatch || getValue()
+                      ? " exam-select--filled"
+                      : ""
+                  }`}
+                  style={{ fontSize: `${size}px` }}
+                  placeholder="Select"
                   id={"ques-" + itemNumber}
-                  value={selectValue || element.headingMatch || getValue()}
+                  value={
+                    selectValue || element.headingMatch || getValue() || undefined
+                  }
                   onChange={(e) => {
                     const path = ReactEditor.findPath(editor, element);
                     Transforms.setNodes(
@@ -229,9 +216,6 @@ const ListItemViewElement = ({
                     }
                   }}
                 >
-                  <Option value="" disabled>
-                    Select value:
-                  </Option>
                   {headingOptions.map((opt) => (
                     <Option key={opt.key} value={opt.key}>
                       {opt.value}
@@ -240,13 +224,8 @@ const ListItemViewElement = ({
                 </Select>
               ) : (
                 <Radio.Group
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: "10px",
-                    width: "100%",
-                    fontSize: `${size}px`
-                  }}
+                  className="exam-radio-grid"
+                  style={{ fontSize: `${size}px` }}
                   value={
                     selectValue || selected || checkedValue() || getValue()
                   }
@@ -270,12 +249,11 @@ const ListItemViewElement = ({
                     <Radio
                       key={opt.key}
                       value={opt.key}
-                      style={{
-                        fontWeight: 500,
-                        justifySelf: "center",
-                        fontSize: `${size}px`
-                      }}
-                    ></Radio>
+                      className="exam-option exam-option--compact"
+                      style={{ fontSize: `${size}px` }}
+                    >
+                      {opt.value}
+                    </Radio>
                   ))}
                 </Radio.Group>
               )}

@@ -1084,7 +1084,6 @@ const DiscountSection = ({ branchId, branch, onRefresh }) => {
         `api/v1/branch/${branchId}/discount/${discount.id}/toggle?active=${!discount.active}`
       );
       if (res.success) {
-        toast.success(res.data?.active ? "Discount enabled" : "Discount disabled");
         fetchDiscounts();
         onRefresh();
       } else {
