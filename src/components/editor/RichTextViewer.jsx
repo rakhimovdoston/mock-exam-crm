@@ -1,13 +1,12 @@
 import React, {
-  forwardRef,
   useCallback,
   useEffect,
-  useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import ReactDOM from "react-dom";
-import { createEditor, Node } from "slate";
+import { createEditor, Editor, Node, Range, Transforms } from "slate";
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 import TableRowElement from "./elements/TableRowElement";
@@ -24,24 +23,110 @@ import DefaultElement from "./elements/DefaultElement";
 import MultipleChoiceMultipleAnswerElement from "./elements/MultipleChoiceMultipleAnswerElement";
 import TableElementViewer from "./elements/TableElementViewer";
 import ListItemViewElement from "./elements/view/ListItemViewElement";
-import { canDragAndDrop, toggleFormat } from "./editorUtils";
-import { getStartByQuestionType } from "../../utils";
+import {
+  canDragAndDrop,
+  clearFormat,
+  getMarkRangeByValue,
+  toggleFormat,
+} from "./editorUtils";
+import {
+  ANNOTATION_STORAGE_PREFIX,
+  getStartByQuestionType,
+} from "../../utils";
+import { notifyNotesChanged, registerNoteOwner } from "../../utils/examNotes";
 import { DragProvider } from "./contexts/DragContext";
 import { updateAnswer } from "../../store/answerReducer";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { updateForUserAnswers } from "../../store/examReducer";
-import { Button, Flex, Tooltip } from "antd";
+import { Tooltip } from "antd";
+import {
+  ClearOutlined,
+  DeleteOutlined,
+  FormOutlined,
+} from "@ant-design/icons";
 import MultipleChoiceOptionElement from "./elements/view/MultipleChoiceOptionElement";
 import CheckboxViewElement from "./elements/view/CheckboxViewElement";
 import "../../styles/exam.css";
 
-const HIGHLIGHT_COLORS = [
-  { value: "#FFE58F", label: "Yellow" },
-  { value: "#BAE0FF", label: "Blue" },
-  { value: "#B7EB8F", label: "Green" },
-  { value: "#FFCCC7", label: "Red" },
-];
+const HIGHLIGHT_COLORS = ["#FFE58F", "#B7EB8F", "#BAE0FF"];
+
+// Used to keep the floating surfaces inside the viewport. Kept in sync with
+// their own padding/button sizes below.
+const MENU_WIDTH = 190;
+const MENU_HEIGHT = 40;
+const MENU_MARGIN = 8;
+const NOTE_WIDTH = 300;
+const NOTE_HEIGHT = 210;
+
+/** Longest quote shown as the note's header before it is cut short. */
+const NOTE_QUOTE_LIMIT = 90;
+
+/** Ties the leaves of one note together, and names it for the notes panel. */
+const createNoteId = () =>
+  `n${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+
+/**
+ * Clamp a floating surface of the given size next to `rect`, in viewport
+ * coordinates — it is rendered position:fixed, so page scroll does not come
+ * into it, and the passage scrolls in its own container anyway, which document
+ * coordinates could not follow.
+ */
+const placeNear = (rect, width, height) => {
+  const fitsAbove = rect.top > height + MENU_MARGIN * 2;
+  const rawTop = fitsAbove
+    ? rect.top - height - MENU_MARGIN
+    : rect.bottom + MENU_MARGIN;
+
+  return {
+    top: Math.min(
+      Math.max(MENU_MARGIN, rawTop),
+      window.innerHeight - height - MENU_MARGIN
+    ),
+    left: Math.min(
+      Math.max(MENU_MARGIN, rect.left),
+      window.innerWidth - width - MENU_MARGIN
+    ),
+  };
+};
+
+/**
+ * Highlights and notes are both marks on the Slate document, so the document is
+ * what gets persisted — one sessionStorage entry per viewer covers both. Only
+ * viewers that are given a storageKey take part; the admin editors pass none
+ * and behave exactly as before.
+ */
+const loadAnnotatedContent = (storageKey, fresh) => {
+  if (!storageKey) return null;
+
+  try {
+    const raw = sessionStorage.getItem(ANNOTATION_STORAGE_PREFIX + storageKey);
+    if (!raw) return null;
+
+    const saved = JSON.parse(raw);
+    // Shape guard: if the question changed server-side, fall back to the fresh
+    // copy rather than rendering a stale document.
+    if (!Array.isArray(saved) || saved.length !== fresh.length) return null;
+
+    return saved;
+  } catch (error) {
+    console.error("Could not restore annotations:", error);
+    return null;
+  }
+};
+
+const saveAnnotatedContent = (storageKey, value) => {
+  if (!storageKey) return;
+
+  try {
+    sessionStorage.setItem(
+      ANNOTATION_STORAGE_PREFIX + storageKey,
+      JSON.stringify(value)
+    );
+  } catch (error) {
+    console.error("Could not save annotations:", error);
+  }
+};
 
 const initialValue = [
   {
@@ -202,6 +287,7 @@ const RichTextViewer = ({
   type,
   is_passage = false,
   difficultType = "default",
+  storageKey,
 }) => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -224,41 +310,315 @@ const RichTextViewer = ({
   }, []);
 
   const [menuPosition, setMenuPosition] = useState(null);
+  // { top, left, quote, range, existing } while a note is being written.
+  const [notePopup, setNotePopup] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const containerRef = useRef(null);
+  const menuRef = useRef(null);
+  const noteRef = useRef(null);
+  // The note editor's dismissal listeners are bound once per note, so they
+  // reach the current draft through this ref instead of a stale closure.
+  const saveNoteRef = useRef(null);
+  // The Slate range the menu will act on, captured while the DOM selection is
+  // still alive. Buttons preventDefault on mousedown so it survives the click.
+  const savedRangeRef = useRef(null);
 
-  const handleMouseUp = (e) => {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) {
-      setMenuPosition(null);
+  // Notes are only offered where they can be kept — the admin editors pass no
+  // storageKey, and a note that vanished on navigation would be worse than none.
+  const canAnnotate = Boolean(storageKey);
+
+  const closeMenu = () => {
+    savedRangeRef.current = null;
+    setMenuPosition(null);
+  };
+
+  const closeNote = () => {
+    setNotePopup(null);
+    setNoteDraft("");
+  };
+
+  const handleMouseUp = (event) => {
+    // Portals keep their React parent, so a click inside the menu or the note
+    // editor still reaches this handler — it must not be read as a selection.
+    if (
+      menuRef.current?.contains(event?.target) ||
+      noteRef.current?.contains(event?.target)
+    ) {
       return;
     }
 
-    const text = selection.toString();
-    if (!text) {
-      setMenuPosition(null);
+    const domSelection = window.getSelection();
+
+    if (!domSelection || !domSelection.rangeCount) {
+      closeMenu();
       return;
     }
 
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
+    if (!domSelection.toString().trim()) {
+      closeMenu();
+      return;
+    }
+
+    // The page holds several viewers side by side (passage + each question) and
+    // each one owns its own editor. Only act on a selection that lies entirely
+    // inside this one, or a colour click would be applied to the wrong editor.
+    const container = containerRef.current;
+    if (
+      !container ||
+      !container.contains(domSelection.anchorNode) ||
+      !container.contains(domSelection.focusNode)
+    ) {
+      closeMenu();
+      return;
+    }
+
+    // Resolving the DOM selection here — rather than relying on editor.selection
+    // — also covers selections that start next to a contentEditable=false island
+    // (a gap-fill input, a drop zone), which Slate deselects in read-only mode.
+    let slateRange = null;
+    try {
+      slateRange = ReactEditor.toSlateRange(editor, domSelection, {
+        exactMatch: false,
+        suppressThrow: true,
+      });
+    } catch (error) {
+      console.error("Could not resolve the selection:", error);
+    }
+
+    if (!slateRange || Range.isCollapsed(slateRange)) {
+      closeMenu();
+      return;
+    }
+
+    const rect = domSelection.getRangeAt(0).getBoundingClientRect();
 
     // Agar rect noto‘g‘ri bo‘lsa (0,0 yoki -1), menyuni ko‘rsatmaymiz
     if (rect.width === 0 && rect.height === 0) {
-      setMenuPosition(null);
+      closeMenu();
       return;
     }
 
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const preferAbove = spaceAbove > 60;
+    savedRangeRef.current = slateRange;
 
-    const top = preferAbove
-      ? rect.top + window.scrollY - 50
-      : rect.bottom + window.scrollY + 10;
-
-    const left = Math.min(rect.left + window.scrollX, window.innerWidth - 150);
-
-    setMenuPosition({ top, left });
+    setMenuPosition(placeNear(rect, MENU_WIDTH, MENU_HEIGHT));
   };
+
+  // Touch devices finish a selection with touchend, not mouseup. The timeout
+  // lets the browser settle the selection handles first.
+  const handleTouchEnd = (event) => {
+    const target = event?.target;
+    window.setTimeout(() => handleMouseUp({ target }), 0);
+  };
+
+  // A floating menu anchored to a selection goes stale the moment anything
+  // moves, so it is dismissed rather than left drifting. Capture phase catches
+  // scrolling inside the passage panel too, not just the window.
+  useEffect(() => {
+    if (!menuPosition) return undefined;
+
+    const dismiss = () => closeMenu();
+    const onPointerDown = (event) => {
+      if (menuRef.current?.contains(event.target)) return;
+      closeMenu();
+    };
+
+    window.addEventListener("scroll", dismiss, true);
+    window.addEventListener("resize", dismiss);
+    document.addEventListener("mousedown", onPointerDown, true);
+
+    return () => {
+      window.removeEventListener("scroll", dismiss, true);
+      window.removeEventListener("resize", dismiss);
+      document.removeEventListener("mousedown", onPointerDown, true);
+    };
+  }, [menuPosition]);
+
+  // The note editor is anchored the same way, so it is dismissed by the same
+  // events — but dismissing keeps what was typed, because losing a note to a
+  // stray click mid-exam is far worse than an extra one. Escape discards.
+  useEffect(() => {
+    if (!notePopup) return undefined;
+
+    // Scrolling the textarea itself is caught by the capture listener too, and
+    // must not count as moving away from the note.
+    const isInside = (target) => noteRef.current?.contains(target);
+
+    const dismiss = (event) => {
+      if (isInside(event.target)) return;
+      saveNoteRef.current?.();
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") closeNote();
+    };
+
+    window.addEventListener("scroll", dismiss, true);
+    window.addEventListener("resize", dismiss);
+    document.addEventListener("mousedown", dismiss, true);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("scroll", dismiss, true);
+      window.removeEventListener("resize", dismiss);
+      document.removeEventListener("mousedown", dismiss, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [notePopup]);
+
+  // Re-select the captured range before marking, so the mark always lands on
+  // the text the candidate actually highlighted.
+  const applyHighlight = (color) => {
+    const range = savedRangeRef.current;
+    if (!range) {
+      closeMenu();
+      return;
+    }
+
+    Transforms.select(editor, range);
+
+    if (color) {
+      toggleFormat(editor, "highlight", color);
+    } else {
+      clearFormat(editor, "highlight");
+    }
+
+    closeMenu();
+  };
+
+  const openNoteEditor = ({ range, noteId, rect, text }) => {
+    setNoteDraft(text);
+
+    const quote = Editor.string(editor, range);
+    setNotePopup({
+      ...placeNear(rect, NOTE_WIDTH, NOTE_HEIGHT),
+      quote:
+        quote.length > NOTE_QUOTE_LIMIT
+          ? `${quote.slice(0, NOTE_QUOTE_LIMIT).trimEnd()}…`
+          : quote,
+      range,
+      noteId,
+      existing: Boolean(text),
+    });
+  };
+
+  // Reopen the note with the given id over the words it was written on, rather
+  // than over whatever happens to be selected.
+  const openExistingNote = (noteId, rect) => {
+    const range = getMarkRangeByValue(editor, "noteId", noteId);
+    if (!range) return false;
+
+    const [leaf] = Editor.node(editor, range.anchor.path);
+    openNoteEditor({
+      range,
+      noteId,
+      rect,
+      text: typeof leaf.note === "string" ? leaf.note : "",
+    });
+
+    return true;
+  };
+
+  // "Note" in the selection menu: write a note against the selected words.
+  const startNote = () => {
+    const range = savedRangeRef.current;
+    const domSelection = window.getSelection();
+
+    if (!range || !domSelection?.rangeCount) {
+      closeMenu();
+      return;
+    }
+
+    const rect = domSelection.getRangeAt(0).getBoundingClientRect();
+
+    Transforms.select(editor, range);
+    const marks = Editor.marks(editor) || {};
+    const existingId = typeof marks.noteId === "string" ? marks.noteId : null;
+
+    closeMenu();
+
+    // Selecting over text that already carries a note edits that note, keeping
+    // its id — otherwise the same words would end up with two of them.
+    if (existingId && openExistingNote(existingId, rect)) return;
+
+    openNoteEditor({ range, noteId: createNoteId(), rect, text: "" });
+  };
+
+  // Clicking noted text reopens its note. The click lands on one leaf, but the
+  // id it carries names the whole run.
+  const handleClick = (event) => {
+    if (!canAnnotate) return;
+
+    const noted = event.target?.closest?.("[data-note-id]");
+    if (!noted) return;
+
+    closeMenu();
+    openExistingNote(noted.dataset.noteId, noted.getBoundingClientRect());
+  };
+
+  const saveNote = () => {
+    if (!notePopup) return;
+
+    const text = noteDraft.trim();
+    Transforms.select(editor, notePopup.range);
+
+    // An emptied note is a deleted note, which is also what makes Save the safe
+    // action for a dismissal.
+    if (text) {
+      Editor.addMark(editor, "note", text);
+      Editor.addMark(editor, "noteId", notePopup.noteId);
+    } else {
+      Editor.removeMark(editor, "note");
+      Editor.removeMark(editor, "noteId");
+    }
+
+    closeNote();
+  };
+
+  const deleteNote = () => {
+    if (!notePopup) return;
+
+    Transforms.select(editor, notePopup.range);
+    Editor.removeMark(editor, "note");
+    Editor.removeMark(editor, "noteId");
+    closeNote();
+  };
+
+  saveNoteRef.current = saveNote;
+
+  // The notes panel lists notes read back from storage, so it can only ask for
+  // one by id — this editor is the only thing that can find it again.
+  useEffect(() => {
+    if (!storageKey) return undefined;
+
+    return registerNoteOwner(storageKey, {
+      reveal: (noteId) => {
+        const element = containerRef.current?.querySelector(
+          `[data-note-id="${CSS.escape(noteId)}"]`
+        );
+        if (!element) return;
+
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // Animated rather than class-toggled: the element belongs to Slate, and
+        // a re-render would drop a class halfway through the flash.
+        const wash = getComputedStyle(document.documentElement)
+          .getPropertyValue("--exam-accent-wash")
+          .trim();
+
+        element.animate?.(
+          [{ backgroundColor: wash }, { backgroundColor: "transparent" }],
+          { duration: 1400, easing: "ease-out" }
+        );
+      },
+      remove: (noteId) => {
+        const range = getMarkRangeByValue(editor, "noteId", noteId);
+        if (!range) return;
+
+        Transforms.select(editor, range);
+        Editor.removeMark(editor, "note");
+        Editor.removeMark(editor, "noteId");
+      },
+    });
+  }, [storageKey, editor]);
 
   const renderElement = useCallback((props) => {
     const checkDragAndDrop = canDragAndDrop(content, type);
@@ -312,7 +672,7 @@ const RichTextViewer = ({
       default:
         return <DefaultElement {...props} />;
     }
-  }, []);
+  }, [content, type, is_passage, difficultType, editor]);
 
   const renderLeaf = useCallback((props) => {
     return <Leaf {...props} />;
@@ -322,8 +682,29 @@ const RichTextViewer = ({
     const converted = convertMultipleChoiceToSlateFriendly(
       content || initialValue
     );
-    return injectHeadingOptions(converted, headings, type);
-  }, [content, headings]);
+    const fresh = injectHeadingOptions(converted, headings, type);
+
+    // A restored document already went through the conversion above, but the
+    // heading options are re-injected in case the question type changed.
+    const saved = loadAnnotatedContent(storageKey, fresh);
+    return saved ? injectHeadingOptions(saved, headings, type) : fresh;
+  }, [content, headings, type, storageKey]);
+
+  // Persist after anything that is not a pure selection move — i.e. after a
+  // highlight or a note is added, edited or removed.
+  const handleEditorChange = (value) => {
+    if (!storageKey) return;
+
+    const changedContent = editor.operations.some(
+      (operation) => operation.type !== "set_selection"
+    );
+    if (!changedContent) return;
+
+    saveAnnotatedContent(storageKey, value);
+    // sessionStorage is silent in the tab that wrote it, so the notes panel is
+    // told directly.
+    notifyNotesChanged();
+  };
 
   const isAnswerKeyMode = location.pathname.includes("/dashboard/ielts");
 
@@ -380,65 +761,126 @@ const RichTextViewer = ({
         overflowY: "auto",
         boxSizing: "border-box",
       }}
+      ref={containerRef}
       onMouseUp={handleMouseUp}
+      onTouchEnd={handleTouchEnd}
+      onClick={handleClick}
     >
       <DragProvider onDropAnswer={onDropAnswer} onClearAnswer={onClearAnswer}>
         <Slate
           key={JSON.stringify(content)}
           editor={editor}
           initialValue={preparedContent}
+          onChange={handleEditorChange}
         >
           {menuPosition &&
             ReactDOM.createPortal(
               <div
-                style={{
-                  position: "absolute",
-                  top: `${menuPosition.top}px`,
-                  left: menuPosition.left,
-                  background: "var(--exam-surface)",
-                  border: "1px solid var(--exam-border)",
-                  borderRadius: 10,
-                  zIndex: 1000,
-                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
-                }}
+                ref={menuRef}
+                className="exam-hl-menu"
+                style={{ top: menuPosition.top, left: menuPosition.left }}
               >
-                <Flex align="center" gap={6} style={{ padding: 6 }}>
-                  {HIGHLIGHT_COLORS.map((color) => (
-                    <Tooltip key={color.value} title={color.label}>
-                      <button
-                        type="button"
-                        aria-label={color.label}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          toggleFormat(editor, "highlight", color.value);
-                          setMenuPosition();
-                        }}
-                        style={{
-                          width: 24,
-                          height: 24,
-                          padding: 0,
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          border: "1px solid rgba(16, 24, 40, 0.12)",
-                          background: color.value,
-                        }}
-                      />
-                    </Tooltip>
-                  ))}
-                  <Tooltip title="Clear highlight">
-                    <Button
-                      size="small"
-                      type="text"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        toggleFormat(editor, "highlight", "transparent");
-                        setMenuPosition();
+                {HIGHLIGHT_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className="exam-hl-swatch"
+                    aria-label={`Highlight (${color})`}
+                    style={{ background: color }}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyHighlight(color);
+                    }}
+                  />
+                ))}
+
+                <span className="exam-hl-divider" />
+
+                {canAnnotate && (
+                  <Tooltip title="Add a note">
+                    <button
+                      type="button"
+                      className="exam-hl-action"
+                      aria-label="Add a note"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        startNote();
                       }}
                     >
-                      Clear
-                    </Button>
+                      <FormOutlined />
+                    </button>
                   </Tooltip>
-                </Flex>
+                )}
+
+                <Tooltip title="Remove highlight">
+                  <button
+                    type="button"
+                    className="exam-hl-action"
+                    aria-label="Remove highlight"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyHighlight(null);
+                    }}
+                  >
+                    <ClearOutlined />
+                  </button>
+                </Tooltip>
+              </div>,
+              document.body
+            )}
+
+          {notePopup &&
+            ReactDOM.createPortal(
+              <div
+                ref={noteRef}
+                className="exam-note-pop"
+                style={{ top: notePopup.top, left: notePopup.left }}
+              >
+                <p className="exam-note-pop__quote">“{notePopup.quote}”</p>
+
+                <textarea
+                  autoFocus
+                  className="exam-note-pop__input"
+                  value={noteDraft}
+                  placeholder="Write your note…"
+                  onChange={(event) => setNoteDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    // Enter breaks the line; the shortcut saves, like a dialog.
+                    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                      event.preventDefault();
+                      saveNote();
+                    }
+                  }}
+                />
+
+                <div className="exam-note-pop__actions">
+                  {notePopup.existing && (
+                    <button
+                      type="button"
+                      className="exam-note-pop__btn exam-note-pop__btn--danger"
+                      onClick={deleteNote}
+                    >
+                      <DeleteOutlined /> Delete
+                    </button>
+                  )}
+
+                  <span style={{ flex: 1 }} />
+
+                  <button
+                    type="button"
+                    className="exam-note-pop__btn"
+                    onClick={closeNote}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="exam-note-pop__btn exam-note-pop__btn--primary"
+                    onClick={saveNote}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>,
               document.body
             )}
@@ -453,7 +895,6 @@ const RichTextViewer = ({
               minHeight: "50px",
               maxHeight: "100%",
             }}
-            autoFocus
             readOnly={true}
             placeholder="Type something..."
             renderElement={renderElement}

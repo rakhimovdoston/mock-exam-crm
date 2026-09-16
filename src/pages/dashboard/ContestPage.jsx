@@ -1,24 +1,92 @@
 import React, { useMemo, useState } from "react";
-import { Table, Tag, Space, Select, DatePicker, Button, Flex } from "antd";
+import {
+  Table,
+  Tag,
+  Space,
+  Select,
+  DatePicker,
+  Button,
+  Flex,
+  Tooltip,
+} from "antd";
+import { FieldTimeOutlined } from "@ant-design/icons";
 import useApiRequest from "../../hooks/useApiRequest";
+import StatusCounts from "./components/StatusCounts";
 import dayjs from "dayjs";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { checkRole } from "../../utils/roleUtils";
 import { Role } from "../../data/role";
 import { useT } from "../../i18n/useT";
+import ExtraTimeModal from "../../components/modal/ExtraTimeModal";
 
 const { Option } = Select;
 
+/** Rows may carry a date in any readable form; the API wants YYYY-MM-DD. */
+const toApiDate = (value) => {
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format("YYYY-MM-DD") : null;
+};
+
 const ContestPage = () => {
   const t = useT();
+  // The dashboard links here with a day and a status already chosen, so the
+  // list opens on exactly the figures the tile was counting.
+  const [searchParams] = useSearchParams();
+
   const [selectBranch, setSelectBranch] = useState();
   const [testTime, setTestTime] = useState("all");
-  const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(
+    () => searchParams.get("date") || dayjs().format("YYYY-MM-DD")
+  );
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const { user } = useSelector((state) => state.auth);
-  const [statuses, setStatuses] = useState();
+  const [statuses, setStatuses] = useState(() => {
+    const status = searchParams.get("status");
+    return status ? status.split(",") : undefined;
+  });
+  // The row a grant is being written for; null while the modal is closed.
+  const [extraTimeFor, setExtraTimeFor] = useState(null);
+  const canGrantExtraTime =
+    checkRole(user.roles, Role.ROLE_ADMIN) ||
+    checkRole(user.roles, Role.ROLE_BRANCH_ADMIN);
+
+  const demo = searchParams.get("demo") === "1";
+
+  // Counted the same way the speaking page counts: the list endpoint reports a
+  // total, so one row per status is enough to read it. Same date, branch and
+  // shift as the table, so the tiles always describe what is below them.
+  const countUrl = useMemo(
+    () => (value) => {
+      const params = new URLSearchParams();
+      params.set("page", 0);
+      params.set("size", 1);
+      params.set("status", value);
+      if (selectBranch) params.set("branch", selectBranch);
+      if (testTime !== "all") params.set("time", testTime);
+      if (startDate) params.set("date", startDate);
+      return `api/v1/booking/all?${params.toString()}`;
+    },
+    [selectBranch, testTime, startDate]
+  );
+
+  const statusTiles = useMemo(
+    () => [
+      { value: "WAITING", label: t("contest.waiting") },
+      { value: "PROCESS", label: t("contest.inProgress") },
+      { value: "COMPLETED", label: t("contest.completed") },
+      { value: "FAILED", label: t("contest.failed"), tone: "danger" },
+    ],
+    [t]
+  );
+
+  // Tiles narrow the table instead of navigating: the route they would link to
+  // is the one already open, and nothing would happen.
+  const handleSelectStatus = (next) => {
+    setStatuses(next);
+    setPage(0);
+  };
 
   const columns = [
     {
@@ -116,18 +184,54 @@ const ContestPage = () => {
     {
       title: "",
       key: "actions",
-      render: (_, record) => (
-        <Flex justify="center" align="center" gap={12}>
-          <Button type="primary" style={{ cursor: "pointer" }}>
-            <Link
-              to={`${record.id}/${record.type}`}
-              style={{ cursor: "pointer", color: "white" }}
-            >
-              {t("contest.details")}
-            </Link>
-          </Button>
-        </Flex>
-      ),
+      render: (_, record) => {
+        // A row knows who the student is, the day and the session — which is
+        // exactly how the student endpoint addresses an exam. Sending the shift
+        // from here is what keeps the "several sessions" refusal unreachable.
+        const userId =
+          record.userId ??
+          record.user_id ??
+          record.studentId ??
+          record.student_id;
+        // Only used where a row has no student id to offer.
+        const examId = record.examId ?? record.exam_id;
+
+        const target = userId
+          ? {
+              userId,
+              // The list is already filtered to one day, so the filter stands in
+              // when a row carries no date of its own.
+              date: toApiDate(record.testDate) || startDate,
+              testTime: record.time,
+            }
+          : examId
+          ? { examId }
+          : null;
+
+        return (
+          <Flex justify="center" align="center" gap={12}>
+            {canGrantExtraTime && target && (
+              <Tooltip title={t("extraTime.singleAction")}>
+                <Button
+                  aria-label={t("extraTime.singleAction")}
+                  icon={<FieldTimeOutlined />}
+                  onClick={() =>
+                    setExtraTimeFor({ target, studentName: record.studentName })
+                  }
+                />
+              </Tooltip>
+            )}
+            <Button type="primary" style={{ cursor: "pointer" }}>
+              <Link
+                to={`${record.id}/${record.type}`}
+                style={{ cursor: "pointer", color: "white" }}
+              >
+                {t("contest.details")}
+              </Link>
+            </Button>
+          </Flex>
+        );
+      },
     },
   ];
 
@@ -160,6 +264,21 @@ const ContestPage = () => {
   return (
     <div>
       <h2>📋 {t("contest.upcomingTitle")}</h2>
+
+      <div style={{ marginBottom: 24 }}>
+        <StatusCounts
+          statuses={statusTiles}
+          buildUrl={countUrl}
+          selected={statuses}
+          onSelect={handleSelectStatus}
+          examples={
+            demo
+              ? { WAITING: 5, PROCESS: 7, COMPLETED: 18, FAILED: 5 }
+              : undefined
+          }
+        />
+      </div>
+
       <Space style={{ marginBottom: 16 }}>
         {checkRole(user.roles, Role.ROLE_ADMIN) && (
           <Select
@@ -215,6 +334,13 @@ const ContestPage = () => {
           },
         }}
         onChange={handleTableChange}
+      />
+
+      <ExtraTimeModal
+        open={Boolean(extraTimeFor)}
+        onClose={() => setExtraTimeFor(null)}
+        target={extraTimeFor?.target}
+        studentName={extraTimeFor?.studentName}
       />
     </div>
   );

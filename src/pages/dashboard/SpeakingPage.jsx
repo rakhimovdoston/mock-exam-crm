@@ -11,6 +11,7 @@ import {
   Modal,
 } from "antd";
 import useApiRequest from "../../hooks/useApiRequest";
+import StatusCounts from "./components/StatusCounts";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import apiClient from "../../services/api";
@@ -47,9 +48,40 @@ const SpeakingPage = () => {
     if (startDate) params.set("date", startDate);
     if (status && status.length > 0) params.set("status", status.join(","));
     return `api/v1/speaking/all?${params.toString()}`;
-  }, [page, size, selectBranch, startDate, status, refresh]);
+  }, [page, size, selectBranch, startDate, status]);
 
-  const { data, loading } = useApiRequest(apiUrl, [apiUrl]);
+  const { data, loading } = useApiRequest(apiUrl, [apiUrl, refresh]);
+
+  // Same date and branch as the list, so the tiles always describe what is
+  // actually below them.
+  const countUrl = useMemo(
+    () => (value) => {
+      const params = new URLSearchParams();
+      // One row is enough: only the envelope's total is read.
+      params.set("page", 0);
+      params.set("size", 1);
+      params.set("status", value);
+      if (selectBranch) params.set("branch", selectBranch);
+      if (startDate) params.set("date", startDate);
+      return `api/v1/speaking/all?${params.toString()}`;
+    },
+    [selectBranch, startDate]
+  );
+
+  const statusTiles = useMemo(
+    () => [
+      { value: "WAITING", label: t("contest.waiting") },
+      { value: "PROCESS", label: t("contest.process") },
+      { value: "COMPLETED", label: t("contest.completed") },
+      { value: "FAILED", label: t("contest.failed"), tone: "danger" },
+    ],
+    [t]
+  );
+
+  const handleSelectStatus = (next) => {
+    setStatus(next);
+    setPage(0);
+  };
 
   const handleSpeakingModalOk = async () => {
     const value = parseFloat(selectedSpeakingScore);
@@ -216,6 +248,17 @@ const SpeakingPage = () => {
   return (
     <div>
       <h2>📋 {t("speaking.upcomingTitle")}</h2>
+
+      <div style={{ marginBottom: 24 }}>
+        <StatusCounts
+          key={refresh}
+          statuses={statusTiles}
+          buildUrl={countUrl}
+          selected={status}
+          onSelect={handleSelectStatus}
+        />
+      </div>
+
       <Space style={{ marginBottom: 16, flexWrap: "wrap" }}>
         {checkRole(user.roles, Role.ROLE_ADMIN) && (
           <Select

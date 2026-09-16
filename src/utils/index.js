@@ -435,3 +435,24 @@ const PART_LABELS = {
 /** Human label for an exam part/passage key, with a positional fallback. */
 export const getPartLabel = (type, index = 0) =>
   PART_LABELS[type] || `Part ${index + 1}`;
+
+
+/**
+ * sessionStorage prefix for per-question annotation documents.
+ *
+ * Both highlights and notes are marks on the Slate document, so one entry per
+ * viewer carries both. sessionStorage — not localStorage — because the work is
+ * meant to survive a refresh or a crash mid-exam, not outlive the sitting.
+ */
+export const ANNOTATION_STORAGE_PREFIX = "exam_annotations_";
+
+/** Drop every stored highlight and note — used once a module is submitted. */
+export const clearStoredAnnotations = () => {
+  try {
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith(ANNOTATION_STORAGE_PREFIX))
+      .forEach((key) => sessionStorage.removeItem(key));
+  } catch (error) {
+    console.error("Could not clear annotations:", error);
+  }
+};

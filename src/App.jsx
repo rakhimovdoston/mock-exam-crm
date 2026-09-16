@@ -68,6 +68,10 @@ const EmployeeDetails = React.lazy(() =>
 );
 const ResultPage = React.lazy(() => import("./pages/dashboard/ResultPage"));
 const Settings = React.lazy(() => import("./pages/Settings"));
+const ExtraTime = React.lazy(() => import("./pages/dashboard/ExtraTime"));
+const AttentionPage = React.lazy(() =>
+  import("./pages/dashboard/AttentionPage")
+);
 
 const { Content: AntContent } = Layout;
 
@@ -164,6 +168,8 @@ function App() {
               <Route path="contest" element={<ContestPage />} />
               <Route path="speaking" element={<SpeakingPage />} />
               <Route path="results" element={<ResultPage />} />
+              <Route path="extra-time" element={<ExtraTime />} />
+              <Route path="attention" element={<AttentionPage />} />
               <Route path="employees" element={<EmployeePage />} />
               <Route path="employee/:id" element={<EmployeeDetails />} />
               <Route path="contest/:id/:type" element={<ContestDetails />} />

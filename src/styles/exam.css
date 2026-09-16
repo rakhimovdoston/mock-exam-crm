@@ -42,6 +42,8 @@
   --exam-text: #101828;
   --exam-text-muted: #667085;
 
+  --exam-selection: rgba(63, 65, 150, 0.22);
+
   --exam-radius: 10px;
   --exam-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
 
@@ -83,7 +85,15 @@
   --exam-text: #ccd1da;
   --exam-text-muted: #8b93a1;
 
+  --exam-selection: rgba(123, 128, 224, 0.34);
   --exam-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Browser default selection blue clashes with the palette — and in night mode
+   it swallows the text. */
+::selection {
+  background: var(--exam-selection);
+  color: inherit;
 }
 
 /* ── Layout chrome ───────────────────────────────────────────────────────── */
@@ -1048,5 +1058,333 @@ th .exam-gap .ant-input-affix-wrapper > .ant-input {
     transition-duration: 0.01ms !important;
     transition-delay: 0ms !important;
     animation: none !important;
+  }
+}
+
+/* ── Highlight menu ──────────────────────────────────────────────────────── */
+
+.exam-hl-menu {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--exam-border);
+  border-radius: 999px;
+  background: var(--exam-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  animation: exam-hl-in 0.14s ease-out;
+}
+
+@keyframes exam-hl-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+}
+
+.exam-hl-swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(16, 24, 40, 0.15);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.exam-hl-swatch:hover,
+.exam-hl-swatch:focus-visible {
+  transform: scale(1.14);
+  box-shadow: 0 0 0 3px var(--exam-accent-wash);
+  outline: none;
+}
+
+.exam-hl-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--exam-border);
+}
+
+.exam-hl-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--exam-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.exam-hl-action:hover,
+.exam-hl-action:focus-visible {
+  background: var(--exam-muted-bg);
+  color: var(--exam-text);
+  outline: none;
+}
+
+/* ── Notes ───────────────────────────────────────────────────────────────── */
+
+/* Noted words keep whatever highlight they carry — the note reads as a second
+   layer on top, the way a margin annotation sits beside the text it belongs to.
+   currentColor keeps the underline legible against both palettes. */
+.exam-note {
+  border-bottom: 2px dotted currentColor;
+  cursor: pointer;
+}
+
+.exam-note:hover {
+  background: var(--exam-accent-wash);
+}
+
+.exam-note-pop {
+  position: fixed;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 300px;
+  padding: 12px;
+  border: 1px solid var(--exam-border);
+  border-radius: 12px;
+  background: var(--exam-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  animation: exam-hl-in 0.14s ease-out;
+}
+
+/* Which words the note belongs to — the popup can sit some way from them. */
+.exam-note-pop__quote {
+  margin: 0;
+  overflow: hidden;
+  color: var(--exam-text-muted);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.exam-note-pop__input {
+  width: 100%;
+  min-height: 84px;
+  padding: 8px 10px;
+  border: 1px solid var(--exam-border);
+  border-radius: 8px;
+  background: var(--exam-field-bg);
+  color: var(--exam-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.exam-note-pop__input:focus {
+  border-color: var(--exam-accent);
+  box-shadow: var(--exam-focus-ring);
+  outline: none;
+}
+
+.exam-note-pop__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exam-note-pop__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid var(--exam-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--exam-text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.exam-note-pop__btn:hover,
+.exam-note-pop__btn:focus-visible {
+  background: var(--exam-muted-bg);
+  outline: none;
+}
+
+.exam-note-pop__btn--primary {
+  border-color: var(--exam-accent);
+  background: var(--exam-accent);
+  color: var(--exam-on-accent);
+}
+
+.exam-note-pop__btn--primary:hover,
+.exam-note-pop__btn--primary:focus-visible {
+  background: var(--exam-accent);
+  filter: brightness(1.08);
+}
+
+.exam-note-pop__btn--danger {
+  border-color: transparent;
+  color: var(--exam-danger);
+}
+
+.exam-note-pop__btn--danger:hover,
+.exam-note-pop__btn--danger:focus-visible {
+  background: var(--exam-danger-bg);
+}
+
+/* ── Pre-exam stages (audio download, retry, start gate) ─────────────────── */
+
+.exam-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--exam-bg);
+}
+
+.exam-stage__inner {
+  width: 440px;
+  max-width: 100%;
+  text-align: center;
+}
+
+.exam-stage__inner p {
+  margin: 12px 0 4px;
+  color: var(--exam-text);
+}
+
+/* ── Draft save indicator ────────────────────────────────────────────────── */
+
+/* Quiet by design: it is reassurance, not an alert, and it sits next to the
+   controls a student uses under time pressure. */
+.exam-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--exam-success-bg);
+  color: var(--exam-success-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.exam-saved::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Notes panel ─────────────────────────────────────────────────────────── */
+
+.exam-notelist__group + .exam-notelist__group {
+  margin-top: 22px;
+}
+
+.exam-notelist__heading {
+  margin: 0 0 10px;
+  color: var(--exam-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.exam-notelist__item {
+  position: relative;
+  /* Room for the delete button, which floats in the top-right corner. */
+  padding: 12px 40px 12px 14px;
+  border: 1px solid var(--exam-border);
+  border-radius: 12px;
+  background: var(--exam-surface);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.exam-notelist__item + .exam-notelist__item {
+  margin-top: 10px;
+}
+
+.exam-notelist__item:hover,
+.exam-notelist__item:focus-visible {
+  border-color: var(--exam-accent);
+  background: var(--exam-hover-accent-bg);
+  outline: none;
+}
+
+.exam-notelist__where {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--exam-muted-bg);
+  color: var(--exam-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* The words the note was written on. Clamped: it is a pointer back to the
+   passage, not a copy of it. */
+.exam-notelist__quote {
+  display: -webkit-box;
+  margin: 0 0 6px;
+  overflow: hidden;
+  color: var(--exam-text-muted);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.exam-notelist__text {
+  margin: 0;
+  color: var(--exam-text);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.exam-notelist__delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--exam-text-muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.exam-notelist__delete:hover,
+.exam-notelist__delete:focus-visible {
+  background: var(--exam-danger-bg);
+  color: var(--exam-danger);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exam-hl-menu,
+  .exam-note-pop {
+    animation: none;
   }
 }

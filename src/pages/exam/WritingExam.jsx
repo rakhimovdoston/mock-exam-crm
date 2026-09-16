@@ -13,6 +13,10 @@ import apiClient from "../../services/api";
 import { enterFullScreen, isFullScreen } from "../../utils/documentUtils";
 import BrandMark from "../../components/layouts/BrandMark";
 import ThemeSwitcher from "../../components/ThemeSwitcher";
+import ExtraTimeNoticeModal from "../../components/modal/ExtraTimeNoticeModal";
+import SectionFinishedModal from "../../components/modal/SectionFinishedModal";
+import useExamTime from "../../hooks/useExamTime";
+import useExamDraft from "../../hooks/useExamDraft";
 import "../../styles/exam.css";
 
 const { Footer, Content } = Layout;
@@ -20,29 +24,22 @@ const { Footer, Content } = Layout;
 // Official IELTS minimums, shown as a live target under the answer box.
 const WORD_TARGETS = { task1: 150, task2: 250 };
 
+/** "Saved 10:42" — the student only needs the wall-clock time of the last save. */
+const formatSavedAt = (isoString) => {
+  const saved = new Date(isoString);
+  if (Number.isNaN(saved.getTime())) return null;
+
+  return saved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
 const WritingExam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const STORAGE_KEY = `writing_exam_${id}`;
-
-  // Load saved state from sessionStorage
-  const getSavedState = () => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch (error) {
-      console.error("Error loading saved state:", error);
-      return null;
-    }
-  };
-
-  const savedState = getSavedState();
-
-  const [task, setTask] = useState(savedState?.task ?? true);
-  const [timeLeft, setTimeLeft] = useState(savedState?.timeLeft ?? 60 * 60);
+  const [task, setTask] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const answersRef = useRef([]);
-  const [answers, setAnswers] = useState(savedState?.answers ?? []);
+  const taskRef = useRef(true);
+  const [answers, setAnswers] = useState([]);
   const [saveLoading, setSaveLoading] = useState(false);
   const [content, setContent] = useState();
   const [isErrorSending, setIsErrorSending] = useState(false);
@@ -53,16 +50,72 @@ const WritingExam = () => {
 
   useExamSecurity({ allowTypingShortcuts: true });
 
-  // Save state to sessionStorage whenever it changes
+  // The clock belongs to the server: there is no local duration any more, and
+  // extra time granted by an invigilator lands within one poll.
+  const {
+    remainingMs,
+    remainingSeconds,
+    started,
+    finished,
+    change,
+    refresh,
+    notFound,
+  } = useExamTime(id, "writing");
+
+  // The paper and the draft arrive independently, so a draft that lands first
+  // waits here until the two tasks exist to merge it into.
+  const [pendingDraft, setPendingDraft] = useState(null);
+  const draftAppliedRef = useRef(false);
+  const expiryHandledRef = useRef(false);
+
+  // Assigned during render, not in an effect: the autosave effect below reads
+  // them, and an effect-synced ref would still hold the previous render's value
+  // — a single keystroke could then look like "no change" and never be saved.
+  answersRef.current = answers;
+  taskRef.current = task;
+
+  const { savedAt, saveNow, markDirty } = useExamDraft(id, "writing", {
+    // Read through refs at save time, so a save always sends what is on screen.
+    getContent: () => ({ answers: answersRef.current, task: taskRef.current }),
+    onRestore: setPendingDraft,
+  });
+
   useEffect(() => {
-    const stateToSave = {
-      task,
-      timeLeft,
-      answers,
-      timestamp: Date.now(),
-    };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [task, timeLeft, answers, STORAGE_KEY]);
+    if (draftAppliedRef.current || !pendingDraft || answers.length === 0) return;
+
+    draftAppliedRef.current = true;
+
+    // Merged onto the tasks that were just loaded rather than swapped in, so a
+    // draft written against an older paper cannot reshape this one.
+    const savedByTask = new Map(
+      (pendingDraft.answers || []).map((item) => [item.task, item.answer])
+    );
+
+    setAnswers((current) =>
+      current.map((item) =>
+        savedByTask.has(item.task)
+          ? { ...item, answer: savedByTask.get(item.task) ?? "" }
+          : item
+      )
+    );
+
+    if (typeof pendingDraft.task === "boolean") setTask(pendingDraft.task);
+    setPendingDraft(null);
+    toast.info("Your saved answers have been restored.");
+  }, [pendingDraft, answers.length]);
+
+  // Every keystroke schedules a save; the hook skips it if nothing changed.
+  useEffect(() => {
+    markDirty();
+  }, [answers, task, markDirty]);
+
+  // The exam is gone — there is nothing to sit.
+  useEffect(() => {
+    if (!notFound) return;
+
+    toast.error("This exam was not found.");
+    navigate("/");
+  }, [notFound, navigate]);
 
   useEffect(() => {
     if (data && data?.data) {
@@ -87,10 +140,6 @@ const WritingExam = () => {
       setAnswers(initAnswers);
     }
   }, [data, answers.length]);
-
-  useEffect(() => {
-    answersRef.current = answers;
-  }, [answers]);
 
   // Keep the icon in sync when the browser leaves full screen via Esc.
   useEffect(() => {
@@ -120,8 +169,6 @@ const WritingExam = () => {
         return;
       }
       toast.success("Answers submitted successfully!");
-      // Clear saved state after successful submission
-      sessionStorage.removeItem(STORAGE_KEY);
       navigate(`/exam/${id}`);
     } catch (error) {
       setIsErrorSending(true);
@@ -130,25 +177,38 @@ const WritingExam = () => {
     } finally {
       setSaveLoading(false);
     }
-  }, [id, navigate, STORAGE_KEY]);
+  }, [id, navigate]);
 
+  const expired = started && !finished && remainingMs <= 0;
+
+  // Running out does not submit on its own. Extra time may have been granted in
+  // the very minute the clock hit zero, so the server gets the last word before
+  // forty minutes of writing are sent off against a stale clock.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer);
-          setIsModalVisible(true);
-          setTimeout(() => {
-            handleModalOk();
-          }, 2000);
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
+    if (!expired) {
+      expiryHandledRef.current = false;
+      return;
+    }
 
-    return () => clearInterval(timer);
-  }, [handleModalOk]);
+    if (expiryHandledRef.current) return;
+    expiryHandledRef.current = true;
+
+    (async () => {
+      try {
+        const fresh = await refresh();
+        if ((fresh?.leftDurationMs ?? 0) > 0) {
+          expiryHandledRef.current = false;
+          return;
+        }
+      } catch (error) {
+        // Offline at the buzzer: submit rather than leave the student stuck.
+        console.error("Final clock check failed:", error);
+      }
+
+      setIsModalVisible(true);
+      window.setTimeout(handleModalOk, 2000);
+    })();
+  }, [expired, refresh, handleModalOk]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -213,10 +273,15 @@ const WritingExam = () => {
 
   const wordTarget = task ? WORD_TARGETS.task1 : WORD_TARGETS.task2;
   const wordCount = getWordCountFor(task);
+  const isTimerVisible = started && !finished;
+  const savedLabel = savedAt ? formatSavedAt(savedAt) : null;
+
   const timerClassName = [
     "exam-timer",
-    timeLeft <= 60 ? "exam-timer--danger" : "",
-    timeLeft > 60 && timeLeft <= 300 ? "exam-timer--warn" : "",
+    isTimerVisible && remainingSeconds <= 60 ? "exam-timer--danger" : "",
+    isTimerVisible && remainingSeconds > 60 && remainingSeconds <= 300
+      ? "exam-timer--warn"
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -228,11 +293,25 @@ const WritingExam = () => {
 
         <div className={timerClassName}>
           <ClockCircleOutlined />
-          <span>{formatTime(timeLeft)}</span>
-          <span className="exam-timer__unit">remaining</span>
+          {isTimerVisible ? (
+            <>
+              <span>{formatTime(remainingSeconds)}</span>
+              <span className="exam-timer__unit">remaining</span>
+            </>
+          ) : (
+            <span className="exam-timer__unit">
+              {finished ? "section finished" : "waiting to start…"}
+            </span>
+          )}
         </div>
 
         <div className="exam-header__actions">
+          {savedLabel && (
+            <span className="exam-saved" title="Your answers are saved">
+              Saved {savedLabel}
+            </span>
+          )}
+
           <ThemeSwitcher type="default" />
 
           <Tooltip title={fullScreen ? "Exit full screen" : "Full screen"}>
@@ -258,16 +337,27 @@ const WritingExam = () => {
         </div>
       </header>
 
+      <ExtraTimeNoticeModal
+        open={Boolean(change)}
+        message={change?.message}
+        saveDraft={saveNow}
+      />
+
+      <SectionFinishedModal
+        open={finished}
+        onLeave={() => navigate(`/exam/${id}`)}
+      />
+
       <Modal
         open={isModalVisible}
-        closable={timeLeft > 0}
+        closable={remainingMs > 0}
         maskClosable={false}
         footer={
-          (timeLeft > 0 || isErrorSending) && [
+          (remainingMs > 0 || isErrorSending) && [
             <Button
               key="cancel"
               onClick={handleModalCancel}
-              disabled={timeLeft <= 0}
+              disabled={remainingMs <= 0}
             >
               Cancel
             </Button>,
@@ -284,14 +374,14 @@ const WritingExam = () => {
         centered
       >
         <Result
-          status={timeLeft <= 0 ? "info" : "warning"}
+          status={remainingMs <= 0 ? "info" : "warning"}
           title={
-            timeLeft <= 0
+            remainingMs <= 0
               ? "Time is up — sending your answers"
               : "Submit both tasks?"
           }
           subTitle={
-            timeLeft <= 0
+            remainingMs <= 0
               ? "Please wait, do not close this window."
               : `Task 1: ${getWordCountFor(true)} words · Task 2: ${getWordCountFor(
                   false

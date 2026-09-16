@@ -14,6 +14,8 @@ import {
   FileDoneOutlined,
   CalendarOutlined,
   TabletOutlined,
+  FieldTimeOutlined,
+  WarningOutlined,
 } from "@ant-design/icons";
 import logo from "../assets/logo.png";
 import { Link, useLocation } from "react-router-dom";
@@ -51,6 +53,12 @@ const Navbar = () => {
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
+      key: "/dashboard/attention",
+      icon: <WarningOutlined />,
+      label: <Link to="/dashboard/attention">{t("nav.attention")}</Link>,
+      roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
+    },
+    {
       key: "/dashboard/contest",
       icon: <TrophyOutlined />,
       label: <Link to="/dashboard/contest">{t("nav.testSessions")}</Link>,
@@ -61,6 +69,12 @@ const Navbar = () => {
       icon: <CustomerServiceOutlined />,
       label: <Link to="/dashboard/speaking">{t("nav.speakingSessions")}</Link>,
       roles: ["ROLE_SPEAKER", "ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
+    },
+    {
+      key: "/dashboard/extra-time",
+      icon: <FieldTimeOutlined />,
+      label: <Link to="/dashboard/extra-time">{t("nav.extraTime")}</Link>,
+      roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {
       key: "/dashboard/venues",

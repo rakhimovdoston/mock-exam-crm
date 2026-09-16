@@ -1,6 +1,6 @@
-import React from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import { Layout, Avatar, Dropdown, Typography, theme } from "antd";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   UserOutlined,
   LogoutOutlined,
@@ -10,6 +10,7 @@ import {
 import Navbar from "../components/Navbar";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import ThemeSwitcher from "../components/ThemeSwitcher";
+import RouteFallback from "../components/RouteFallback";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/authReducer";
 import { useT } from "../i18n/useT";
@@ -29,8 +30,16 @@ const Dashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const t = useT();
   const { token } = theme.useToken();
+  const contentRef = useRef(null);
+
+  // A new page should start at its top, not wherever the previous one was
+  // scrolled to — the content pane keeps its own scroll across navigations.
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [location.pathname]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -129,14 +138,24 @@ const Dashboard = () => {
         </Header>
 
         <Content
+          ref={contentRef}
           style={{
+            position: "relative",
             padding: 24,
             height: `calc(100vh - ${HEADER_HEIGHT}px)`,
             overflowY: "auto",
             background: token.colorBgLayout,
           }}
         >
-          <Outlet />
+          {/* The boundary sits here rather than around the whole app, so a page
+              chunk loading swaps only this pane — the sidebar and the header
+              stay put instead of the screen going blank. */}
+          <Suspense fallback={<RouteFallback />}>
+            {/* Keyed on the path so every page mounts fresh and animates in. */}
+            <div key={location.pathname} className="route-view">
+              <Outlet />
+            </div>
+          </Suspense>
         </Content>
       </Layout>
     </Layout>

@@ -36,7 +36,10 @@ import apiClient from "../../services/api";
 import { useSelector } from "react-redux";
 import { Role } from "../../data/role";
 import { checkRole } from "../../utils/roleUtils";
+import dayjs from "dayjs";
 import { formatDateTime } from "../../utils/dateUtils";
+import ExtraTimeModal from "../../components/modal/ExtraTimeModal";
+import { useT } from "../../i18n/useT";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -50,7 +53,9 @@ const ContestDetails = () => {
   const [selectedSpeakingScore, setSelectedSpeakingScore] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [speakingLoading, setSpeakingLoading] = useState(false);
+  const [extraTimeOpen, setExtraTimeOpen] = useState(false);
   const auth = useSelector((state) => state.auth);
+  const t = useT();
 
   const { data, loading, error } = useApiRequest(
     `api/v1/booking/session/${id}/${type}`,
@@ -245,6 +250,13 @@ const ContestDetails = () => {
                         <Button type="primary">Edit booking</Button>
                       </Link>
                     )}
+
+                  {(checkRole(auth.user.roles, Role.ROLE_ADMIN) ||
+                    checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN)) && (
+                    <Button onClick={() => setExtraTimeOpen(true)}>
+                      ⏱️ {t("extraTime.singleAction")}
+                    </Button>
+                  )}
                 </Space>
               </Card>
             </Col>
@@ -668,6 +680,29 @@ const ContestDetails = () => {
             </Card>
           </>
         )}
+
+        <ExtraTimeModal
+          open={extraTimeOpen}
+          onClose={() => setExtraTimeOpen(false)}
+          // Addressed by student where possible — the exam id path exists for
+          // the case where this screen is all we have to go on.
+          target={
+            user?.id
+              ? {
+                  userId: user.id,
+                  date: dayjs(booking?.testDate).isValid()
+                    ? dayjs(booking.testDate).format("YYYY-MM-DD")
+                    : undefined,
+                  testTime: booking?.time,
+                }
+              : { examId: exam_id ? exam_id : booking.id }
+          }
+          studentName={
+            booking?.studentName ||
+            `${user?.firstname ?? ""} ${user?.lastname ?? ""}`.trim()
+          }
+          onGranted={() => setRefresh((prev) => prev + 1)}
+        />
       </Content>
     </Layout>
   );

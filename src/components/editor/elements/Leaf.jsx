@@ -26,6 +26,9 @@ const withAlpha = (hex, alpha) => {
 const Leaf = ({ attributes, children, leaf }) => {
   const isDark = useSelector((state) => state.app.theme) === "dark";
   const isHighlighted = leaf.highlight && leaf.highlight !== "transparent";
+  // A note is its text plus the id that ties its leaves together; without the
+  // id it could not be reopened, so both have to be there to count as one.
+  const hasNote = Boolean(leaf.note) && Boolean(leaf.noteId);
 
   // In night mode a solid pastel marker is a glaring patch on a dark page, so
   // it becomes a translucent wash and the text keeps its normal light colour.
@@ -39,6 +42,11 @@ const Leaf = ({ attributes, children, leaf }) => {
   return (
     <span
       {...attributes}
+      // The id is how a click, and the notes panel, find their way back to this
+      // note: every leaf of one note carries the same one.
+      className={hasNote ? "exam-note" : undefined}
+      data-note-id={hasNote ? leaf.noteId : undefined}
+      title={hasNote ? leaf.note : undefined}
       style={{
         fontWeight: leaf.bold ? "bold" : "normal",
         fontStyle: leaf.italic ? "italic" : "normal",

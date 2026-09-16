@@ -7,6 +7,13 @@ const useApiRequest = (url, dependencies = []) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // A falsy url means "not applicable here" — a role that may not read this
+    // resource, or a parameter that has not arrived yet. Firing anyway would
+    // request the API root and hand back a response nobody can use.
+    if (!url) {
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);

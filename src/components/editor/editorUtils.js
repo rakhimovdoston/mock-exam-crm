@@ -4,22 +4,68 @@ import {
   Node,
   Path,
   Range,
+  Text,
   Transforms,
 } from "slate";
 import { ReactEditor } from "slate-react";
 
-export const isFormatActive = (editor, format) => {
+/**
+ * Is `format` applied at the selection?
+ *
+ * Boolean marks (bold/italic/underline) store `true`, but a highlight stores a
+ * colour string — comparing against `true` made highlights read as never
+ * active, so they could never be toggled back off.
+ * Passing `value` narrows the check to that exact value, which is what lets the
+ * same colour act as a toggle while a different colour replaces it.
+ */
+export const isFormatActive = (editor, format, value) => {
   const marks = Editor.marks(editor);
-  return marks ? marks[format] === true : false;
+  if (!marks) return false;
+
+  const current = marks[format];
+  if (current === undefined || current === false) return false;
+
+  return value === undefined || value === "" ? true : current === value;
 };
 
 export const toggleFormat = (editor, format, value = "") => {
-  const isActive = isFormatActive(editor, format);
-  if (isActive) {
+  if (isFormatActive(editor, format, value)) {
     Editor.removeMark(editor, format);
   } else {
     Editor.addMark(editor, format, value === "" ? true : value);
   }
+};
+
+/** Drop a mark from the selection entirely, whatever its value is. */
+export const clearFormat = (editor, format) => {
+  Editor.removeMark(editor, format);
+};
+
+/**
+ * The range covering every text node whose `format` mark equals `value`.
+ *
+ * A mark is stored per leaf, so a note written over a phrase becomes several
+ * text nodes sharing one id — and the candidate only ever clicks one of them.
+ * Editing, deleting or scrolling to that note has to act on the run as a whole,
+ * and the id is what identifies it. Returns null when nothing carries the mark.
+ */
+export const getMarkRangeByValue = (editor, format, value) => {
+  const leaves = Array.from(
+    Editor.nodes(editor, {
+      at: [],
+      match: (node) => Text.isText(node) && node[format] === value,
+    })
+  );
+
+  if (!leaves.length) return null;
+
+  const [, firstPath] = leaves[0];
+  const [lastNode, lastPath] = leaves[leaves.length - 1];
+
+  return {
+    anchor: { path: firstPath, offset: 0 },
+    focus: { path: lastPath, offset: lastNode.text.length },
+  };
 };
 
 export const insertTable = (editor, rows = 2, cols = 2) => {

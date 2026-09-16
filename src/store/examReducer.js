@@ -132,6 +132,40 @@ const examReducer = createSlice({
       // ✅ Save after update
       saveAnswersToStorage(state.answers);
     },
+    /**
+     * Apply a server-side draft on top of the initialised answer sheet.
+     *
+     * Merged by key rather than swapped in wholesale: the sheet's shape comes
+     * from the paper that was just loaded, and a draft written against an older
+     * version of it must not be able to reshape it.
+     */
+    restoreExamAnswers: (state, action) => {
+      const saved = action.payload;
+      if (!Array.isArray(saved)) return;
+
+      const byKey = new Map();
+      const byKeys = new Map();
+
+      saved.forEach((part) => {
+        (part?.answers || []).forEach((answer) => {
+          if (answer?.key !== undefined) byKey.set(answer.key, answer.value);
+          else if (answer?.keys !== undefined) byKeys.set(answer.keys, answer.values);
+        });
+      });
+
+      state.answers.forEach((part) => {
+        (part.answers || []).forEach((answer) => {
+          if (answer.key !== undefined && byKey.has(answer.key)) {
+            answer.value = byKey.get(answer.key) ?? "";
+          } else if (answer.keys !== undefined && byKeys.has(answer.keys)) {
+            const values = byKeys.get(answer.keys);
+            answer.values = Array.isArray(values) ? values : [];
+          }
+        });
+      });
+
+      saveAnswersToStorage(state.answers);
+    },
     clearExamAnswers: (state) => {
       state.answers = [];
       // ✅ Clear with specific key
@@ -145,6 +179,7 @@ export const {
   initilalizeExam,
   updateForUserAnswers,
   updateForUserMultipleAnswers,
+  restoreExamAnswers,
   clearExamAnswers,
 } = examReducer.actions;
 export default examReducer.reducer;
