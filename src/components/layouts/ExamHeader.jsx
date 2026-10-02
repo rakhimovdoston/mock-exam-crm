@@ -29,6 +29,7 @@ import AnswerReviewModal from "../modal/AnswerReviewModal";
 import ExtraTimeNoticeModal from "../modal/ExtraTimeNoticeModal";
 import SectionFinishedModal from "../modal/SectionFinishedModal";
 import ThemeSwitcher from "../ThemeSwitcher";
+import AudioStatusPanel from "./AudioStatusPanel";
 import BrandMark from "./BrandMark";
 import store from "../../store";
 import { changeSize } from "../../store/appReducer";
@@ -64,6 +65,9 @@ const ExamHeader = ({
   // The page owns its draft — only it knows what its answers look like.
   saveDraft,
   draftSavedAt,
+  // Download state of this sitting's recordings. Only Listening passes it, so
+  // the settings menu grows the section there and nowhere else.
+  audioStatus,
 }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -78,6 +82,8 @@ const ExamHeader = ({
     remainingSeconds,
     started,
     finished,
+    durationMs,
+    loading: clockLoading,
     change,
     refresh,
     notFound,
@@ -202,6 +208,19 @@ const ExamHeader = ({
 
   const isTimerVisible = started && !finished;
 
+  /**
+   * How much of the module has gone.
+   *
+   * The denominator is whatever this exam's module actually lasts — Listening
+   * is the sum of its own recordings — so it comes from the server with the
+   * rest of the clock. No total, no bar: a made-up one would be worse than
+   * none, and an older backend simply does not draw it.
+   */
+  const elapsedRatio =
+    isTimerVisible && durationMs > 0
+      ? Math.min(1, Math.max(0, (durationMs - remainingMs) / durationMs))
+      : null;
+
   const timerClassName = [
     "exam-timer",
     isTimerVisible && remainingSeconds <= 60 ? "exam-timer--danger" : "",
@@ -219,7 +238,14 @@ const ExamHeader = ({
       <header className="exam-header">
         <BrandMark />
 
-        <div className={timerClassName}>
+        <div
+          className={timerClassName}
+          style={
+            elapsedRatio == null
+              ? undefined
+              : { "--exam-timer-progress": `${elapsedRatio * 100}%` }
+          }
+        >
           <ClockCircleOutlined />
           {isTimerVisible ? (
             <>
@@ -228,8 +254,19 @@ const ExamHeader = ({
             </>
           ) : (
             <span className="exam-timer__unit">
-              {finished ? "section finished" : "waiting to start…"}
+              {/* The first read can take a few seconds while the server works
+                  out the length from the recordings. That is not the same as a
+                  module waiting to be started, and showing a zero here would
+                  be a lie about a clock nobody has read yet. */}
+              {finished
+                ? "section finished"
+                : clockLoading
+                ? "preparing…"
+                : "waiting to start…"}
             </span>
+          )}
+          {elapsedRatio != null && (
+            <span className="exam-timer__progress" aria-hidden="true" />
           )}
         </div>
 
@@ -269,21 +306,30 @@ const ExamHeader = ({
                   padding: 14,
                 }}
               >
-                <Flex vertical gap={8}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>
-                    Text size
-                  </span>
-                  <Segmented
-                    options={TEXT_SIZES}
-                    value={String(textSize)}
-                    onChange={(value) => dispatch(changeSize({ size: value }))}
-                  />
+                <Flex vertical gap={14}>
+                  <Flex vertical gap={8}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>
+                      Text size
+                    </span>
+                    <Segmented
+                      options={TEXT_SIZES}
+                      value={String(textSize)}
+                      onChange={(value) => dispatch(changeSize({ size: value }))}
+                    />
+                  </Flex>
+
+                  {/* Gated on there being parts, not just on the prop: the
+                      module's paper arrives a moment after the header does,
+                      and an empty "Recordings" heading is worse than none. */}
+                  {audioStatus?.parts?.length > 0 && (
+                    <AudioStatusPanel {...audioStatus} />
+                  )}
                 </Flex>
               </div>
             )}
           >
-            <Tooltip title="Text size">
-              <Button aria-label="Text size" icon={<SettingOutlined />} />
+            <Tooltip title="Settings">
+              <Button aria-label="Settings" icon={<SettingOutlined />} />
             </Tooltip>
           </Dropdown>
 

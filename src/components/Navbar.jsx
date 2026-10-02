@@ -16,6 +16,7 @@ import {
   TabletOutlined,
   FieldTimeOutlined,
   WarningOutlined,
+  RedoOutlined,
 } from "@ant-design/icons";
 import logo from "../assets/logo.png";
 import { Link, useLocation } from "react-router-dom";
@@ -52,12 +53,12 @@ const Navbar = () => {
       label: <Link to="/dashboard/users">{t("nav.candidates")}</Link>,
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
-    {
-      key: "/dashboard/attention",
-      icon: <WarningOutlined />,
-      label: <Link to="/dashboard/attention">{t("nav.attention")}</Link>,
-      roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
-    },
+    // {
+    //   key: "/dashboard/attention",
+    //   icon: <WarningOutlined />,
+    //   label: <Link to="/dashboard/attention">{t("nav.attention")}</Link>,
+    //   roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
+    // },
     {
       key: "/dashboard/contest",
       icon: <TrophyOutlined />,
@@ -74,6 +75,14 @@ const Navbar = () => {
       key: "/dashboard/extra-time",
       icon: <FieldTimeOutlined />,
       label: <Link to="/dashboard/extra-time">{t("nav.extraTime")}</Link>,
+      roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
+    },
+    {
+      key: "/dashboard/section-reopen",
+      icon: <RedoOutlined />,
+      label: (
+        <Link to="/dashboard/section-reopen">{t("nav.sectionReopen")}</Link>
+      ),
       roles: ["ROLE_ADMIN", "ROLE_BRANCH_ADMIN"],
     },
     {

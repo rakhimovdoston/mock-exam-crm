@@ -12,6 +12,7 @@ import useApiRequest from "../../hooks/useApiRequest";
 import useExamSecurity from "../../hooks/useExamSecurity";
 import useExamDraft from "../../hooks/useExamDraft";
 import useAudioPreloader from "../../hooks/useAudioPreloader";
+import useAudioRetryApproval from "../../hooks/useAudioRetryApproval";
 import store from "../../store";
 import { initilalizeExam, restoreExamAnswers } from "../../store/examReducer";
 import { getPartLabel, getQuestionNumbers } from "../../utils";
@@ -103,6 +104,59 @@ const ListeningExam = () => {
 
   const requiredFailed = failedIndexes.some((index) => index < requiredCount);
 
+  /* ── Recordings panel (settings menu) ─────────────────────────────────── */
+
+  // Downloading again is not the candidate's to decide: the usual cause is the
+  // hall's connection, and every machine re-fetching at once is what broke it.
+  const { allowed: retryAllowed, approvedByName } = useAudioRetryApproval(
+    id,
+    failedIndexes
+  );
+
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetryDownload = useCallback(() => {
+    setRetrying(true);
+    retryDownload();
+  }, [retryDownload]);
+
+  // The preloader reports it has finished the whole list, which is the only
+  // honest end of a retry — a part can still have failed a second time.
+  useEffect(() => {
+    if (downloadComplete) setRetrying(false);
+  }, [downloadComplete]);
+
+  const audioParts = useMemo(
+    () =>
+      examParts.map((part, index) => {
+        const label = getPartLabel(part.type, index);
+
+        // A part with nothing attached is not a failure and must not be shown
+        // as one — there is simply nothing to play.
+        if (!audioSources[index]) return { label, state: "none", progress: 1 };
+        if (audioUrls[index]) return { label, state: "ready", progress: 1 };
+        if (failedIndexes.includes(index)) return { label, state: "failed", progress: 0 };
+
+        return {
+          label,
+          state: "downloading",
+          progress: audioProgress[index] ?? 0,
+        };
+      }),
+    [examParts, audioSources, audioUrls, audioProgress, failedIndexes]
+  );
+
+  const audioStatus = useMemo(
+    () => ({
+      parts: audioParts,
+      allowed: retryAllowed,
+      approvedByName,
+      onRetry: handleRetryDownload,
+      retrying,
+    }),
+    [audioParts, retryAllowed, approvedByName, handleRetryDownload, retrying]
+  );
+
   const percentOver = useCallback(
     (count) => {
       if (!count) return 0;
@@ -120,6 +174,19 @@ const ListeningExam = () => {
   // Read once, lazily: after a reload the candidate is offered their place back
   // rather than the recording starting over.
   const [resumePoint] = useState(() => readAudioPosition(id));
+
+  /**
+   * Every recording has been played.
+   *
+   * There is still time on the clock at this point, and that is deliberate:
+   * the module's length includes the gaps between parts and a stretch at the
+   * end for checking answers. Said plainly here, because a running clock with
+   * silent headphones otherwise reads as something having gone wrong.
+   */
+  const allRecordingsPlayed =
+    examStarted &&
+    audioSources.length > 0 &&
+    currentAudioIndex >= audioSources.length;
 
   // Kept outside the playback effect so a background download landing — which
   // changes audioUrls and so re-runs that effect — cannot cancel a pending move
@@ -457,6 +524,18 @@ const ListeningExam = () => {
                 </div>
               )}
 
+              {allRecordingsPlayed && (
+                <div className="exam-panel" style={{ padding: 16, marginBottom: 18 }}>
+                  <Text strong style={{ display: "block", marginBottom: 4 }}>
+                    All recordings have been played.
+                  </Text>
+                  <Text type="secondary">
+                    Use the time left to check your answers. The section is
+                    submitted when the clock runs out.
+                  </Text>
+                </div>
+              )}
+
               {waitingForAudio && (
                 <div className="exam-panel" style={{ padding: 16, marginBottom: 18 }}>
                   <Text strong style={{ display: "block", marginBottom: 8 }}>
@@ -526,6 +605,7 @@ const ListeningExam = () => {
         onJumpToNote={handleJumpToNote}
         saveDraft={saveNow}
         draftSavedAt={savedAt}
+        audioStatus={audioStatus}
       />
 
       <Content

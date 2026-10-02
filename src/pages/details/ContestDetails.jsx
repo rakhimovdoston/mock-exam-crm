@@ -18,11 +18,15 @@ import {
   Tag,
   Modal,
   Input,
+  Descriptions,
 } from "antd";
 import {
   AudioOutlined,
   ReadOutlined,
   FileWordOutlined,
+  CustomerServiceOutlined,
+  FieldTimeOutlined,
+  RedoOutlined,
 } from "@ant-design/icons";
 import {
   getQuestionNumbers,
@@ -39,6 +43,8 @@ import { checkRole } from "../../utils/roleUtils";
 import dayjs from "dayjs";
 import { formatDateTime } from "../../utils/dateUtils";
 import ExtraTimeModal from "../../components/modal/ExtraTimeModal";
+import SectionReopenModal from "../../components/modal/SectionReopenModal";
+import AudioRetryModal from "../../components/modal/AudioRetryModal";
 import { useT } from "../../i18n/useT";
 
 const { Content } = Layout;
@@ -54,6 +60,8 @@ const ContestDetails = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [speakingLoading, setSpeakingLoading] = useState(false);
   const [extraTimeOpen, setExtraTimeOpen] = useState(false);
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [audioRetryOpen, setAudioRetryOpen] = useState(false);
   const auth = useSelector((state) => state.auth);
   const t = useT();
 
@@ -92,6 +100,38 @@ const ContestDetails = () => {
     speaking = {},
   } = data.data;
 
+  // A speaking-only session carries `booking: null`, and a destructuring
+  // default only fills in for `undefined` — so this is read defensively rather
+  // than trusted to be the `{}` above.
+  const testDate = booking?.testDate;
+
+  // How the extra-time, reopen and audio endpoints address this sitting.
+  // Addressed by student where possible — the exam id path exists for the case
+  // where this screen is all we have to go on.
+  const examTarget = user?.id
+    ? {
+        userId: user.id,
+        // Checked before it is parsed: `dayjs(undefined)` is the current
+        // moment and reports itself valid, so parsing first would quietly send
+        // today's date for a sitting that has none.
+        date:
+          testDate && dayjs(testDate).isValid()
+            ? dayjs(testDate).format("YYYY-MM-DD")
+            : undefined,
+        testTime: booking?.time,
+      }
+    : { examId: exam_id ?? booking?.id };
+
+  const studentName =
+    booking?.studentName ||
+    `${user?.firstname ?? ""} ${user?.lastname ?? ""}`.trim();
+
+  // All three interventions carry the same permission: a branch admin may run
+  // any of them for their own branch, and the backend refuses anyone else.
+  const canManageExam =
+    checkRole(auth.user.roles, Role.ROLE_ADMIN) ||
+    checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN);
+
   const getColor = (status) => {
     switch (status) {
       case "PROCESS":
@@ -115,7 +155,7 @@ const ContestDetails = () => {
     setResetLoading(true);
     const request = {
       type: section,
-      examId: exam_id ? exam_id : booking.id,
+      examId: exam_id ?? booking?.id,
       userId: user.id,
     };
     try {
@@ -148,7 +188,7 @@ const ContestDetails = () => {
     setResetLoading(true);
     const request = {
       section: section,
-      examId: exam_id ? exam_id : booking.id,
+      examId: exam_id ?? booking?.id,
       type: exam_id ? "exam" : "booking",
       userId: user.id,
     };
@@ -220,75 +260,159 @@ const ContestDetails = () => {
           {/* Booking Details */}
           {data.data.type === "TEST" && (
             <Col xs={24} md={12}>
-              <Card title="Booking Details" variant={"borderless"}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Flex gap={10} align="center">
-                    <Text strong>Student Name:</Text>
-                    <Text>{booking?.studentName || "N/A"}</Text>
-                  </Flex>
-                  <Flex gap={10} align="center">
-                    <Text strong>Status:</Text>
-                    <Tag color={getColor(booking?.status)}>
-                      {booking?.status || "N/A"}
-                    </Tag>
-                  </Flex>
-                  <Flex gap={10} align="center">
-                    <Text strong>Branch:</Text>
-                    <Text>{booking?.branch || "N/A"}</Text>
-                  </Flex>
-                  <Flex gap={10} align="center">
-                    <Text strong>Test Date:</Text>
-                    <Tag color="red">{booking?.testDate || "N/A"}</Tag>
-                  </Flex>
-                  <Flex gap={10} align="center">
-                    <Text strong>Test Time:</Text>
-                    <Tag color="green">{booking?.time || "N/A"}</Tag>
-                  </Flex>
-                  {booking.status != "COMPLETED" &&
-                    booking.status != "PROCESS" && (
-                      <Link to={`edit`}>
-                        <Button type="primary">Edit booking</Button>
-                      </Link>
-                    )}
+              <Card
+                title="Booking Details"
+                variant={"borderless"}
+                // The one routine action lives in the header; the three below
+                // are interventions, and mixing them into one stack made the
+                // routine one look as consequential as deleting an answer.
+                extra={
+                  booking?.status != "COMPLETED" &&
+                  booking?.status != "PROCESS" ? (
+                    <Link to={`edit`}>
+                      <Button type="primary">Edit booking</Button>
+                    </Link>
+                  ) : null
+                }
+              >
+                <Descriptions
+                  column={1}
+                  size="small"
+                  colon={false}
+                  items={[
+                    {
+                      key: "student",
+                      label: "Student",
+                      children: booking?.studentName || "N/A",
+                    },
+                    {
+                      key: "status",
+                      label: "Status",
+                      children: (
+                        <Tag
+                          color={getColor(booking?.status)}
+                          style={{ marginInlineEnd: 0 }}
+                        >
+                          {booking?.status || "N/A"}
+                        </Tag>
+                      ),
+                    },
+                    {
+                      key: "branch",
+                      label: "Branch",
+                      children: booking?.branch || "N/A",
+                    },
+                    {
+                      // Date and shift name one sitting; they are read together.
+                      key: "session",
+                      label: "Session",
+                      children: (
+                        <Space size={6} wrap>
+                          <Tag color="red" style={{ marginInlineEnd: 0 }}>
+                            {booking?.testDate || "N/A"}
+                          </Tag>
+                          <Tag color="green" style={{ marginInlineEnd: 0 }}>
+                            {booking?.time || "N/A"}
+                          </Tag>
+                        </Space>
+                      ),
+                    },
+                  ]}
+                />
 
-                  {(checkRole(auth.user.roles, Role.ROLE_ADMIN) ||
-                    checkRole(auth.user.roles, Role.ROLE_BRANCH_ADMIN)) && (
-                    <Button onClick={() => setExtraTimeOpen(true)}>
-                      ⏱️ {t("extraTime.singleAction")}
-                    </Button>
-                  )}
-                </Space>
+                {canManageExam && (
+                  <>
+                    <Divider style={{ margin: "12px 0" }} />
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        letterSpacing: 0.4,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {t("common.actions")}
+                    </Text>
+                    {/* Equal columns rather than a free-flowing row: three
+                        ragged widths read as three unrelated things. Three
+                        across only from `lg`, because the Uzbek labels run to
+                        about twenty characters and a third of a half-width
+                        card is not enough for that below it. */}
+                    <Row gutter={[8, 8]} style={{ marginTop: 10 }}>
+                      <Col xs={24} lg={8}>
+                        <Button
+                          block
+                          icon={<FieldTimeOutlined />}
+                          onClick={() => setExtraTimeOpen(true)}
+                        >
+                          {t("extraTime.singleAction")}
+                        </Button>
+                      </Col>
+                      <Col xs={24} lg={8}>
+                        <Button
+                          block
+                          icon={<CustomerServiceOutlined />}
+                          onClick={() => setAudioRetryOpen(true)}
+                        >
+                          {t("audioRetry.singleAction")}
+                        </Button>
+                      </Col>
+                      <Col xs={24} lg={8}>
+                        {/* Last and red: it is the only one that deletes work. */}
+                        <Button
+                          block
+                          danger
+                          icon={<RedoOutlined />}
+                          onClick={() => setReopenOpen(true)}
+                        >
+                          {t("sectionReopen.singleAction")}
+                        </Button>
+                      </Col>
+                    </Row>
+                  </>
+                )}
               </Card>
             </Col>
           )}
 
           {/* User Info */}
           <Col xs={24} md={12}>
-            <Card title="User Info" variant={"borderless"}>
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <Flex gap={10} align="center">
-                  <Text strong>Full Name:</Text>
-                  <Text>
-                    {user?.firstname ?? ""} {user?.lastname ?? ""}
-                  </Text>
-                </Flex>
-                <Flex gap={10} align="center">
-                  <Text strong>Email:</Text>
-                  <Text>{user?.email || "N/A"}</Text>
-                </Flex>
-                <Flex gap={10} align="center">
-                  <Text strong>Username:</Text>
-                  <Text>{user?.username || "N/A"}</Text>
-                </Flex>
-                <Button type="primary" style={{ cursor: "pointer" }}>
-                  <Link
-                    to={`/dashboard/user/${user.id}`}
-                    style={{ color: "white" }}
-                  >
-                    View user details
+            <Card
+              title="User Info"
+              variant={"borderless"}
+              extra={
+                user?.id ? (
+                  <Link to={`/dashboard/user/${user.id}`}>
+                    <Button type="primary">View user details</Button>
                   </Link>
-                </Button>
-              </Space>
+                ) : null
+              }
+            >
+              <Descriptions
+                column={1}
+                size="small"
+                colon={false}
+                items={[
+                  {
+                    key: "name",
+                    label: "Full name",
+                    children:
+                      `${user?.firstname ?? ""} ${user?.lastname ?? ""}`.trim() ||
+                      "N/A",
+                  },
+                  {
+                    key: "email",
+                    label: "Email",
+                    children: user?.email || "N/A",
+                  },
+                  {
+                    key: "username",
+                    label: "Username",
+                    children: user?.username || "N/A",
+                  },
+                ]}
+              />
             </Card>
           </Col>
         </Row>
@@ -408,14 +532,14 @@ const ContestDetails = () => {
                         ) : (
                           <Tag>Waiting Listening</Tag>
                         ))}
-                      {exam_id && (
+                      {/* {exam_id && (
                         <Button
                           type="primary"
                           onClick={() => retryListening("listening")}
                         >
                           Retry Listening
                         </Button>
-                      )}
+                      )} */}
                       {listening.length === 0 && (
                         <Button
                           htmlType="button"
@@ -495,14 +619,14 @@ const ContestDetails = () => {
                         ) : (
                           <Tag> Waiting Reading</Tag>
                         ))}
-                      {exam_id && (
+                      {/* {exam_id && (
                         <Button
                           type="primary"
                           onClick={() => retryListening("reading")}
                         >
                           Retry Listening
                         </Button>
-                      )}
+                      )} */}
                       {readings.length === 0 && (
                         <Button
                           htmlType="button"
@@ -613,14 +737,14 @@ const ContestDetails = () => {
                       ) : (
                         <Tag>Waiting Writing</Tag>
                       ))}
-                    {exam_id && (
+                    {/* {exam_id && (
                       <Button
                         type="primary"
                         onClick={() => retryListening("writing")}
                       >
                         Retry Listening
                       </Button>
-                    )}
+                    )} */}
                     {writings.length === 0 && (
                       <Button
                         htmlType="button"
@@ -684,24 +808,25 @@ const ContestDetails = () => {
         <ExtraTimeModal
           open={extraTimeOpen}
           onClose={() => setExtraTimeOpen(false)}
-          // Addressed by student where possible — the exam id path exists for
-          // the case where this screen is all we have to go on.
-          target={
-            user?.id
-              ? {
-                  userId: user.id,
-                  date: dayjs(booking?.testDate).isValid()
-                    ? dayjs(booking.testDate).format("YYYY-MM-DD")
-                    : undefined,
-                  testTime: booking?.time,
-                }
-              : { examId: exam_id ? exam_id : booking.id }
-          }
-          studentName={
-            booking?.studentName ||
-            `${user?.firstname ?? ""} ${user?.lastname ?? ""}`.trim()
-          }
+          target={examTarget}
+          studentName={studentName}
           onGranted={() => setRefresh((prev) => prev + 1)}
+        />
+
+        <SectionReopenModal
+          open={reopenOpen}
+          onClose={() => setReopenOpen(false)}
+          target={examTarget}
+          studentName={studentName}
+          // The page shows the module scores this just cleared, so it re-reads.
+          onReopened={() => setRefresh((prev) => prev + 1)}
+        />
+
+        <AudioRetryModal
+          open={audioRetryOpen}
+          onClose={() => setAudioRetryOpen(false)}
+          target={examTarget}
+          studentName={studentName}
         />
       </Content>
     </Layout>

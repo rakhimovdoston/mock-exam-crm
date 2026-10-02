@@ -6,6 +6,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   EditOutlined,
+  ExclamationCircleFilled,
   LockOutlined,
   ReadOutlined,
 } from "@ant-design/icons";
@@ -13,8 +14,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/authReducer";
 import useApiRequest from "../hooks/useApiRequest";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
 import { enterFullScreen, isFullScreen } from "../utils/documentUtils";
+import { ensureMicrophoneAccess } from "../utils/microphone";
 import CandidateTopBar from "../components/layouts/CandidateTopBar";
 import { useT } from "../i18n/useT";
 
@@ -35,6 +36,22 @@ const UserPage = () => {
   const t = useT();
 
   const { data, loading, error } = useApiRequest(`api/v1/exam/get/${id}`, [id]);
+
+  /**
+   * How long this sitting's Listening actually runs.
+   *
+   * It is the sum of the recordings this exam was built from, so it differs
+   * between exams and cannot be written down anywhere. Read per exam, never
+   * cached — and asking here also warms the server's own figure, so the module
+   * page does not have to wait for it to be worked out from the audio.
+   *
+   * Purely informational: a failure leaves the line without a length rather
+   * than holding up the page.
+   */
+  const { data: listeningClock } = useApiRequest(
+    id ? `api/v1/exam/time-state/${id}?moduleType=listening` : null,
+    [id]
+  );
 
   useEffect(() => {
     if (data?.data && data?.data.leftDuration) {
@@ -77,55 +94,10 @@ const UserPage = () => {
   const handleExit = () => dispatch(logout());
 
   const startListening = useCallback(async () => {
-    try {
-      // 1️⃣ Permission statusni tekshirish (browser qo'llab-quvvatlasa)
-      if (navigator.permissions) {
-        const permissionStatus = await navigator.permissions.query({
-          name: "microphone",
-        });
-
-        if (permissionStatus.state === "denied") {
-          toast.info(
-            "Please enable microphone access in your browser settings and try again."
-          );
-          return;
-        }
-      }
-
-      // 2️⃣ Microphone so'rash
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // 3️⃣ Streamni yopish (faqat permission check uchun)
-      stream.getTracks().forEach((track) => track.stop());
-
-      // 4️⃣ Navigate
-      navigate(`/listening/${id}`);
-    } catch (error) {
-      console.error("Audio permission error: ", error);
-
-      switch (error.name) {
-        case "NotAllowedError":
-          toast.info(
-            "Microphone access denied. Please enable it in browser settings."
-          );
-          break;
-
-        case "NotFoundError":
-          toast.error("No microphone device found.");
-          break;
-
-        case "NotReadableError":
-          toast.error("Microphone is already in use by another application.");
-          break;
-
-        case "SecurityError":
-          toast.error("Microphone access requires HTTPS.");
-          break;
-
-        default:
-          toast.error("An unexpected error occurred. Please try again.");
-      }
-    }
+    // The same check the reopened-sections card makes before a retake, so a
+    // first sitting and a second one cannot drift apart in what they require.
+    const allowed = await ensureMicrophoneAccess();
+    if (allowed) navigate(`/listening/${id}`);
   }, [id, navigate]);
 
   if (loading) {
@@ -150,15 +122,30 @@ const UserPage = () => {
   const exam = data?.data;
   const isLowTime = startedRef.current && timeLeft <= LOW_TIME_SECONDS;
 
+  // A reopened module looks exactly like one never taken — its answers were
+  // deleted, so its flag is back to false. This is the only thing that tells
+  // the two apart, and a candidate who has already sat it needs to be told.
+  const reopenedModules = new Set(exam?.reopenedModules || []);
+
+  const listeningMs = Number(listeningClock?.data?.durationMs);
+  const listeningMeta = [
+    "4 parts",
+    "40 questions",
+    listeningMs > 0 ? `~${Math.round(listeningMs / 60000)} min` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const modules = exam
     ? [
         {
           key: "listening",
           title: "Listening",
           icon: <AudioOutlined />,
-          meta: "4 parts · 40 questions · ~30 min",
+          meta: listeningMeta,
           hint: "Each audio is played once. Headphones and microphone access are required.",
           done: exam.listening,
+          reopened: reopenedModules.has("listening"),
           unlocked: true,
           lockedHint: "",
           onStart: startListening,
@@ -170,6 +157,7 @@ const UserPage = () => {
           meta: "3 passages · 40 questions · 60 min",
           hint: "Read each passage and answer the questions on the right.",
           done: exam.reading,
+          reopened: reopenedModules.has("reading"),
           unlocked: Boolean(exam.listening),
           lockedHint: "Finish Listening to unlock",
           onStart: () => navigate(`/reading/${id}`),
@@ -181,6 +169,7 @@ const UserPage = () => {
           meta: "Task 1 · Task 2 · 60 min",
           hint: "Spend about 20 minutes on Task 1 and 40 minutes on Task 2.",
           done: exam.writing,
+          reopened: reopenedModules.has("writing"),
           unlocked: Boolean(exam.reading),
           lockedHint: "Finish Reading to unlock",
           onStart: () => navigate(`/writing/${id}`),
@@ -353,6 +342,9 @@ const UserPage = () => {
                 {modules.map((module, index) => {
                   const isActive = !module.done && module.unlocked;
                   const isLocked = !module.done && !module.unlocked;
+                  // Sat once already and open again. Worth its own colour:
+                  // silently showing "Start" invites "but I did this one".
+                  const isRetake = module.reopened && !module.done;
 
                   return (
                     <div
@@ -364,11 +356,15 @@ const UserPage = () => {
                         alignItems: "center",
                         gap: 16,
                         opacity: isLocked ? 0.65 : 1,
-                        borderColor: isActive
+                        borderColor: isRetake
+                          ? token.colorWarning
+                          : isActive
                           ? token.colorPrimary
                           : token.colorBorderSecondary,
                         boxShadow: isActive
-                          ? `0 0 0 3px ${token.colorPrimaryBg}`
+                          ? `0 0 0 3px ${
+                              isRetake ? token.colorWarningBg : token.colorPrimaryBg
+                            }`
                           : "none",
                         transition: "border-color 0.2s ease",
                       }}
@@ -387,11 +383,15 @@ const UserPage = () => {
                             ? token.colorSuccess
                             : isLocked
                             ? token.colorTextTertiary
+                            : isRetake
+                            ? token.colorWarning
                             : token.colorPrimary,
                           background: module.done
                             ? token.colorSuccessBg
                             : isLocked
                             ? token.colorFillSecondary
+                            : isRetake
+                            ? token.colorWarningBg
                             : token.colorPrimaryBg,
                         }}
                       >
@@ -419,10 +419,20 @@ const UserPage = () => {
                               Completed
                             </Tag>
                           )}
-                          {isActive && (
-                            <Tag color="processing" style={{ marginInlineEnd: 0 }}>
-                              Up next
+                          {isRetake ? (
+                            <Tag
+                              color="warning"
+                              icon={<ExclamationCircleFilled />}
+                              style={{ marginInlineEnd: 0 }}
+                            >
+                              Retake
                             </Tag>
+                          ) : (
+                            isActive && (
+                              <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+                                Up next
+                              </Tag>
+                            )
                           )}
                         </div>
                         <Text
@@ -435,7 +445,11 @@ const UserPage = () => {
                           type="secondary"
                           style={{ display: "block", fontSize: 13 }}
                         >
-                          {isLocked ? module.lockedHint : module.hint}
+                          {isLocked
+                            ? module.lockedHint
+                            : isRetake
+                            ? "This section was reopened for you. Your previous answers for it were cleared."
+                            : module.hint}
                         </Text>
                       </div>
 
@@ -446,7 +460,7 @@ const UserPage = () => {
                         onClick={module.onStart}
                         style={{ minWidth: 116, borderRadius: 999 }}
                       >
-                        {module.done ? "Done" : "Start"}
+                        {module.done ? "Done" : isRetake ? "Retake" : "Start"}
                       </Button>
                     </div>
                   );

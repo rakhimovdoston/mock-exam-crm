@@ -120,6 +120,8 @@
 
 /* Timer pill */
 .exam-timer {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -132,6 +134,22 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* How much of the module has gone. The width comes from the header, which
+   divides by the length the server reports for THIS exam — Listening is the
+   sum of its own recordings, so there is no fixed total to hard-code here.
+   currentColor means the bar follows the pill into its warning and danger
+   states without a second set of rules. */
+.exam-timer__progress {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  height: 2px;
+  width: var(--exam-timer-progress, 0%);
+  background: currentColor;
+  opacity: 0.45;
+  transition: width 0.5s linear;
 }
 
 .exam-timer__unit {
@@ -163,6 +181,85 @@
   50% {
     opacity: 0.78;
   }
+}
+
+/* ── Recordings panel (settings menu, Listening only) ──────────────────── */
+
+.exam-audio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 236px;
+}
+
+.exam-audio__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.exam-audio__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exam-audio-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.exam-audio-row__icon {
+  font-size: 13px;
+  flex: 0 0 auto;
+  color: var(--exam-accent);
+}
+
+.exam-audio-row__icon--ready {
+  color: var(--exam-success-text);
+}
+
+.exam-audio-row__icon--failed {
+  color: var(--exam-danger);
+}
+
+.exam-audio-row__icon--none {
+  color: var(--exam-text-muted);
+}
+
+.exam-audio-row__name {
+  flex: 1 1 auto;
+}
+
+/* Tabular figures so a percentage counting up does not shuffle the column. */
+.exam-audio-row__state {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--exam-text-muted);
+}
+
+.exam-audio-row__state--failed {
+  color: var(--exam-danger);
+  font-weight: 600;
+}
+
+.exam-audio__notice {
+  border-top: 1px solid var(--exam-border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exam-audio__text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--exam-text-muted);
 }
 
 /* Content surface */
@@ -1053,6 +1150,7 @@ th .exam-gap .ant-input-affix-wrapper > .ant-input {
   .exam-pane,
   .exam-partnav__item,
   .exam-timer,
+  .exam-timer__progress,
   .exam-chip,
   .exam-drop {
     transition-duration: 0.01ms !important;

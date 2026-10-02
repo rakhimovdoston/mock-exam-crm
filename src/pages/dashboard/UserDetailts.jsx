@@ -19,6 +19,8 @@ import {
   Tag,
   Modal,
   Radio,
+  Avatar,
+  Descriptions,
 } from "antd";
 import {
   ReadOutlined,
@@ -35,6 +37,8 @@ import {
   DownloadOutlined,
   LockOutlined,
   UnlockOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
 
 import useApiRequest from "../../hooks/useApiRequest";
@@ -93,6 +97,7 @@ const UserDetails = () => {
   const [tempAccessLoading, setTempAccessLoading] = useState(false);
   const [tempAccessActive, setTempAccessActive] = useState(false);
   const [tempAccessUntil, setTempAccessUntil] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const temporaryAccess = data?.data?.temporaryAccess;
@@ -221,12 +226,9 @@ const UserDetails = () => {
     <div style={{ padding: "40px" }}>
       <Card
         variant={"borderless"}
-        style={{
-          maxWidth: 600,
-          borderRadius: "12px",
-        }}
+        style={{ maxWidth: 780, borderRadius: 12 }}
       >
-        <Space direction="vertical" style={{ width: "100%" }} align="start">
+        <Space direction="vertical" size={0} style={{ width: "100%" }}>
           {isEditing ? (
             <Form form={form} onFinish={handleSave} layout="vertical">
               <h2>{t("userDetails.updateTitle")}</h2>
@@ -307,51 +309,108 @@ const UserDetails = () => {
             </Form>
           ) : (
             <>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
-              >
-                <Typography>{t("userDetails.fullName")}:</Typography>
-                <Title level={3} style={{ margin: 0 }}>
-                  {user?.firstname} {user?.lastname}
-                </Title>
-              </div>
-              <Text>
-                {t("userDetails.email")}: <b>{user?.email}</b>
-              </Text>
-              <Text>
-                {t("userDetails.phone")}: <b>{user?.phone}</b>
-              </Text>
-              <Text>
-                {t("userDetails.login")}: <b>{user?.username}</b>
-              </Text>
-              <Text>
-                {t("userDetails.password")}: <b>{user?.password}</b>
-              </Text>
-              <Button type="primary" onClick={handleEdit}>
-                {t("userDetails.editDetails")}
-              </Button>
-              <Divider style={{ margin: "4px 0" }} />
-              {tempAccessActive ? (
-                <Flex vertical gap={8} align="flex-start">
+              <Flex align="center" gap={14} wrap style={{ width: "100%" }}>
+                <Avatar size={56} style={{ background: token.colorPrimary }}>
+                  {`${user?.firstname?.[0] ?? ""}${
+                    user?.lastname?.[0] ?? ""
+                  }`.toUpperCase() || "?"}
+                </Avatar>
+                <div style={{ flex: 1, minWidth: 180 }}>
+                  <Title level={4} style={{ margin: 0 }}>
+                    {user?.firstname} {user?.lastname}
+                  </Title>
+                  <Text type="secondary">{user?.email || "—"}</Text>
+                </div>
+                {tempAccessActive && (
                   <Tag color="orange" icon={<UnlockOutlined />}>
                     {t("userDetails.tempActive")} {tempAccessUntil || "—"}
                   </Tag>
+                )}
+              </Flex>
+
+              <Divider style={{ margin: "14px 0" }} />
+
+              <Descriptions
+                column={{ xs: 1, sm: 2 }}
+                size="small"
+                colon={false}
+                style={{ width: "100%" }}
+                items={[
+                  {
+                    key: "phone",
+                    label: t("userDetails.phone"),
+                    children: user?.phone || "—",
+                  },
+                  {
+                    key: "login",
+                    label: t("userDetails.login"),
+                    children: user?.username || "—",
+                  },
+                  {
+                    key: "password",
+                    label: t("userDetails.password"),
+                    // Hidden by default: this screen is read in a busy office
+                    // and gets screenshotted. The value is still one click
+                    // away for the admin who actually needs to read it out.
+                    children: user?.password ? (
+                      <Text
+                        copyable={{ text: user.password }}
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {showPassword ? user.password : "••••••••"}
+                      </Text>
+                    ) : (
+                      "—"
+                    ),
+                  },
+                ]}
+              />
+
+              {user?.password && (
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ paddingInline: 0 }}
+                  icon={showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  onClick={() => setShowPassword((open) => !open)}
+                >
+                  {showPassword
+                    ? t("userDetails.hidePassword")
+                    : t("userDetails.showPassword")}
+                </Button>
+              )}
+
+              <Divider style={{ margin: "14px 0" }} />
+
+              {/* One row: editing the profile and lending access are both
+                  things an admin does here, and stacking them made the second
+                  look like an afterthought. */}
+              <Space wrap>
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={handleEdit}
+                >
+                  {t("userDetails.editDetails")}
+                </Button>
+                {tempAccessActive ? (
                   <Button
                     danger
+                    icon={<LockOutlined />}
                     loading={tempAccessLoading}
                     onClick={handleRevokeAccess}
                   >
                     {t("userDetails.revokeAccess")}
                   </Button>
-                </Flex>
-              ) : (
-                <Button
-                  icon={<LockOutlined />}
-                  onClick={() => setTempAccessModalOpen(true)}
-                >
-                  {t("userDetails.grantAccess")}
-                </Button>
-              )}
+                ) : (
+                  <Button
+                    icon={<UnlockOutlined />}
+                    onClick={() => setTempAccessModalOpen(true)}
+                  >
+                    {t("userDetails.grantAccess")}
+                  </Button>
+                )}
+              </Space>
             </>
           )}
         </Space>
@@ -412,7 +471,9 @@ const UserDetails = () => {
         </Space>
       </Modal>
 
-      <Divider>{t("userDetails.bookingHistory")}</Divider>
+      <Divider orientation="left" style={{ marginTop: 32 }}>
+        {t("userDetails.bookingHistory")}
+      </Divider>
 
       {historyLoading ? (
         <Spin />
@@ -904,6 +965,8 @@ const UserDetails = () => {
                                   </Text>
                                 </div>
                               }
+                              variant="borderless"
+                              styles={{ body: { paddingTop: 0 } }}
                             >
                               <List
                                 grid={{ gutter: 24, column: 1 }}
@@ -921,6 +984,7 @@ const UserDetails = () => {
                                     <List.Item>
                                       {result.type === "mock_exam" ? (
                                         <Card
+                                          size="small"
                                           title={
                                             <div
                                               style={{
@@ -1182,7 +1246,7 @@ const UserDetails = () => {
                                           </Row>
                                         </Card>
                                       ) : (
-                                        <Card>
+                                        <Card size="small">
                                           <Row
                                             justify="space-between"
                                             align="top"

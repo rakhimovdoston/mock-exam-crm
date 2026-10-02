@@ -560,7 +560,8 @@ const UpdateContest = () => {
                           <Text strong>🕒 Speaking Time:</Text> {session.time}
                         </Text>
                         <Text>
-                          <Text strong>🧑‍🏫 Speaker:</Text> {session.speakerName}
+                          <Text strong>🧑‍🏫 Speaker:</Text>{" "}
+                          {session.speakerName || "Unnamed speaker"}
                         </Text>
                         <Text>
                           <Text strong>Type:</Text>{" "}

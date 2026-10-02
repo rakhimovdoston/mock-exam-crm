@@ -546,6 +546,11 @@ const UserBookingPage = () => {
                                   <Text strong>🕒 {t("booking.speakingTime")}:</Text>{" "}
                                   {session.time}
                                 </Text>
+                                <Text>
+                                  <Text strong>🧑‍🏫 {t("booking.speaker")}:</Text>{" "}
+                                  {session.speakerName ||
+                                    t("booking.speakerUnknown")}
+                                </Text>
                               </Space>
                             </Card>
                           </List.Item>
@@ -664,6 +669,13 @@ const UserBookingPage = () => {
                       <Space direction="vertical" size="small">
                         <Text>
                           <Text strong>🕒 {t("booking.speakingTime")}:</Text> {session.time}
+                        </Text>
+                        {/* Comes with the session itself — no lookup by id.
+                            Still optional: a speaker with no name on file
+                            leaves it null. */}
+                        <Text>
+                          <Text strong>🧑‍🏫 {t("booking.speaker")}:</Text>{" "}
+                          {session.speakerName || t("booking.speakerUnknown")}
                         </Text>
                         <Text>
                           <Text strong>{t("booking.type")}:</Text>{" "}

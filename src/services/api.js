@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getRequestLanguage } from "../i18n/lang";
 
 export const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -16,6 +17,12 @@ apiClient.interceptors.request.use(
     if (accessToken) {
       config.headers["Authorization"] = `Bearer ${accessToken}`;
     }
+
+    // Read per request rather than captured once: the switcher changes the
+    // language mid-session, and a value bound at module load would keep
+    // sending the one the panel had when it started.
+    config.headers["Accept-Language"] = getRequestLanguage();
+
     return config;
   },
   (error) => {

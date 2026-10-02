@@ -1,14 +1,15 @@
 import { useSelector } from "react-redux";
 import translations from "./translations";
+import { DEFAULT_LANG, LANGS } from "./lang";
 
-export const LANGS = ["uz", "ru", "en"];
-export const DEFAULT_LANG = "uz";
+export { DEFAULT_LANG, LANGS };
 
 // Resolve a dot-path key ("nav.dashboard") from an object.
 const resolve = (obj, path) =>
   path.split(".").reduce((acc, part) => (acc ? acc[part] : undefined), obj);
 
-// useT() → t("nav.dashboard"). Falls back: current lang → uz → the key itself.
+// useT() → t("nav.dashboard"). Falls back: current lang → the default one →
+// the key itself.
 export const useT = () => {
   const lang = useSelector((state) => state.app.lang) || DEFAULT_LANG;
 

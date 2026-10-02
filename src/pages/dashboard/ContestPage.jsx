@@ -9,7 +9,7 @@ import {
   Flex,
   Tooltip,
 } from "antd";
-import { FieldTimeOutlined } from "@ant-design/icons";
+import { FieldTimeOutlined, RedoOutlined } from "@ant-design/icons";
 import useApiRequest from "../../hooks/useApiRequest";
 import StatusCounts from "./components/StatusCounts";
 import dayjs from "dayjs";
@@ -19,6 +19,7 @@ import { checkRole } from "../../utils/roleUtils";
 import { Role } from "../../data/role";
 import { useT } from "../../i18n/useT";
 import ExtraTimeModal from "../../components/modal/ExtraTimeModal";
+import SectionReopenModal from "../../components/modal/SectionReopenModal";
 
 const { Option } = Select;
 
@@ -48,7 +49,12 @@ const ContestPage = () => {
   });
   // The row a grant is being written for; null while the modal is closed.
   const [extraTimeFor, setExtraTimeFor] = useState(null);
-  const canGrantExtraTime =
+  // Likewise for a reopen. Kept apart so one modal closing cannot clear the
+  // other's row out from under it.
+  const [reopenFor, setReopenFor] = useState(null);
+  // Both actions carry the same permission: a branch admin may run either one
+  // for their own branch, and the backend refuses anyone else.
+  const canManageExam =
     checkRole(user.roles, Role.ROLE_ADMIN) ||
     checkRole(user.roles, Role.ROLE_BRANCH_ADMIN);
 
@@ -210,13 +216,24 @@ const ContestPage = () => {
 
         return (
           <Flex justify="center" align="center" gap={12}>
-            {canGrantExtraTime && target && (
+            {canManageExam && target && (
               <Tooltip title={t("extraTime.singleAction")}>
                 <Button
                   aria-label={t("extraTime.singleAction")}
                   icon={<FieldTimeOutlined />}
                   onClick={() =>
                     setExtraTimeFor({ target, studentName: record.studentName })
+                  }
+                />
+              </Tooltip>
+            )}
+            {canManageExam && target && (
+              <Tooltip title={t("sectionReopen.singleAction")}>
+                <Button
+                  aria-label={t("sectionReopen.singleAction")}
+                  icon={<RedoOutlined />}
+                  onClick={() =>
+                    setReopenFor({ target, studentName: record.studentName })
                   }
                 />
               </Tooltip>
@@ -341,6 +358,13 @@ const ContestPage = () => {
         onClose={() => setExtraTimeFor(null)}
         target={extraTimeFor?.target}
         studentName={extraTimeFor?.studentName}
+      />
+
+      <SectionReopenModal
+        open={Boolean(reopenFor)}
+        onClose={() => setReopenFor(null)}
+        target={reopenFor?.target}
+        studentName={reopenFor?.studentName}
       />
     </div>
   );

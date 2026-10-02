@@ -14,16 +14,21 @@ import { toast } from "react-toastify";
 import apiClient from "../services/api";
 import { enterFullScreen } from "../utils/documentUtils";
 import CandidateTopBar from "../components/layouts/CandidateTopBar";
+import ReopenedSections from "../components/ReopenedSections";
 
 const { Title, Text, Paragraph } = Typography;
 
+// This screen has no exam yet, so it cannot name a Listening length: that is
+// worked out from the recordings of the sitting the candidate is given, and
+// differs from one to the next. The real figure is on the module list, once
+// there is an exam to ask about.
 const MODULES = [
   {
     key: "listening",
     title: "Listening",
     icon: <AudioOutlined />,
     meta: "4 parts · 40 questions",
-    duration: "~30 min",
+    duration: "Timed by the audio",
   },
   {
     key: "reading",
@@ -139,6 +144,11 @@ const HomePage = () => {
               keeps running.
             </Paragraph>
           </div>
+
+          {/* Anything a supervisor reopened comes before the normal start:
+              it is the reason this candidate is on the page. Draws nothing
+              when there is none. */}
+          <ReopenedSections />
 
           {/* Module overview */}
           <Row gutter={[14, 14]} style={{ marginBottom: "clamp(10px, 1.8vh, 16px)" }}>

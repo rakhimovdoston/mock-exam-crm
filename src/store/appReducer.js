@@ -1,7 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { DEFAULT_THEME, THEME_MODES } from "../theme";
+import { DEFAULT_LANG, LANGS, readStoredLang, writeStoredLang } from "../i18n/lang";
 
-const savedLang = localStorage.getItem("lang") || "uz";
+// Whatever was chosen last, or English. The same value the API client puts in
+// Accept-Language, so the panel and the server always speak about one language.
+const savedLang = readStoredLang() ?? DEFAULT_LANG;
 
 const savedTheme = THEME_MODES.includes(localStorage.getItem("theme"))
   ? localStorage.getItem("theme")
@@ -19,8 +22,12 @@ const appReducer = createSlice({
       state.size = action.payload.size;
     },
     changeLang: (state, action) => {
+      // Ignored rather than stored if it is not a language we have: the value
+      // goes out on every request from here on.
+      if (!LANGS.includes(action.payload)) return;
+
       state.lang = action.payload;
-      localStorage.setItem("lang", action.payload);
+      writeStoredLang(action.payload);
     },
     changeTheme: (state, action) => {
       const next = THEME_MODES.includes(action.payload)

@@ -72,6 +72,9 @@ const ExtraTime = React.lazy(() => import("./pages/dashboard/ExtraTime"));
 const AttentionPage = React.lazy(() =>
   import("./pages/dashboard/AttentionPage")
 );
+const SectionReopen = React.lazy(() =>
+  import("./pages/dashboard/SectionReopen")
+);
 
 const { Content: AntContent } = Layout;
 
@@ -105,7 +108,7 @@ function App() {
   }, [isLoggedIn, accessToken]);
 
   return (
-    <ConfigProvider locale={ANTD_LOCALES[lang] || uzUZ} theme={themeConfig}>
+    <ConfigProvider locale={ANTD_LOCALES[lang] || enUS} theme={themeConfig}>
       <Layout style={{ width: "100%", height: "100vh" }}>
         <AppToaster />
       <AntContent>
@@ -170,6 +173,7 @@ function App() {
               <Route path="results" element={<ResultPage />} />
               <Route path="extra-time" element={<ExtraTime />} />
               <Route path="attention" element={<AttentionPage />} />
+              <Route path="section-reopen" element={<SectionReopen />} />
               <Route path="employees" element={<EmployeePage />} />
               <Route path="employee/:id" element={<EmployeeDetails />} />
               <Route path="contest/:id/:type" element={<ContestDetails />} />

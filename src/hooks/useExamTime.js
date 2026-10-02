@@ -37,6 +37,11 @@ const fetchTimeState = async (examUniqueId, moduleType, knownVersion) => {
  * hardcoded constants before, and now only `leftDurationMs` decides. The local
  * interval exists purely to animate the number between polls, so a dropped
  * connection slows nothing down.
+ *
+ * `durationMs` is the module's full length, and it is per exam rather than per
+ * module type: Listening is the sum of that sitting's own recordings plus the
+ * gaps between them. It is the only honest denominator for a progress figure,
+ * and it must never be cached across exams.
  */
 const useExamTime = (examUniqueId, moduleType) => {
   const [state, setState] = useState(null);
@@ -159,6 +164,8 @@ const useExamTime = (examUniqueId, moduleType) => {
     finished: Boolean(state?.finished),
     running,
     examLeftDurationMs: state?.examLeftDuration ?? null,
+    /** Full length of this module for this exam; null until the server says. */
+    durationMs: state?.durationMs ?? null,
     loading,
     notFound,
     change,

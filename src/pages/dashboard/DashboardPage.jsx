@@ -237,7 +237,7 @@ const StaffDashboard = ({ t, isAdmin }) => {
         </Col>
       </Row>
 
-      <Section
+      {/* <Section
         title={t("dashboard.attention")}
         hint={t("dashboard.attentionHint")}
         stale={attention.stale}
@@ -254,7 +254,7 @@ const StaffDashboard = ({ t, isAdmin }) => {
           onRetry={attention.refetch}
           example={DEMO_ATTENTION}
         />
-      </Section>
+      </Section> */}
 
       <Section
         title={t("dashboard.scores")}

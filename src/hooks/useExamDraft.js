@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import apiClient, { apiUrl } from "../services/api";
+import { getRequestLanguage } from "../i18n/lang";
 
 export const DRAFT_SAVE_INTERVAL_MS = 15000;
 export const DRAFT_DEBOUNCE_MS = 3000;
@@ -134,6 +135,9 @@ const useExamDraft = (examUniqueId, moduleType, { getContent, onRestore }) => {
         keepalive: true,
         headers: {
           "Content-Type": "application/json",
+          // Set by hand: this one leaves through fetch, so the axios
+          // interceptor that adds it everywhere else never sees it.
+          "Accept-Language": getRequestLanguage(),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(content),
